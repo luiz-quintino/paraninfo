@@ -1,0 +1,31 @@
+
+
+<ul id="menu-options" class="menu-options">
+    {% if user.is_authenticated %}
+        
+            <li><a href="{% url 'user_list' %}">Usuários</a></li>
+            <hr> <!-- Linha divisória -->
+            <li><a href="{% url 'login' %}">Movimentação</a></li>
+            <li><a href="{% url 'login' %}">Pagamentos</a></li>
+            <li><a href="{% url 'login' %}">Balanços</a></li>
+            <hr> <!-- Linha divisória -->
+            <li><a href="{% url 'login' %}">Documentos</a></li>
+            <li><a href="{% url 'login' %}">News</a></li>
+            <hr> <!-- Linha divisória -->
+            <li><a href="{% url 'login' %}">Configurações</a></li> 
+            {% if request.is_sys_admin %}
+                <li><a href="{% url 'client_list' %}">Lista de clientes</a></li>
+            {% endif %}
+            <hr> <!-- Linha divisória -->
+            <li>
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <a href="#" onclick="this.closest('form').submit(); return false;" >Sair</a>
+                </form>
+            </li> 
+    {% else %}
+        <li><a href="{% url 'login' %}">Login</a></li>
+        <li><a href="{% url 'login' %}">Ajuda</a></li>
+        <li><a href="{% url 'login' %}">Sobre o Paraninfo</a></li>
+    {% endif %}
+</ul>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% load static %}
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Paraninfo{% endblock %}</title>
+        
+        <link rel="stylesheet" href="{% static 'css/base.css' %}">
+        <link rel="stylesheet" href="{% static 'css/user_list.css' %}">
+        <link rel="stylesheet" href="{% static 'css/user_record.css' %}">
+        <link rel="stylesheet" href="{% static 'css/user_credential.css' %}">
+        <link rel="stylesheet" href="{% static 'css/login.css' %}">
+        <link rel="stylesheet" href="{% static 'css/style.css' %}">
+        <link rel="stylesheet" href="{% static 'css/menu_user.css' %}">
+        <link rel="stylesheet" href="{% static 'css/menu_main.css' %}">
+
+        <script src="{% static 'js/menu_main.js' %}" defer></script>
+        <script src="{% static 'js/menu_user.js' %}" defer></script>
+    </head>
+    <body>
+        {% include 'partials/header.html' %}
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+        {% include 'partials/footer.html' %}
+    </body>
+</html>

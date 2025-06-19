@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'paraninfo_admin/css/client_list.css' %}">
+
+{% block title %}Lista de Clientes{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Lista de Clientes</h2>
+
+    <!-- Botão para incluir nova comissão -->
+    <div class="action-buttons">
+        <a href="{% url 'client_details' %}" class="add-button">Incluir Comissão</a>
+    </div>
+
+    <!-- Linha de pesquisa -->
+    <form method="get" action="{% url 'client_list' %}" class="filter-form">
+        <input type="text" name="search" placeholder="Buscar comissão" value="{{ search_query }}" class="filter-input">
+        <button type="submit" class="filter-button">
+            <img src="{% static 'icons/search-icon.png' %}" alt="Buscar" class="filter-icon">
+        </button>
+        <a href="{% url 'client_list' %}" class="cancel-button">
+            <img src="{% static 'icons/cancel-icon.png' %}" alt="Cancelar" class="cancel-icon">
+        </a>
+    </form>
+
+    <!-- Tabela de clientes -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Comissão</th>
+                <th>CNPJ</th>
+                <th>Inscrição</th>
+                <th>Endereço</th>
+                <th>Presidente</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for client in clients %}
+            <tr onclick="window.location.href='{% url 'client_details' uuid=client.uuid %}'" style="cursor: pointer;">
+                <td>{{ client.comissao }}</td>
+                <td>{{ client.cnpj }}</td>
+                <td>{{ client.inscricao }}</td>
+                <td>{{ client.endereco }}</td>
+                <td>{{ client.presidente }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

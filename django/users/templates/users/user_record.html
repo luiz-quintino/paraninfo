@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalhes do Usuário - Paraninfo{% endblock %}
+
+
+
+{% block content %}
+<div class="container">
+
+    <h2>Registro de {% if not uuid %}novo{% endif %} usuário</h2>
+
+    <!-- Exibir mensagens de sucesso ou erro -->
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    <!-- </div> -->
+    {% endif %}
+
+    <form method="post" action="{% if uuid %}{% url 'user_record' uuid=associado.uuid %}{% else %}{% url 'user_record' %}{% endif %}" class="user-form readonly-form">
+        {% csrf_token %}
+
+        <!-- Botões de definição de acesso -->
+        {% if uuid %}
+            <div class="action-buttons">
+                <a href="{% url 'user_credential' uuid=associado.uuid %}" class="access-button">Definição de acesso</a>
+            </div>
+        {% endif %}
+
+        <!-- Campos do formulário -->
+        
+        {% if uuid %}
+        <div class="form-group">
+            <label for="codigo_associado">Código do Associado</label>
+            <input type="text" id="codigo_associado" name="codigo_associado" value="{{ associado.codigo_associado }}" {% if not allow_edition %}readonly{% endif %} placeholder="Código do associado" required>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="nome_responsavel">Nome do Responsável</label>
+            <input type="text" id="nome_responsavel" name="nome_responsavel" value="{{ associado.nome_responsavel }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome do responsável" required>
+        </div>
+        <div class="form-group">
+            <label for="aluno">Aluno</label>
+            <input type="text" id="aluno" name="aluno" value="{{ associado.aluno }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome do nascimento_aluno" required>
+        </div>
+        <div class="form-group">
+            <label for="nome_de_guerra">Nome de Guerra</label>
+            <input type="text" id="nome_de_guerra" name="nome_de_guerra" value="{{ associado.nome_de_guerra }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome de guerra" required>
+        </div>
+        <div class="form-group">
+            <label for="codigo_pagamento">Código de Pagamento</label>
+            <input type="text" id="codigo_pagamento" name="codigo_pagamento" value="{{ associado.codigo_pagamento }}" {% if not allow_edition %}readonly{% endif %} placeholder="Código de pagamento" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="{{ associado.email }}" {% if not allow_edition %}readonly{% endif %} placeholder="email do responsável" required>
+        </div>
+        <div class="form-group">
+            <label for="nascimento_responsavel">Nascimento do Responsável</label>
+            <input type="text" id="nascimento_responsavel" name="nascimento_responsavel" value="{{ associado.nascimento_responsavel }}" {% if not allow_edition %}readonly{% endif %} placeholder="Data de nascimento do responsável" required>
+        </div>
+        <div class="form-group">
+            <label for="cpf">CPF</label>
+            <input type="text" id="cpf" name="cpf" value="{{ associado.cpf }}" {% if not allow_edition %}readonly{% endif %} placeholder="CPF do responsável" required>
+        </div>
+        <div class="form-group">
+            <label for="telefone">Telefone</label>
+            <input type="text" id="telefone" name="telefone" value="{{ associado.telefone }}" {% if not allow_edition %}readonly{% endif %} placeholder="Telefone do Responsável" required>
+        </div>
+        <div class="form-group">
+            <label for="sexo">Sexo</label>
+            <input type="text" id="sexo" name="sexo" value="{{ associado.sexo }}" {% if not allow_edition %}readonly{% endif %} placeholder="Sexo do aluno" required>
+        </div>
+        <div class="form-group">
+            <label for="nascimento_aluno">Nascimento do Aluno</label>
+            <input type="text" id="nascimento_aluno" name="nascimento_aluno" value="{{ associado.nascimento_aluno }}" {% if not allow_edition %}readonly{% endif %} placeholder="Data de nascimento do aluno" required>
+        </div>
+        <div class="form-group">
+            <label for="matricula">Matrícula</label>
+            <input type="text" id="matricula" name="matricula" value="{{ associado.matricula }}" {% if not allow_edition %}readonly{% endif %} placeholder="Matrículo do aluno no colégio" required>
+        </div>
+        <div class="form-group">
+            <label for="endereco">Endereço</label>
+            <input type="text" id="endereco" name="endereco" value="{{ associado.endereco }}" {% if not allow_edition %}readonly{% endif %} placeholder="Endereço do aluno" required>
+        </div>
+        <div class="form-group">
+            <label for="numero">Número</label>
+            <input type="text" id="numero" name="numero" value="{{ associado.numero }}" {% if not allow_edition %}readonly{% endif %} placeholder="Número" required>
+        </div>
+        <div class="form-group">
+            <label for="complemento">Complemento</label>
+            <input type="text" id="complemento" name="complemento" value="{{ associado.complemento }}" {% if not allow_edition %}readonly{% endif %} placeholder="Complemento">
+        </div>
+        <div class="form-group">
+            <label for="bairro">Bairro</label>
+            <input type="text" id="bairro" name="bairro" value="{{ associado.bairro }}" {% if not allow_edition %}readonly{% endif %} placeholder="Bairro" required>
+        </div>
+        <div class="form-group">
+            <label for="cidade">Cidade</label>
+            <input type="text" id="cidade" name="cidade" value="{{ associado.cidade }}" {% if not allow_edition %}readonly{% endif %} placeholder="Cidade" required>
+        </div>
+        <div class="form-group">
+            <label for="cep">CEP</label>
+            <input type="text" id="cep" name="cep" value="{{ associado.cep }}" {% if not allow_edition %}readonly{% endif %} placeholder="CEP" required>
+        </div>
+        <div class="form-group">
+            <label for="tipo">Tipo</label>
+            <input type="text" id="tipo" name="tipo" value="{{ associado.tipo }}" {% if not allow_edition %}readonly{% endif %} placeholder="Tipo de associado" required>
+        </div>
+        
+        {% if request.is_admin %}
+            <div class="form-group">
+                <label for="situacao">Situação</label>
+                <input type="text" id="situacao" name="situacao" value="{{ associado.situacao }}" {% if not allow_edition %}readonly{% endif %} placeholder="situacao" required>
+            </div>
+        {% endif %}
+
+        {% if request.is_sys_admin %}
+            <div class="form-group">
+                <label for="comissao">Comissão</label>
+                <input type="text" id="comissao" name="comissao" value="{{ associado.comissao }}" {% if not allow_edition %}readonly{% endif %} placeholder="comissao" required>
+            </div>
+        {% endif %}
+
+        <!-- <div class="form-group">
+            <label for="certificado">Certificado</label>
+            <input type="text" id="certificado" name="certificado" value="{{ associado.certificado }}" {% if not allow_edition %}readonly{% endif %} placeholder="Cerificado">
+        </div>
+        <div class="form-group">
+            <label for="kit">Kit</label>
+            <input type="text" id="kit" name="kit" value="{{ associado.kit }}" {% if not allow_edition %}readonly{% endif %} placeholder="Data de envio do kit" >>
+        </div>
+
+        <div class="form-group">
+            <label for="inscricao">Inscrição</label>
+            <input type="text" id="inscricao" name="inscricao" value="{{ associado.inscricao }}" {% if not allow_edition %}readonly{% endif %} placeholder="Data da inscrição">
+        </div>
+        <div class="form-group">
+            <label for="grupo_zap">Grupo Zap</label>
+            <input type="text" id="grupo_zap" name="grupo_zap" value="{{ associado.grupo_zap }}" {% if not allow_edition %}readonly{% endif %} placeholder="...">
+        </div>
+        <div class="form-group">
+            <label for="senha_certificado">Senha do Certificado</label>
+            <input type="text" id="senha_certificado" name="senha_certificado" value="{{ associado.senha_certificado }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome da Comissão" required>
+        </div>
+        <div class="form-group">
+            <label for="contatos">Contatos</label>
+            <input type="text" id="contatos" name="contatos" value="{{ associado.contatos }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome da Comissão" required>
+        </div>
+        <div class="form-group">
+            <label for="cadastro_cobranca">Cadastro de Cobrança</label>
+            <input type="text" id="cadastro_cobranca" name="cadastro_cobranca" value="{{ associado.cadastro_cobranca }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome da Comissão" required>
+        </div>
+        <div class="form-group">
+            <label for="old_certificado">Certificado Antigo</label>
+            <input type="text" id="old_certificado" name="old_certificado" value="{{ associado.old_certificado }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome da Comissão" required>
+        </div>
+        <div class="form-group">
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" name="senha" value="{{ associado.senha }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome da Comissão" required>
+        </div>
+        <div class="form-group">
+            <label for="data">Data</label>
+            <input type="text" id="data" name="data" value="{{ associado.data }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome da Comissão" required>
+        </div> -->
+
+        <!-- Botões de ação -->
+        <div class="action-buttons">
+            {% if allow_edition %}
+                <button type="submit" class="save-button">Salvar</button>
+                <button type="reset" class="cancel-button">Cancelar alterações</button>
+            {% endif %}            
+            <a href="{% url 'user_list' %}" class="back-button">Voltar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

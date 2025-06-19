@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalhes da Comissão{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <h2>Detalhes da Comissão</h2>
+
+    <!-- Exibir mensagens de sucesso ou erro -->
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Formulário para exibir ou adicionar registro -->
+    <form method="post" action="{% if uuid %}{% url 'client_details' uuid=uuid %}{% else %}{% url 'client_details' %}{% endif %}">
+        {% csrf_token %}
+
+        <!-- Campos do formulário -->
+        <div class="form-group">
+            <label for="comissao">Comissão</label>
+            <input type="text" id="comissao" name="comissao" value="{{ comissao.comissao }}" placeholder="Nome da Comissão" required>
+        </div>
+        <div class="form-group">
+            <label for="cnpj">CNPJ</label>
+            <input type="text" id="cnpj" name="cnpj" value="{{ comissao.cnpj }}" placeholder="CNPJ da Comissão ou CPF do presidente" required>
+        </div>
+        <div class="form-group">
+            <label for="inscricao">Inscrição</label>
+            <input type="text" id="inscricao" name="inscricao" value="{{ comissao.inscricao }}" placeholder="Número da inscrição">
+        </div>
+        <div class="form-group">
+            <label for="endereco">Endereço</label>
+            <input type="text" id="endereco" name="endereco" value="{{ comissao.endereco }}" placeholder="Endereço da sede da Comissão" required>
+        </div>
+        <div class="form-group">
+            <label for="cep">CEP</label>
+            <input type="text" id="cep" name="cep" value="{{ comissao.cep }}" placeholder="CEP da sede da Comissão" required>
+        </div>
+        <div class="form-group">
+            <label for="imagem">Imagem</label>
+            <input type="text" id="imagem" name="imagem" value="{{ comissao.imagem }}" placeholder="Arquivo de imagem para a Comissão">
+        </div>
+        <div class="form-group">
+            <label for="presidente">Presidente</label>
+            <input type="text" id="presidente" name="presidente" value="{{ comissao.presidente }}" placeholder="Nome do Presidente da Comissão">
+        </div>
+
+        <!-- Botões de ação -->
+        <div class="action-buttons">
+            <button type="submit" class="save-button">Salvar</button>
+            <button type="reset" class="cancel-button">Cancelar</button>
+            <a href="javascript:history.back()" class="back-button">Voltar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

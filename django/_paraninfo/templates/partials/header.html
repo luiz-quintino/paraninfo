@@ -1,0 +1,52 @@
+{% load static %}
+<header class="header">
+    <!-- Coluna 1: Menu Sanduíche e Botão Home -->
+    <div class="menu-home-container">
+        <div class="menu">
+            <button class="menu-button" onclick="toggleMenu_main()">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+            {% include 'partials/menu_main.html' %}
+        </div>
+
+        <!-- Botão Home ao lado do menu sanduíche -->
+        <div class="home-button">
+            <a href="{% url 'home' %}">
+                <img src="{% static 'media/home-icon.png' %}" alt="Home" style="width: 30px; height: 30px;">
+            </a>
+        </div>
+    </div>
+
+    <!-- Coluna 2: Título da Página -->
+    <div class="app-title-container">
+        <div class="app-title">
+            Paraninfo!
+        </div>
+
+        <div class="app-subtitle">
+            {% if request.comissao_title %}
+                <p>{{ request.comissao_title }}</p>
+            {% else %}
+                <p>"O melhor amigo da sua comissão de formatura!"</p>
+            {% endif %}
+            
+        </div>
+    </div>
+
+    <!-- Coluna 3: Imagem com Link para Login -->
+    {% if user.is_authenticated %}
+        <div class="menu-user-container">
+            <img src="{% static 'media/user_on.png' %}" alt="Login" class="menu-user-button" style="width: 30px; height: 30px; cursor: pointer;" onclick="toggleMenu_user()">
+            {{ request.session.apelido }}
+            {% include 'partials/menu_user.html' %}
+        </div>
+        
+    {% else %}
+        <a href="{% url 'login' %}" class="login">
+            <img src="{% static 'media/user_off.png' %}" alt="Login">
+            <span>Login</span>
+        </a>
+    {% endif %}
+</header>

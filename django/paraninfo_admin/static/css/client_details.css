@@ -1,0 +1,5 @@
+/* filepath: /static/paraninfo_admin/css/client_details.css */
+.form-group input::placeholder {
+    color: #999;
+    font-style: italic;
+}

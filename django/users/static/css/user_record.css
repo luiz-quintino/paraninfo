@@ -1,0 +1,173 @@
+/* Estilo geral */
+.container {
+    width: 90%;
+    margin: 20px auto; /* Centraliza horizontalmente */
+    font-family: 'Arial', sans-serif;
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex; /* Adiciona flexbox */
+    flex-direction: column; /* Organiza os elementos verticalmente */
+    align-items: center; /* Centraliza os elementos horizontalmente */
+}
+
+/* Título */
+h2 {
+    text-align: center;
+    color: #4CAF50;
+    margin-bottom: 20px;
+}
+
+/* Formulário */
+.user-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.form-group {
+    display: flex;
+    align-items: center; /* Alinha o rótulo e o campo verticalmente */
+    gap: 10px; /* Espaçamento entre o rótulo e o campo */
+}
+
+label {
+    font-weight: bold;
+    color: #333;
+    text-align: right;  /* Alinha o texto do rótulo à direita */
+    width: 40%;        /* Define uma largura fixa para os rótulos */
+    max-width: 400px;   /* Limita a largura máxima a 300px */
+    margin-bottom: 0px;   /* Remove a margem inferior */
+}
+
+input {
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 60%;        /* Garante que o campo ocupe todo o espaço disponível */
+    max-width: 600px;   /* Limita a largura máxima a 400px */
+    box-sizing: border-box; /* Inclui o padding na largura total */
+}
+
+/* Botões de ação */
+.access-buttons {
+    display: flex;
+    justify-content: center; /* Centraliza os botões horizontalmente */
+    /* margin-top: 20px; */
+    margin-bottom: 20px; /* Espaçamento inferior */
+}
+.action-buttons {
+    display: flex;
+    justify-content: center; /* Centraliza os botões horizontalmente */
+    gap: 20px; /* Espaçamento entre os botões */
+    margin-top: 20px;
+}
+
+.action-buttons button, 
+.action-buttons a {
+    background-color: #4CAF50; /* Cor de fundo */
+    color: white; /* Cor do texto */
+    border: none;
+    padding: 10px 0; /* Espaçamento interno ajustado */
+    border-radius: 4px; /* Bordas arredondadas */
+    cursor: pointer;
+    text-decoration: none; /* Remove o sublinhado dos links */
+    font-size: 14px; /* Tamanho da fonte */
+    font-weight: bold; /* Negrito no texto */
+    text-align: center;
+    white-space: nowrap; /* Garante que o texto não quebre em várias linhas */
+    width: 150px; /* Define a largura fixa dos botões */
+    margin-bottom: 20px; /* Espaçamento inferior */
+}
+
+.action-buttons .cancel-button {
+    background-color: #f44336; /* Cor de fundo para o botão de cancelar */
+}
+
+.action-buttons .back-button {
+    background-color: #555; /* Cor de fundo para o botão de voltar */
+}
+
+.action-buttons button:hover,
+.action-buttons a:hover {
+    background-color: #333; /* Cor de fundo ao passar o mouse */
+    color: #fff; /* Cor do texto ao passar o mouse */
+}
+
+/* Tooltip (texto de ajuda ao passar o mouse) */
+.action-buttons button[title]:hover::after,
+.action-buttons a[title]:hover::after {
+    content: attr(title); /* Exibe o texto do atributo 'title' */
+    position: absolute;
+    background-color: #333;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    top: 100%; /* Exibe abaixo do botão */
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 5px;
+    z-index: 10;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.action-buttons button[title]:hover::before,
+.action-buttons a[title]:hover::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 2px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+    z-index: 10;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.action-buttons button[title]::after,
+.action-buttons a[title]::after {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Mensagens */
+.messages {
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Estilo para campos readonly */
+.readonly-form input[readonly] {
+    background-color: #f0f0f0; /* Cor de fundo para campos bloqueados */
+    color: #333; /* Cor do texto */
+    border: 1px solid #ccc; /* Bordas para campos bloqueados */
+    cursor: not-allowed; /* Cursor indicando que o campo não é editável */
+}

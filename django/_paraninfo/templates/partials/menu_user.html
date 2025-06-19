@@ -1,0 +1,18 @@
+
+<ul id="menu-user-options" class="menu-user-options">
+    {% if user.is_authenticated %}
+        
+            <li>
+                <a href="{% url 'user_record' request.session.user_uuid %}">Registro de usuário</a>
+            </li>
+            <hr> <!-- Linha divisória -->
+            <li>
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <a href="#" onclick="this.closest('form').submit(); return false;" >Sair</a>
+                </form>
+            </li> 
+    {% else %}
+        <li><a href="{% url 'login' %}">Login</a></li>
+    {% endif %}
+</ul>

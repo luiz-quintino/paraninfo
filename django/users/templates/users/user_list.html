@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Página Inicial - Paraninfo{% endblock %}
+
+{% block header_title %}
+    Bem-vindo ao Paraninfo
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+
+        <!-- Cabeçalho da tabela -->
+        <h2>Listagem de Usuários</h2>
+
+        <!-- Botão "Adicionar novo usuário" visível apenas para usuários com request.is_admin -->
+        {% if request.is_admin %}
+            <div class="action-buttons">
+                <a href="{% url 'user_record' %}" class="add-button">Incluir usuário</a>
+            </div>
+        {% endif %}
+
+        {% if show_search %}
+            <!-- Filtro de dados -->
+            <form method="get" action="{% url 'user_list' %}" class="filter-form">
+                <input type="text" name="search" placeholder="Buscar..." value="{{ request.GET.search }}" class="filter-input">
+                <button type="submit" class="filter-button">
+                    <img src="{% static 'icons/search-icon.png' %}" alt="Buscar" class="filter-icon">
+                </button>
+                <a href="{% url 'user_list' %}" class="cancel-button">
+                    <img src="{% static 'icons/cancel-icon.png' %}" alt="Cancelar" class="cancel-icon">
+                </a>
+            </form>
+        {% endif %}
+
+
+        <!-- Tabela -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Código do Associado</th>
+                    <th>Nome do Responsável</th>
+                    <th>Aluno</th>
+                    <th>Nome de Guerra</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for associado in associados %}
+                <tr onclick="window.location.href='{% url 'user_record' uuid=associado.uuid %}';" style="cursor: pointer;">
+                    <td>{{ associado.codigo_associado }}</td>
+                    <td>{{ associado.nome_responsavel }}</td>
+                    <td>{{ associado.aluno }}</td>
+                    <td>{{ associado.nome_de_guerra }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">Nenhum associado encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Paginação -->
+        <div class="pagination">
+            {% if associados.has_previous %}
+                <a href="?page={{ associados.previous_page_number }}&search={{ request.GET.search }}" class="pagination-button">&lt;</a>
+            {% endif %}
+
+            {% for page_num in associados.paginator.page_range %}
+                {% if page_num == associados.number %}
+                    <span class="pagination-current">{{ page_num }}</span>
+                {% elif page_num > associados.number|add:'-3' and page_num < associados.number|add:'3' %}
+                    <a href="?page={{ page_num }}&search={{ request.GET.search }}" class="pagination-button">{{ page_num }}</a>
+                {% elif page_num == 1 or page_num == associados.paginator.num_pages %}
+                    <a href="?page={{ page_num }}&search={{ request.GET.search }}" class="pagination-button">{{ page_num }}</a>
+                {% elif page_num == associados.number|add:'-3' or page_num == associados.number|add:'3' %}
+                    <span class="pagination-dots">...</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if associados.has_next %}
+                <a href="?page={{ associados.next_page_number }}&search={{ request.GET.search }}" class="pagination-button">&gt;</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
