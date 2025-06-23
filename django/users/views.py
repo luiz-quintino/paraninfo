@@ -45,7 +45,7 @@ def user_list(request):
             associados = associados.filter(codigo_associado=request.user.username)
         else:
             # Usuários com acesso admin verão todos os registros com a mesma comissão
-            associados = associados.filter(comissao=request.comissao)
+            associados = associados.filter(comissao=request.comissao).order_by('id') 
 
             if search_query:
                 # Filtrar os registros com base no texto de busca

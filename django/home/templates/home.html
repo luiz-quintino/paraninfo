@@ -11,29 +11,7 @@
     {% if user.is_authenticated %}
         <h1>Bem-vindo, {{ request.session.apelido }}!</h1>
         <p>Você está logado em {{ request.comissao_title }}.</p>
-
-        <p>Grupos: 
-            {% for group in user.groups.all %}
-                {{ group.name }}
-            {% endfor %}
-        </p>
-
-        <p>GrupoAdmim: 
-            {% if is_admin %}
-                sim
-            {% else %}
-                não
-            {% endif %}
-        </p>
-
-        <p>is_sys_admin: 
-            {% if is_sys_admin %}
-                sim
-            {% else %}
-                não
-            {% endif %}
-        </p>
-
+ 
         <p>
             {% with user.first_name|split:" " as name_parts %}
                 {% if name_parts.0|length < 5 %}
@@ -43,7 +21,7 @@
                 {% endif %}
             {% endwith %}
         </p>
-
+        
     {% else %}
         <h1>Bem-vindo ao Paraninfo!</h1>
         <p>Por favor, faça login para continuar.</p>

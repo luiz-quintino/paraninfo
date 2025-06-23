@@ -6,7 +6,7 @@
 
 
 {% block content %}
-<div class="container">
+<div class="form-container">
 
     <h2>Registro de {% if not uuid %}novo{% endif %} usuário</h2>
 
@@ -27,7 +27,7 @@
         <!-- Botões de definição de acesso -->
         {% if uuid %}
             <div class="action-buttons">
-                <a href="{% url 'user_credential' uuid=associado.uuid %}" class="access-button">Definição de acesso</a>
+                <a href="{% url 'user_credential' uuid=associado.uuid %}" class="generic-button">Definição de acesso</a>
             </div>
         {% endif %}
 

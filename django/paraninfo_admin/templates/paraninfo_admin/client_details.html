@@ -20,7 +20,7 @@
     {% endif %}
 
     <!-- Formulário para exibir ou adicionar registro -->
-    <form method="post" action="{% if uuid %}{% url 'client_details' uuid=uuid %}{% else %}{% url 'client_details' %}{% endif %}">
+    <form method="post" action="{% if uuid %}{% url 'client_details' uuid=uuid %}{% else %}{% url 'client_details' %}{% endif %}" class="user-form readonly-form">
         {% csrf_token %}
 
         <!-- Campos do formulário -->

@@ -1,0 +1,60 @@
+/* Estilo para o contêiner do título */
+header .app-title-container {
+    display: flex;
+    flex-direction: column; /* Empilha os elementos verticalmente */
+    align-items: center; /* Centraliza os elementos horizontalmente */
+    }
+
+header .app-title {
+    font-size: 50px;
+    font-family: 'Brush Script MT', cursive; /* Fonte cursiva */
+    margin-top: 5px; /* Sobrepõe o subtítulo ao título */
+    margin-bottom: 0px; /* Remove completamente o espaçamento inferior */
+    line-height: 0.5; /* Reduz o espaçamento entre as linhas */
+    color: #000000; /* Cor do título */
+}
+
+header .app-subtitle {
+    font-size: 24px;
+    font-family: 'Apple Chancery', cursive; /* Fonte padrão */
+    color: #2a892d; /* Cor do subtítulo */
+    margin-top: 10px; /* Sobrepõe o subtítulo ao título */
+    margin-bottom: 0px; /* Remove completamente o espaçamento inferior */
+    line-height: 1; /* Reduz o espaçamento entre as linhas */
+    font-style: italic; /* Deixa o subtítulo em itálico */
+    text-align: center; /* Centraliza o texto */
+    word-wrap: break-word; /* Permite quebra de linha em palavras longas */
+    white-space: normal; /* Permite que o texto quebre automaticamente */
+    max-width: 100%; /* Limita a largura do subtítulo ao tamanho da janela */
+}
+
+.login {
+    display: flex;
+    flex-direction: column; /* Alinha os itens verticalmente */
+    align-items: center;
+    text-decoration: none;
+    color: black;
+}
+
+.login img {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 5px; /* Espaço entre a imagem e o texto */
+}
+
+/* Botão Home */
+.home-button img {
+    display: block;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+
+

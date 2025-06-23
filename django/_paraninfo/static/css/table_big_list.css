@@ -1,0 +1,69 @@
+/* Estilo para tabelas modernas */
+.table_blig_list {
+    width: 90%; /* Reduz a largura para 90% */
+    margin: 10px auto; /* Centraliza a tabela horizontalmente e adiciona margem superior/inferior */
+    border-collapse: collapse; /* Remove espaços entre as bordas */
+    font-size: 12px; /* Tamanho da fonte */
+    font-family: 'Arial', sans-serif; /* Fonte padrão */
+    text-align: left; /* Alinha o texto à esquerda */
+    background-color: #f9f9f9; /* Fundo claro */
+    border-radius: 8px; /* Bordas arredondadas */
+    overflow: hidden; /* Garante que o conteúdo respeite as bordas arredondadas */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+}
+
+.table_blig_list thead {
+    background-color: #4CAF50; /* Cor de fundo do cabeçalho */
+    color: white; /* Cor do texto no cabeçalho */
+    font-weight: bold; /* Negrito no cabeçalho */
+}
+
+.table_blig_list th, .table_blig_list td {
+    padding: 3px 3px; /* Espaçamento interno */
+    border: 1px solid #ddd; /* Borda fina e clara */
+}
+
+.table_blig_list tbody tr:nth-child(even) {
+    background-color: #d4e9d7; /* Cor alternada para linhas pares */
+}
+
+/* Estilo para destacar a linha ao passar o mouse */
+.table_blig_list tbody tr:hover {
+    background-color: #e0f7fa; /* Cor de destaque */
+    cursor: pointer; /* Mostra o cursor como "pointer" */
+}
+
+.table_blig_list tbody td {
+    color: #333; /* Cor do texto */
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .table_blig_list {
+        font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
+    }
+
+    .table_blig_list thead {
+        display: none; /* Esconde o cabeçalho em telas pequenas */
+    }
+
+    .table_blig_list tbody tr {
+        display: block; /* Exibe as linhas como blocos */
+        margin-bottom: 10px; /* Espaçamento entre os blocos */
+    }
+
+    .table_blig_list tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        border: none;
+        border-bottom: 1px solid #a8a5a5; /* Borda inferior para separar os itens */
+    }
+
+    .table_blig_list tbody td::before {
+        content: attr(data-label); /* Adiciona o rótulo antes do valor */
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #4CAF50;
+    }
+}

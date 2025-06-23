@@ -1,5 +1,33 @@
 <footer class="footer">
     <hr>
     <p>Paraninfo é um software livre, desenvolvido para auxiliar na gestão de associações e entidades.</p>
-    <p>&copy; 2025 Paraninfo. Todos os direitos reservados.</p>
+    <p>&copy; 2025 Paraninfo.Todos os direitos reservados.</p>
+
+    {% if user.is_authenticated %}
+
+        <p>GrupoAdmim: 
+            {% if reuest.is_admin %}
+                sim
+            {% else %}
+                não
+            {% endif %}
+        </p>
+
+        <p>is_sys_admin: 
+            {% if request.is_sys_admin %}
+                sim
+            {% else %}
+                não
+            {% endif %}
+        </p>
+        <p>is_app_admin: 
+            {% if request.is_app_admin %}
+                sim
+            {% else %}
+                não
+            {% endif %}
+        </p>
+
+    {% endif %}
+
 </footer>

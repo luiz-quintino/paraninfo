@@ -15,5 +15,6 @@ urlpatterns = [
     path("credential/", include("credential.urls")),  # Inclui as URLs do app credential
     path('users/', include('users.urls')),  # Inclui as URLs do app users
     path('paraninfo-admin/', include('paraninfo_admin.urls')),  # Inclui as URLs do app users
+    path('balance/', include('balance.urls')),  # Inclui as URLs do app users
 
 ]

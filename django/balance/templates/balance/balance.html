@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload de Arquivo Excel</title>
+    <link rel="stylesheet" href="{% static 'css/balance.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Upload de Arquivo Excel</h1>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label for="file">Selecione um arquivo (.xls ou .xlsx):</label>
+            <input type="file" id="file" name="file" accept=".xls,.xlsx" required>
+            <button type="submit">Enviar</button>
+        </form>
+
+        {% if dataframe %}
+        <h2>Conteúdo do Arquivo:</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    {% for column in dataframe.columns %}
+                    <th>{{ column }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in dataframe.values %}
+                <tr>
+                    {% for cell in row %}
+                    <td>{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% elif error %}
+        <p style="color: red;">{{ error }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>

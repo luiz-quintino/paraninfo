@@ -1,10 +1,12 @@
+/* Base styles for the Django application */
+/* Reset some default styles */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
 }
 
-
+/* Style for the header */
 .header {
     display: flex;
     justify-content: space-between;
@@ -13,238 +15,152 @@ body {
     padding: 10px 20px;
 }
 
-.menu {
-    position: relative;
-}
-
-.menu-user {
-    position: relative;
-}
-
-/* Contêiner para o menu sanduíche e o botão Home */
-.menu-home-container {
-    display: flex; /* Alinha os itens horizontalmente */
-    align-items: center; /* Centraliza verticalmente */
-    gap: 10px; /* Espaçamento entre o menu e o botão Home */
-}
-
-.menu-options {
-    display: none; /* Inicialmente oculto */
-    opacity: 0; /* Transparente */
-    position: absolute;
-    top: 35px; /* Ajuste conforme necessário */
-    left: 0;
-    background-color: #ffffff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    list-style: none;
-    padding: 10px 0;
-    margin: 0;
-    z-index: 1000;
-    width: 200px;
-    transition: opacity 0.5s ease-in-out; /* Transição suave para o fade */
-}
-
-/* Botão Home */
-.home-button img {
-    display: block;
-    width: 30px;
-    height: 30px;
-    cursor: pointer;
-}
-
-/* Botão do menu sanduíche */
-.menu-button {
-    position: relative;
-    width: 30px;
-    height: 24px;
-    background: none;
+.action-buttons button, 
+.action-buttons a {
+    background-color: #4CAF50; /* Cor de fundo */
+    color: white; /* Cor do texto */
     border: none;
+    padding: 10px 0; /* Espaçamento interno ajustado */
+    border-radius: 4px; /* Bordas arredondadas */
     cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0;
-    z-index: 1001; /* Certifique-se de que o botão está acima do menu */
+    text-decoration: none; /* Remove o sublinhado dos links */
+    font-size: 14px; /* Tamanho da fonte */
+    font-weight: bold; /* Negrito no texto */
+    text-align: center;
+    white-space: nowrap; /* Garante que o texto não quebre em várias linhas */
+    width: 150px; /* Define a largura fixa dos botões */
+    margin-bottom: 5px; /* Espaçamento inferior */
+    transition: background-color 0.3s ease;
+    
 }
 
-.menu-button .bar {
-    width: 100%;
-    height: 4px;
-    background-color: #333;
-    border-radius: 2px;
-    transition: all 0.3s ease-in-out; /* Transição suave */
-}
-
-/* Transformação para o "X" */
-.menu-button.active .bar:nth-child(1) {
-    transform: rotate(45deg) translate(7px, 7px);
-}
-
-.menu-button.active .bar:nth-child(2) {
-    opacity: 0; /* Esconde a barra do meio */
-}
-
-.menu-button.active .bar:nth-child(3) {
-    transform: rotate(-45deg) translate(7px, -7px);
-}
-
-/* Menu user */
-.menu-user-container {
-    display: flex; /* Alinha os itens horizontalmente */
-    align-items: center; /* Centraliza verticalmente */
-    gap: 10px; /* Espaçamento entre o menu e o botão Home */
-    flex-direction: column; /* Empilha os elementos verticalmente */
-}
-
-.menu-user-button {
-    position: relative;
-    width: 30px;
-    height: 24px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0;
-    z-index: 9991; /* Certifique-se de que o botão está acima do menu */
-}
-
-/* Estilo do menu */
-.menu-user-options {
-    display: none; /* Inicialmente oculto */
-    opacity: 0; /* Transparente */
-    position: absolute;
-    top: 40px; /* Ajuste conforme necessário */
-    right: 60px;
-    background-color: #ffffff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    list-style: none;
-    padding: 10px 0;
-    margin: 0;
-    z-index: 9990;
-    width: 200px;
-    transition: opacity 0.5s ease-in-out; /* Transição suave para o fade */
-}
-
-/* Exibir o menu com fade-in */
-.menu.active .menu-options, .menu-user-options {
-    display: block; /* Torna o menu visível */
-    opacity: 1; /* Totalmente opaco */
-}
-
-.menu-options, .menu-user-options li {
-    padding: 5px 10px;
-}
-
-.menu-options, .menu-user-options li a {
-    text-decoration: none;
-    color: black;
-}
-
-.menu-options, .menu-user-options li:hover {
-    background-color: #f0f0f0;
-}
-
-/* Estilo para o contêiner do título */
-header .app-title-container {
-    display: flex;
-    flex-direction: column; /* Empilha os elementos verticalmente */
-    align-items: center; /* Centraliza os elementos horizontalmente */
-    }
-
-header .app-title {
-    font-size: 50px;
-    font-family: 'Brush Script MT', cursive; /* Fonte cursiva */
-    margin-top: 5px; /* Sobrepõe o subtítulo ao título */
-    margin-bottom: 0px; /* Remove completamente o espaçamento inferior */
-    line-height: 0.5; /* Reduz o espaçamento entre as linhas */
-    color: #000000; /* Cor do título */
-}
-
-header .app-subtitle {
-    font-size: 24px;
-    font-family: 'Apple Chancery', cursive; /* Fonte padrão */
-    color: #2a892d; /* Cor do subtítulo */
-    margin-top: 10px; /* Sobrepõe o subtítulo ao título */
-    margin-bottom: 0px; /* Remove completamente o espaçamento inferior */
-    line-height: 1; /* Reduz o espaçamento entre as linhas */
-    font-style: italic; /* Deixa o subtítulo em itálico */
-    text-align: center; /* Centraliza o texto */
-    word-wrap: break-word; /* Permite quebra de linha em palavras longas */
-    white-space: normal; /* Permite que o texto quebre automaticamente */
-    max-width: 100%; /* Limita a largura do subtítulo ao tamanho da janela */
-}
-
-.login {
-    display: flex;
-    flex-direction: column; /* Alinha os itens verticalmente */
-    align-items: center;
-    text-decoration: none;
-    color: black;
-}
-
-.login img {
-    width: 30px;
-    height: 30px;
-    margin-bottom: 5px; /* Espaço entre a imagem e o texto */
-}
-
-/* Estilo para as opções do menu */
-.menu-options li a {
-    text-decoration: none;
-    color: #333; /* Cor padrão do texto */
-    padding: 10px 15px; /* Espaçamento interno */
-    display: block; /* Garante que o link ocupe toda a largura do item */
-    transition: background-color 0.3s ease, color 0.3s ease; /* Transição suave */
-}
-
-/* Cor ao passar o mouse */
-.menu-options li a:hover {
-    background-color: aquamarine; /* Cor de fundo ao passar o mouse */
-    color: #000; /* Cor do texto ao passar o mouse */
-    border-radius: 4px; /* Bordas arredondadas para um visual mais moderno */
-}
-
-
-
-.action-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.action-buttons .save-button,
-.action-buttons .cancel-button {
+.action-buttons .save-button {
     background-color: #09b90f;
     color: #fff;
     border: none;
-    padding: 10px 15px;
+    padding: 10px 10px;
     border-radius: 4px;
     cursor: pointer;
+}
+
+.action-buttons .cancel-button {
+    background-color: #f44336;
 }
 
 .action-buttons .back-button {
     background-color: #ccc;
-    color: #333;
-    padding: 10px 15px;
-    border-radius: 4px;
-    text-decoration: none;
-    display: inline-block;
 }
 
-.action-buttons .save-button:hover,
 .action-buttons .cancel-button:hover {
+    background-color: #97120d;
+}
+
+.action-buttons .save-button:hover {
     background-color: #007b00;
 }
 
 .action-buttons .back-button:hover {
-    background-color: #bbb;
+    background-color: #616060;
 }
 
+
+/* Botões de ação */
+.generic-button {
+    display: flex;
+    justify-content: center; /* Centraliza os botões horizontalmente */
+    /* margin-top: 20px; */
+    margin-bottom: 20px; /* Espaçamento inferior */
+    
+}
+
+
+
+.action-buttons button:hover,
+.action-buttons a:hover {
+    background-color: #333; /* Cor de fundo ao passar o mouse */
+    color: #fff; /* Cor do texto ao passar o mouse */
+}
+
+/* Tooltip (texto de ajuda ao passar o mouse) */
+.action-buttons button[title]:hover::after,
+.action-buttons a[title]:hover::after {
+    content: attr(title); /* Exibe o texto do atributo 'title' */
+    position: absolute;
+    background-color: #333;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    top: 100%; /* Exibe abaixo do botão */
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 5px;
+    z-index: 10;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.action-buttons button[title]:hover::before,
+.action-buttons a[title]:hover::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 2px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+    z-index: 10;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.action-buttons button[title]::after,
+.action-buttons a[title]::after {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Mensagens */
+.messages {
+    margin: 20px auto; /* Centraliza horizontalmente */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex; /* Adiciona flexbox */
+    margin-bottom: 20px;
+    justify-content: space-between;
+    font-family: 'Arial', sans-serif;
+    
+}
+
+.alert {
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 4px solid #c3e6cb;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 4px solid #f5c6cb;
+}
+
+.upload-icon {
+    width: 30px; /* Define a largura da imagem */
+    height: 30px; /* Define a altura da imagem */
+    
+    padding: 10px 10px;
+    display: block; 
+    cursor: pointer; 
+}

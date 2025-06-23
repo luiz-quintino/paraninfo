@@ -1,3 +1,15 @@
+/* Estilo para o menu principal e o botão Home */
+.menu {
+    position: relative;
+}
+
+/* Contêiner para o menu sanduíche e o botão Home */
+.menu-home-container {
+    display: flex; /* Alinha os itens horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+    gap: 10px; /* Espaçamento entre o menu e o botão Home */
+}
+
 /* Estilo do menu principal */
 .menu-options {
     display: none; /* Inicialmente oculto */
@@ -37,4 +49,42 @@
     background-color: aquamarine; /* Cor de fundo ao passar o mouse */
     color: #000; /* Cor do texto ao passar o mouse */
     border-radius: 4px; /* Bordas arredondadas para um visual mais moderno */
+}
+
+/* Botão do menu sanduíche */
+.menu-button {
+    position: relative;
+    width: 30px;
+    height: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+    z-index: 1001; /* Certifique-se de que o botão está acima do menu */
+}
+
+/* Barras do menu sanduíche */
+.menu-button .bar {
+    width: 100%;
+    height: 4px;
+    background-color: #333;
+    border-radius: 2px;
+    transition: all 0.3s ease-in-out; /* Transição suave */
+}
+
+/* Transformação para o "X" */
+.menu-button.active .bar:nth-child(1) {
+    transform: rotate(45deg) translate(7px, 7px);
+}
+
+.menu-button.active .bar:nth-child(2) {
+    opacity: 0; /* Esconde a barra do meio */
+}
+
+.menu-button.active .bar:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
 }

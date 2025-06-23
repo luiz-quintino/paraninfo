@@ -1,0 +1,110 @@
+/* Estilo geral */
+.form-container {
+    width: 90%;
+    margin: 20px auto; /* Centraliza horizontalmente */
+    font-family: 'Arial', sans-serif;
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex; /* Adiciona flexbox */
+    flex-direction: column; /* Organiza os elementos verticalmente */
+    align-items: center; /* Centraliza os elementos horizontalmente */
+}
+
+/* Estilo para o contêiner do título na página */
+.title-form-container {
+    display: flex;
+    align-items: center; /* Centraliza verticalmente a imagem e o texto */
+    gap: 10px; /* Espaçamento entre a imagem e o título */
+}
+
+/* Título */
+form.h2 {
+    text-align: center;
+    color: #4CAF50;
+    margin-bottom: 20px;
+}
+
+/* Formulário */
+.user-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.form-group {
+    display: flex;
+    align-items: center; /* Alinha o rótulo e o campo verticalmente */
+    gap: 10px; /* Espaçamento entre o rótulo e o campo */
+}
+
+label {
+    font-weight: bold;
+    color: #333;
+    text-align: right;  /* Alinha o texto do rótulo à direita */
+    width: 40%;        /* Define uma largura fixa para os rótulos */
+    max-width: 400px;   /* Limita a largura máxima a 300px */
+    margin-bottom: 0px;   /* Remove a margem inferior */
+}
+
+input, select{
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 60%;        /* Garante que o campo ocupe todo o espaço disponível */
+    max-width: 700px;   /* Limita a largura máxima a 400px */
+    box-sizing: border-box; /* Inclui o padding na largura total */
+}
+
+/* Estilo para campos obrigatórios */
+input:required {
+    border: 1px solid red; /* Borda vermelha para campos obrigatórios */
+    outline: none; /* Remove o contorno padrão */
+}
+
+/* Estilo para campos obrigatórios quando focados */
+input:required:focus {
+    border: 1px solid darkred; /* Borda vermelha mais escura ao focar */
+    box-shadow: 0 0 5px rgba(255, 0, 0, 0.5); /* Adiciona um efeito de sombra */
+}
+
+/* Estilo para campos obrigatórios quando inválidos */
+input:required:invalid {
+    border: 1px solid red; /* Borda vermelha para campos inválidos */
+    background-color: #ffe6e6; /* Fundo levemente vermelho */
+}
+
+/* Estilo para campos obrigatórios quando válidos */
+input:required:valid {
+    border: 1px solid green; /* Borda verde para campos válidos */
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #4CAF50; /* Cor de destaque ao focar */
+    outline: none;
+}
+
+.form-group select {
+    appearance: none; /* Remove o estilo padrão do navegador */
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%234CAF50' d='M2 0L0 2h4z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px;
+}
+
+/* Estilo para campos readonly */
+.readonly-form input select [readonly] {
+    background-color: #f0f0f0; /* Cor de fundo para campos bloqueados */
+    color: #333; /* Cor do texto */
+    border: 1px solid #ccc; /* Bordas para campos bloqueados */
+    cursor: not-allowed; /* Cursor indicando que o campo não é editável */
+}
+
+/* Estilo para a imagem */
+.form-icon {
+    width: 160px; /* Largura da imagem */
+    height: 160px; /* Altura da imagem */
+}

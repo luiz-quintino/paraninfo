@@ -1,0 +1,162 @@
+/* Estilo para tabelas modernas */
+.table {
+    width: 90%; /* Reduz a largura para 90% */
+    margin: 20px auto; /* Centraliza a tabela horizontalmente e adiciona margem superior/inferior */
+    border-collapse: collapse; /* Remove espaços entre as bordas */
+    font-size: 16px; /* Tamanho da fonte */
+    font-family: 'Arial', sans-serif; /* Fonte padrão */
+    text-align: left; /* Alinha o texto à esquerda */
+    background-color: #f9f9f9; /* Fundo claro */
+    border-radius: 8px; /* Bordas arredondadas */
+    overflow: hidden; /* Garante que o conteúdo respeite as bordas arredondadas */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+}
+
+.table thead {
+    background-color: #4CAF50; /* Cor de fundo do cabeçalho */
+    color: white; /* Cor do texto no cabeçalho */
+    font-weight: bold; /* Negrito no cabeçalho */
+}
+
+.table th, .table td {
+    padding: 12px 15px; /* Espaçamento interno */
+    border: 1px solid #ddd; /* Borda fina e clara */
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: #d4e9d7; /* Cor alternada para linhas pares */
+}
+
+/* Estilo para destacar a linha ao passar o mouse */
+.table tbody tr:hover {
+    background-color: #e0f7fa; /* Cor de destaque */
+    cursor: pointer; /* Mostra o cursor como "pointer" */
+}
+
+.table tbody td {
+    color: #333; /* Cor do texto */
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .table {
+        font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
+    }
+
+    .table thead {
+        display: none; /* Esconde o cabeçalho em telas pequenas */
+    }
+
+    .table tbody tr {
+        display: block; /* Exibe as linhas como blocos */
+        margin-bottom: 10px; /* Espaçamento entre os blocos */
+    }
+
+    .table tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        border: none;
+        border-bottom: 1px solid #a8a5a5; /* Borda inferior para separar os itens */
+    }
+
+    .table tbody td::before {
+        content: attr(data-label); /* Adiciona o rótulo antes do valor */
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #4CAF50;
+    }
+}
+
+/* Estilo para o cabeçalho */
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #4CAF50;
+}
+
+/* Estilo para o formulário de filtro */
+.filter-form {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centraliza o formulário horizontalmente */
+    margin-bottom: 20px;
+}
+
+.filter-input {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+/* Estilo para o botão de pesquisa */
+.filter-button {
+    border: none;
+    padding: 4px; /* Ajusta o espaçamento interno */
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+    width: 30px; /* Define a largura do botão */
+    height: 30px; /* Define a altura do botão */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-button img {
+    width: 24px; /* Tamanho do ícone dentro do botão */
+    height: 24px;
+}
+
+/* Estilo para o botão de cancelar pesquisa */
+.cancel-button {
+    display: inline-block;
+    border: none;
+    padding: 4px; /* Ajusta o espaçamento interno */
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    width: 30px; /* Define a largura do botão */
+    height: 30px; /* Define a altura do botão */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cancel-icon {
+    width: 24px; /* Tamanho do ícone dentro do botão */
+    height: 24px;
+}
+
+/* Estilo para paginação */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.pagination-button {
+    padding: 8px 12px;
+    margin: 0 5px;
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.pagination-current {
+    padding: 8px 12px;
+    margin: 0 5px;
+    background-color: #333;
+    color: white;
+    border-radius: 4px;
+}
+
+.pagination-dots {
+    padding: 8px 12px;
+    margin: 0 5px;
+    color: #999;
+}

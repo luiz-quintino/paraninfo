@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Load balance{% endblock %}
+{% load static %}
+
+{% block content %}
+
+    <div class="container_side">
+        <!-- Menu lateral -->
+        <div id="sidebar" class="sidebar expanded">
+            <button id="toggle-btn" class="toggle-btn">⏪</button>
+            <ul class="menu-options_side">
+                <li><a href="#">Importar extrato</a></li>
+                <li><a href="#">Analisar extrato</a></li>
+                <li><a href="#">Incorporar extrato</a></li>
+            </ul>
+        </div>
+
+        <!-- Conteúdo principal -->
+        <div class="main-content">
+        
+            <h2>Importar extrato</h2>
+
+            <div class="messages">
+            {% if error %}
+                <div class="alert-error">
+                    {{ error }}
+                </div>
+            {% elif is_dataframe_empty and file %}
+                <div class="alert">
+                    Nenhum dado encontrado no arquivo.
+                </div>
+            {% endif %}
+            </div>
+
+            <div class="file-upload-container ">
+                <form method="post" enctype="multipart/form-data" class="action-buttons">
+                    {% csrf_token %}
+                    <span id="file-name" class="custom-file-label">Selecione o extrato bancário (.xls/.xlsx)</span>
+                    <div>
+                        <label for="file">
+                            <img src="{% static 'media/open.png' %}" alt="Selecionar arquivo" class="upload-icon">
+                        </label>
+                        <input type="file" id="file" name="file" accept=".xls,.xlsx" class="hide-input">
+                    </div>
+                    
+                    <button type="submit" class="generic-button">Enviar</button>
+                </form>
+            </div>
+
+            {% if not is_dataframe_empty %}
+                <h2>Extrato conta corrente: "{{ file_name }}"</h2>
+                <table border="1" class="table_blig_list">
+                    <thead>
+                        <tr>
+                            {% for column in dataframe.columns %}
+                            <th>{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in dataframe.values %}
+                        <tr>
+                            {% for cell in row %}
+                            <td>{{ cell }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </div>
+    </div>
+    <script>
+        document.getElementById('file').addEventListener('change', function() {
+            const fileName = this.files.length > 0 ? this.files[0].name : 'Nenhum arquivo selecionado';
+            document.getElementById('file-name').textContent = fileName;
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggle-btn');
+
+            toggleBtn.addEventListener('click', function () {
+                if (sidebar.classList.contains('expanded')) {
+                    sidebar.classList.remove('expanded');
+                    toggleBtn.textContent = '⏩';
+                } else {
+                    sidebar.classList.add('expanded');
+                    toggleBtn.textContent = '⏪';
+                }
+            });
+        });
+    </script>
+{% endblock %}

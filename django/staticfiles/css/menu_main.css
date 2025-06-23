@@ -1,0 +1,40 @@
+/* Estilo do menu principal */
+.menu-options {
+    display: none; /* Inicialmente oculto */
+    opacity: 0; /* Transparente */
+    position: absolute;
+    top: 35px; /* Ajuste conforme necessário */
+    left: 0;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    list-style: none;
+    padding: 10px 0;
+    margin: 0;
+    z-index: 1000;
+    width: 200px;
+    transition: opacity 0.5s ease-in-out; /* Transição suave para o fade */
+}
+
+/* Exibir o menu com fade-in */
+.menu.active .menu-options {
+    display: block; /* Torna o menu visível */
+    opacity: 1; /* Totalmente opaco */
+}
+
+/* Estilo para as opções do menu */
+.menu-options li a {
+    text-decoration: none;
+    color: #333; /* Cor padrão do texto */
+    padding: 10px 15px; /* Espaçamento interno */
+    display: block; /* Garante que o link ocupe toda a largura do item */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Transição suave */
+}
+
+/* Cor ao passar o mouse */
+.menu-options li a:hover {
+    background-color: aquamarine; /* Cor de fundo ao passar o mouse */
+    color: #000; /* Cor do texto ao passar o mouse */
+    border-radius: 4px; /* Bordas arredondadas para um visual mais moderno */
+}

@@ -1,0 +1,250 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: aquamarine;
+    padding: 10px 20px;
+}
+
+.menu {
+    position: relative;
+}
+
+.menu-user {
+    position: relative;
+}
+
+/* Contêiner para o menu sanduíche e o botão Home */
+.menu-home-container {
+    display: flex; /* Alinha os itens horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+    gap: 10px; /* Espaçamento entre o menu e o botão Home */
+}
+
+.menu-options {
+    display: none; /* Inicialmente oculto */
+    opacity: 0; /* Transparente */
+    position: absolute;
+    top: 35px; /* Ajuste conforme necessário */
+    left: 0;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    list-style: none;
+    padding: 10px 0;
+    margin: 0;
+    z-index: 1000;
+    width: 200px;
+    transition: opacity 0.5s ease-in-out; /* Transição suave para o fade */
+}
+
+/* Botão Home */
+.home-button img {
+    display: block;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+}
+
+/* Botão do menu sanduíche */
+.menu-button {
+    position: relative;
+    width: 30px;
+    height: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+    z-index: 1001; /* Certifique-se de que o botão está acima do menu */
+}
+
+.menu-button .bar {
+    width: 100%;
+    height: 4px;
+    background-color: #333;
+    border-radius: 2px;
+    transition: all 0.3s ease-in-out; /* Transição suave */
+}
+
+/* Transformação para o "X" */
+.menu-button.active .bar:nth-child(1) {
+    transform: rotate(45deg) translate(7px, 7px);
+}
+
+.menu-button.active .bar:nth-child(2) {
+    opacity: 0; /* Esconde a barra do meio */
+}
+
+.menu-button.active .bar:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+
+/* Menu user */
+.menu-user-container {
+    display: flex; /* Alinha os itens horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+    gap: 10px; /* Espaçamento entre o menu e o botão Home */
+    flex-direction: column; /* Empilha os elementos verticalmente */
+}
+
+.menu-user-button {
+    position: relative;
+    width: 30px;
+    height: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+    z-index: 9991; /* Certifique-se de que o botão está acima do menu */
+}
+
+/* Estilo do menu */
+.menu-user-options {
+    display: none; /* Inicialmente oculto */
+    opacity: 0; /* Transparente */
+    position: absolute;
+    top: 40px; /* Ajuste conforme necessário */
+    right: 60px;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    list-style: none;
+    padding: 10px 0;
+    margin: 0;
+    z-index: 9990;
+    width: 200px;
+    transition: opacity 0.5s ease-in-out; /* Transição suave para o fade */
+}
+
+/* Exibir o menu com fade-in */
+.menu.active .menu-options, .menu-user-options {
+    display: block; /* Torna o menu visível */
+    opacity: 1; /* Totalmente opaco */
+}
+
+.menu-options, .menu-user-options li {
+    padding: 5px 10px;
+}
+
+.menu-options, .menu-user-options li a {
+    text-decoration: none;
+    color: black;
+}
+
+.menu-options, .menu-user-options li:hover {
+    background-color: #f0f0f0;
+}
+
+/* Estilo para o contêiner do título */
+header .app-title-container {
+    display: flex;
+    flex-direction: column; /* Empilha os elementos verticalmente */
+    align-items: center; /* Centraliza os elementos horizontalmente */
+    }
+
+header .app-title {
+    font-size: 50px;
+    font-family: 'Brush Script MT', cursive; /* Fonte cursiva */
+    margin-top: 5px; /* Sobrepõe o subtítulo ao título */
+    margin-bottom: 0px; /* Remove completamente o espaçamento inferior */
+    line-height: 0.5; /* Reduz o espaçamento entre as linhas */
+    color: #000000; /* Cor do título */
+}
+
+header .app-subtitle {
+    font-size: 24px;
+    font-family: 'Apple Chancery', cursive; /* Fonte padrão */
+    color: #2a892d; /* Cor do subtítulo */
+    margin-top: 10px; /* Sobrepõe o subtítulo ao título */
+    margin-bottom: 0px; /* Remove completamente o espaçamento inferior */
+    line-height: 1; /* Reduz o espaçamento entre as linhas */
+    font-style: italic; /* Deixa o subtítulo em itálico */
+    text-align: center; /* Centraliza o texto */
+    word-wrap: break-word; /* Permite quebra de linha em palavras longas */
+    white-space: normal; /* Permite que o texto quebre automaticamente */
+    max-width: 100%; /* Limita a largura do subtítulo ao tamanho da janela */
+}
+
+.login {
+    display: flex;
+    flex-direction: column; /* Alinha os itens verticalmente */
+    align-items: center;
+    text-decoration: none;
+    color: black;
+}
+
+.login img {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 5px; /* Espaço entre a imagem e o texto */
+}
+
+/* Estilo para as opções do menu */
+.menu-options li a {
+    text-decoration: none;
+    color: #333; /* Cor padrão do texto */
+    padding: 10px 15px; /* Espaçamento interno */
+    display: block; /* Garante que o link ocupe toda a largura do item */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Transição suave */
+}
+
+/* Cor ao passar o mouse */
+.menu-options li a:hover {
+    background-color: aquamarine; /* Cor de fundo ao passar o mouse */
+    color: #000; /* Cor do texto ao passar o mouse */
+    border-radius: 4px; /* Bordas arredondadas para um visual mais moderno */
+}
+
+
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.action-buttons .save-button,
+.action-buttons .cancel-button {
+    background-color: #09b90f;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.action-buttons .back-button {
+    background-color: #ccc;
+    color: #333;
+    padding: 10px 15px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.action-buttons .save-button:hover,
+.action-buttons .cancel-button:hover {
+    background-color: #007b00;
+}
+
+.action-buttons .back-button:hover {
+    background-color: #bbb;
+}
+

@@ -1,0 +1,101 @@
+/* Estilo para o contêiner do formulário */
+/* Estilo para o contêiner do formulário */
+.file-upload-container {
+    display: flex;
+    flex-direction: column; /* Empilha os elementos verticalmente */
+    gap: 15px; /* Adiciona espaçamento entre os elementos */
+    width: 100%; /* Ajusta a largura do contêiner */
+    width: 600px; /* Limita a largura máxima */
+    margin: 0 auto; /* Centraliza o contêiner */
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.container_side {
+    display: flex;
+    height: 100vh;
+}
+
+/* Esconde o botão padrão do input */
+.hide-input {
+    display: none;
+}
+
+/* Estilo para o rótulo personalizado */
+.custom-file-label {
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+
+/* Estilo para o texto do arquivo selecionado */
+#file-name {
+    padding: 5px;
+    font-size: 14px;
+    color: #333;
+    padding: 10px 10px;
+    border: 1px solid darkgray;
+    border-radius: 4px;
+    width: 500px; /* Limita a largura máxima */
+}
+
+
+/* Menu lateral */
+.sidebar {
+    width: 50px;
+    background-color: #333;
+    color: #fff;
+    transition: width 0.3s ease;
+    overflow: hidden;
+    min-width: 50px;
+}
+
+.sidebar.expanded {
+    width: 200px;
+    min-width: 130px;
+}
+
+.toggle-btn {
+    background-color: #444;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+}
+
+.menu-options {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: none;
+}
+
+.sidebar.expanded .menu-options {
+    display: block;
+}
+
+.menu-options_side li {
+    padding: 10px;
+    border-bottom: 1px solid #555;
+}
+
+.menu-options_side li a {
+    text-decoration: none;
+    color: #fff;
+    display: block;
+}
+
+.menu-options_side li a:hover {
+    background-color: #555;
+}
+
+/* Conteúdo principal */
+.main-content {
+    flex: 1;
+    padding: 20px;
+}

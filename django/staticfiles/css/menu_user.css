@@ -1,0 +1,44 @@
+/* Estilo do menu do usuário */
+.menu-user-options {
+    display: none; /* Inicialmente oculto */
+    opacity: 0; /* Transparente */
+    position: absolute;
+    top: 70px; /* Ajuste conforme necessário */
+    right: 0; /* Alinha o menu à direita */
+    background-color: #ffffff; /* Fundo branco */
+    border: 1px solid #ddd; /* Borda cinza clara */
+    border-radius: 8px; /* Bordas arredondadas */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para destaque */
+    list-style: none; /* Remove marcadores de lista */
+    padding: 10px 0; /* Espaçamento interno */
+    margin: 0; /* Remove margens externas */
+    z-index: 10005; /* Certifique-se de que o menu está acima de outros elementos */
+    width: 200px; /* Define a largura do menu */
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; /* Transição suave para o fade e movimento */
+}
+
+/* Exibir o menu com fade-in */
+.menu-user-options.active {
+    display: block; /* Torna o menu visível */
+    opacity: 1; /* Totalmente opaco */
+    transform: translateY(0); /* Remove qualquer deslocamento vertical */
+}
+
+/* Estilo para as opções do menu do usuário */
+.menu-user-options li {
+    padding: 5px 10px; /* Espaçamento interno */
+}
+
+.menu-user-options li a {
+    text-decoration: none; /* Remove sublinhado */
+    color: black; /* Cor padrão do texto */
+    display: block; /* Garante que o link ocupe toda a largura do item */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Transição suave */
+}
+
+/* Cor ao passar o mouse */
+.menu-user-options li:hover {
+    background-color: aquamarine; /* Cor de fundo ao passar o mouse */
+    color: #000; /* Cor do texto ao passar o mouse */
+    border-radius: 4px; /* Bordas arredondadas para um visual mais moderno */
+}
