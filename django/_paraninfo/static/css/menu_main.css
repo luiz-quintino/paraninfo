@@ -8,6 +8,7 @@
     display: flex; /* Alinha os itens horizontalmente */
     align-items: center; /* Centraliza verticalmente */
     gap: 10px; /* Espaçamento entre o menu e o botão Home */
+    padding: 0 0 0 106px ;
 }
 
 /* Estilo do menu principal */
@@ -15,8 +16,8 @@
     display: none; /* Inicialmente oculto */
     opacity: 0; /* Transparente */
     position: absolute;
-    top: 35px; /* Ajuste conforme necessário */
-    left: 0;
+    top: 25px; /* Ajuste conforme necessário */
+    left: -120px;
     background-color: #ffffff;
     border: 1px solid #ddd;
     border-radius: 8px;

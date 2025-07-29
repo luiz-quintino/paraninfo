@@ -1,0 +1,17 @@
+<!-- Popup para duplicar linha -->
+<div id="duplicate-popup" class="popup-modal" style="display: none; width: 400px;">
+    <div class="popup-content">
+        <h3>Duplicar Registro</h3>
+        <p>Digite o valor do qual o valor original será subraído</p>
+            <label id="duplicar-descricption">Registro</label>
+            <div class="form-group">
+                <label>Valor:</label>
+                <input type="text" id="duplicate-value" name="duplicate-value" required>
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" onclick="cancelDuplicate()" class="cancel-button">Cancelar</button>
+                <button type="button" onclick="acceptDuplicate()" class="save-button">Aceitar</button>
+            </div>
+    </div>
+</div>

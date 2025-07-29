@@ -14,10 +14,6 @@ body {
     font-family: Arial, sans-serif;
 }
 
-.container_side {
-    display: flex;
-    height: 100vh;
-}
 
 /* Esconde o botão padrão do input */
 .hide-input {
@@ -42,60 +38,3 @@ body {
     width: 500px; /* Limita a largura máxima */
 }
 
-
-/* Menu lateral */
-.sidebar {
-    width: 50px;
-    background-color: #333;
-    color: #fff;
-    transition: width 0.3s ease;
-    overflow: hidden;
-    min-width: 50px;
-}
-
-.sidebar.expanded {
-    width: 200px;
-    min-width: 130px;
-}
-
-.toggle-btn {
-    background-color: #444;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-    padding: 10px;
-    text-align: center;
-}
-
-.menu-options {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: none;
-}
-
-.sidebar.expanded .menu-options {
-    display: block;
-}
-
-.menu-options_side li {
-    padding: 10px;
-    border-bottom: 1px solid #555;
-}
-
-.menu-options_side li a {
-    text-decoration: none;
-    color: #fff;
-    display: block;
-}
-
-.menu-options_side li a:hover {
-    background-color: #555;
-}
-
-/* Conteúdo principal */
-.main-content {
-    flex: 1;
-    padding: 20px;
-}

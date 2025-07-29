@@ -3,6 +3,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from paraninfo_admin.models import tbComissao
 import uuid as uuid_generate # Certifique-se de que o módulo uuid está importado corretamente
+from django.urls import reverse
+from config.menus import menu_url, MENU_VOLTAR, MENU_CLIENTS_INCLUIR_COMISSAO
 
 uuid = ''
 
@@ -12,6 +14,8 @@ def is_sys_admin(user):
 
 @user_passes_test(is_sys_admin)
 def client_details(request, uuid=None):
+    menu_options = [MENU_VOLTAR]
+
     if uuid:
         # Busca o registro pelo UUID
         comissao = get_object_or_404(tbComissao, uuid=uuid)
@@ -52,10 +56,17 @@ def client_details(request, uuid=None):
             print('erro', str(e))
             messages.error(request, f"Erro ao salvar registro: {str(e)}")
 
-    return render(request, 'paraninfo_admin/client_details.html', {'comissao': comissao, 'uuid': uuid})
+    context = {
+        'comissao': comissao, 
+        'uuid': uuid,
+        'menu_options': menu_options
+        }
+    
+    return render(request, 'paraninfo_admin/client_details.html', context)
 
 @user_passes_test(is_sys_admin)
 def client_list(request):
+    menu_options = [MENU_VOLTAR]
     search_query = request.GET.get('search', '')  # Obtém o texto de busca
     clients = tbComissao.objects.all()  # Obtém todos os registros da tabela tbComissao
 
@@ -73,4 +84,13 @@ def client_list(request):
             presidente__icontains=search_query
         )
 
-    return render(request, 'paraninfo_admin/client_list.html', {'clients': clients, 'search_query': search_query})
+
+    menu_options.append(MENU_CLIENTS_INCLUIR_COMISSAO)
+    
+    context = {
+        'clients': clients, 
+        'search_query': search_query,
+        'menu_options': menu_options
+        }
+
+    return render(request, 'paraninfo_admin/client_list.html', context)

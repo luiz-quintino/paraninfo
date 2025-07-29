@@ -1,0 +1,80 @@
+<!-- Popup Modal -->
+<div id="popup-modal" class="popup-modal" style="display: none;">
+    <div class="form-container">
+        <h3 id="popup_title">Detalhes do registro</h3>
+        <form id="popup-form">
+
+            <div class="form-group">
+                <label for="popup-data">Data:</label>
+                <input type="text" id="popup-data" name="data" readonly>
+            </div>
+
+            <div id="popup-credito-group">
+                <div class="form-group">
+                    <label for="popup-credito">Crédito:</label>
+                    <input type="text" id="popup-credito" name="credito" readonly>
+                </div>
+            </div>
+
+            <div id="popup-debito-group">
+                <div class="form-group">
+                    <label for="popup-debito">Débito:</label>
+                    <input type="text" id="popup-debito" name="debito" readonly>
+                </div>
+            </div>
+            
+            <div id="popup-nome-group">
+                <div class="form-group">
+                    <label for="popup-nome">Nome:</label>
+                    <input type="text" id="popup-nome" name="nome" readonly>
+                    <input type="text" id="popup-user_id" name="nome" readonly>
+                    
+                </div>
+            </div>
+
+            <!-- Movimentação default -->
+            <div id="default-movimentacao">
+                <div class="form-group">
+                    <label for="popup-cpf">CPF:</label>
+                    <input type="text" id="popup-cpf" name="cpf" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="popup-nota">Anotação:</label>
+                    <input type="text" id="popup-nota" name="nota" readonly>
+                </div>
+            </div>
+
+            <!-- Movimentação contabilidade -->
+            <div id="contabil-movimentacao" style="display: none;">
+                <div class="form-group">
+                    <label for="popup-transacao">Transacao:</label>
+                    <input type="text" id="popup-transacao" name="transacao" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="popup-registro">Log registro:</label>
+                    <input type="text" id="popup-registro_name" name="registro" readonly>
+                    <input type="text" id="popup-registro" name="registro" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="popup-associacao">Log associação:</label>
+                    <input type="text" id="popup-associacao_name" name="associacao" readonly>
+                    <input type="text" id="popup-associacao" name="associacao" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="popup-fechamento">Log fechamento:</label>
+                    <input type="text" id="popup-fechamento_name" name="fechamento" readonly>
+                    <input type="text" id="popup-fechamento" name="fechamento" readonly>
+                </div>
+            </div>
+
+
+            <div class="action-buttons generic-button">
+                <button type="button" onclick="closePopup()">Fechar</button>
+            </div>
+        </form>
+    </div>
+</div>

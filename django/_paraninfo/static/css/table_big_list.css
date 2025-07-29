@@ -1,5 +1,10 @@
-/* Estilo para tabelas modernas */
-.table_blig_list {
+/* 
+    big list são tabelas compactas, com pouco espaçamento entre as linhas, e cores alternadas entre as linhas
+    big list simple são tabelas que não alternam as cores entre as linhas
+*/
+
+/* Estilo para tabelas compactas */
+.table_big_list, .table_big_list_simple {
     width: 90%; /* Reduz a largura para 90% */
     margin: 10px auto; /* Centraliza a tabela horizontalmente e adiciona margem superior/inferior */
     border-collapse: collapse; /* Remove espaços entre as bordas */
@@ -12,47 +17,82 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
 }
 
-.table_blig_list thead {
-    background-color: #4CAF50; /* Cor de fundo do cabeçalho */
-    color: white; /* Cor do texto no cabeçalho */
-    font-weight: bold; /* Negrito no cabeçalho */
+.table_big_list_simple input, .table_big_list_simple select {
+    background-color: #f9f9f9; /* Fundo claro */
+    outline: none; /* Remove o contorno ao focar */
 }
 
-.table_blig_list th, .table_blig_list td {
+
+/* Estilo para o cabeçalho da tabela */
+.table_big_list thead, .table_big_list_simple thead {
+    background-color: #4CAF50;  /* Cor de fundo do cabeçalho */
+    color: white;               /* Cor do texto no cabeçalho */
+    font-weight: bold;            /* Negrito no cabeçalho */
+}
+
+/* Estilo para as células da tabela */
+.table_big_list th, .table_big_list td, .table_big_list_simple td, .table_big_list_simple th {
     padding: 3px 3px; /* Espaçamento interno */
     border: 1px solid #ddd; /* Borda fina e clara */
 }
 
-.table_blig_list tbody tr:nth-child(even) {
-    background-color: #d4e9d7; /* Cor alternada para linhas pares */
+/* Cor alternada para linhas pares */
+.table_big_list tbody tr:nth-child(even) {
+    background-color: #d4e9d7; 
 }
 
 /* Estilo para destacar a linha ao passar o mouse */
-.table_blig_list tbody tr:hover {
+.table_big_list tbody tr:hover, .table_big_list_simple tbody tr:hover, .table_big_list_simple tr:hover input, .table_big_list_simple tr:hover select {
     background-color: #e0f7fa; /* Cor de destaque */
-    cursor: pointer; /* Mostra o cursor como "pointer" */
 }
 
-.table_blig_list tbody td {
+/* Estilo para os campos de entrada de texto dentro da tabela */
+.table_big_list_simple input {
+    width: 100px; 
+    border: none;
+    text-align: right;
+}
+
+/* Estilo para os campos de entrada de texto */
+.table_big_list tbody td {
     color: #333; /* Cor do texto */
 }
 
-/* Responsividade */
-@media (max-width: 768px) {
-    .table_blig_list {
+/* Estilo para o campo de transação */
+.transacao-select {
+    width: 100%; /* Aumenta o tamanho do campo */
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Estilo para o campo de associado */
+.associado-select {
+    width: 100%; /* Mantém o tamanho consistente */
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Ajusta o estilo para telas menores */
+@media (max-width: 500px) {
+    .table_big_list, .table_big_list_simple {
         font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
     }
 
-    .table_blig_list thead {
+    /* Ajusta a largura da tabela para 100% em telas pequenas */
+    .table_big_list thead, .table_big_list_simple thead {
         display: none; /* Esconde o cabeçalho em telas pequenas */
     }
 
-    .table_blig_list tbody tr {
+    /* Exibe as linhas como blocos para facilitar a leitura em telas pequenas */
+    .table_big_list tbody tr, .table_big_list_simple tbody tr {
         display: block; /* Exibe as linhas como blocos */
         margin-bottom: 10px; /* Espaçamento entre os blocos */
     }
 
-    .table_blig_list tbody td {
+    /* Ajusta as células para exibir os dados em blocos */
+    .table_big_list tbody td, .table_big_list_simple tbody td {
         display: flex;
         justify-content: space-between;
         padding: 10px;
@@ -60,7 +100,8 @@
         border-bottom: 1px solid #a8a5a5; /* Borda inferior para separar os itens */
     }
 
-    .table_blig_list tbody td::before {
+    /* Adiciona rótulos para os dados em telas pequenas */
+    .table_big_list tbody td::before, .table_big_list_simple tbody td::before {
         content: attr(data-label); /* Adiciona o rótulo antes do valor */
         font-weight: bold;
         text-transform: uppercase;

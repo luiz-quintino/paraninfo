@@ -1,0 +1,17 @@
+#loading-overlay {
+    display: none; /* Oculta o elemento inicialmente */
+    position: fixed; /* Fixa o elemento na tela */
+    top: 0; /* Posiciona no topo */
+    left: 0; /* Posiciona à esquerda */
+    width: 100%; /* Ocupa toda a largura da tela */
+    height: 100%; /* Ocupa toda a altura da tela */
+    background: rgba(147, 239, 165, 0.3); /* Fundo branco com transparência */
+    z-index: 800; /* Garante que o elemento fique acima de outros */
+    text-align: center; /* Centraliza o conteúdo horizontalmente */
+}
+
+#loading-overlay img {
+    margin-top: 20%; /* Centraliza verticalmente */
+    width: 100px; /* Define a largura da imagem */
+    height: 100px; /* Define a altura da imagem */
+}

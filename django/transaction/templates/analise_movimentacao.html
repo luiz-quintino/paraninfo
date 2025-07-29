@@ -1,0 +1,472 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Análise de Movimentação - Paraninfo{% endblock %}
+
+{% block content %}
+    {% include 'partials/popup_movimentacao.html' %}
+    {% include 'partials/popup_duplicar_linha.html' %}
+
+    {% if message.text %}
+        {% include 'partials/popup_message.html' with message=message %}
+    {% endif %}
+
+    <div class="table-container">
+        <h2>{{ message.title }}</h2>
+
+        <div class="user-form">
+            {% if is_data_empty %}
+                <div class="alert">
+                    Nenhum dado encontrado para análise.
+                </div>
+            {% endif %}
+        </div>
+
+        <form method="post" action="{% url 'analise_movimentacao' %}" id="formRevisao">
+            {% csrf_token %}
+            <input type="hidden" id="review" name="review" value="revisao"> 
+        </form>
+
+        <form method="post" action="{% url 'analise_movimentacao' %}" id="formFechamento">
+            {% csrf_token %}
+            <input type="hidden" id="close" name="close" value="fechamento"> 
+        </form>
+
+        <form method="post" action="{% url 'analise_movimentacao' %}" id="formConfirmarFechamento">
+            {% csrf_token %}
+            <input type="hidden" id="confirm_close" name="confirm_close" value="confirmar_fechamento"> 
+        </form>
+        
+        <form method="post" action="{% url 'analise_movimentacao' %}" id="formAnalise">
+            
+            {% csrf_token %}
+
+            <input type="hidden" id="ignorados" name="ignorados" value=""> <!-- Campo oculto para armazenar os índices -->
+            <input type="hidden" id="ids_duplicados" name="ids_duplicados" value=""> <!-- Campo oculto para armazenar indices duplicados -->
+            
+            <table class="table_big_list_simple">
+                <thead>
+                    <tr>
+                        <th>Indice</th>
+                        <th>Data</th>
+                        <th>Histórico</th>
+                        <th>Crédito</th>
+                        <th>Débito</th>
+                        <th>Tipo de Transação</th>
+                        <th>Código do Associado</th>
+                        <th>Comandos</th>
+                    </tr>
+
+                </thead>
+                <tbody>
+                    {% for extrato in extratos_list %}
+                    <tr style="color: {{ extrato.cor }};" data-id="{{ extrato.id }}" id="row-{{ extrato.id }}">
+                        
+                        <td> {{ extrato.indice }} </td>
+                        <td> {{ extrato.data }} </td>
+                        <td style="cursor: pointer;" class="openPopup" onclick="openPopup({{ extrato.id }})">{{ extrato.historico }}</td> 
+                        
+                        <td>
+                            <input style="color: {{ extrato.cor }};" type="text" name="credito_{{ extrato.id }}" value="{{ extrato.credito }}" readonly>
+                        </td>
+
+                        <td>
+                            <input style="color: {{ extrato.cor }};" type="text" name="debito_{{ extrato.id }}" value="{{ extrato.debito }}" readonly>
+                        </td>
+
+                        <td>
+                            <select style="color: {{ extrato.cor }};" name="transacao_tipo_{{ extrato.id }}" class="transacao-select" onchange="toggleAssociadoField({{ extrato.id }}, this)">
+                                <option value="">Selecione</option>
+                                {% for transacao in transacoes %}
+                                <option value="{{ transacao.id }}" {% if extrato.transacao_id == transacao.id %}selected{% endif %} id_key="{{ transacao.key }}">
+                                    {{ transacao.key }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+
+                        <td>
+                            <select style="{% if extrato.associado_id > 0 %}display: block;{% else %}display: none;{% endif %}"  style="color: {{ extrato.cor }};" name="associado_codigo_{{ extrato.id }}" id="associado-field-{{ extrato.id }}" class="associado-select" onchange="toggleAssociadoId({{ extrato.id }})" >
+                                <option value="">Selecione</option>
+                                {% for associado in associados %}
+                                <option value="{{ associado.codigo_pagamento }}" {% if extrato.associado_id == associado.id %}selected{% endif %}>
+                                    {{ associado.codigo_pagamento }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <input type="hidden" name="extrato_id" value="{{ extrato.id }}">
+                            
+                            <!-- botões de ação pra linha: ignorar, duplicar  -->
+                            <div class="filter-form">
+
+                                <button type="button" onclick="toggleIgnorarLinha({{ extrato.id }})" class="ignore-button" title="Ignorar o registro">
+                                    <img src="{% static 'media/icons/cancel.png' %}" alt="Ignorar" class="ignore-icon" id="ignore-img-{{ extrato.id }}">
+                                </button>
+
+                                <button type="button" onclick="openDuplicatePopup({{ extrato.id }})" class="duplicate-button" id="duplicate-btn-{{ extrato.id }}" title="Duplicar registro">
+                                    <img src="{% static 'media/icons/fork.png' %}" alt="Duplicar" class="duplicate-icon">
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                
+            </table>
+        </form>
+    </div>
+
+    <script type="application/json" id="cor-transacao-data">
+        {{ cor_transacao|safe }}
+    </script>
+
+    <script>
+        // Função submit do Form
+        function submitForm(formulario) {
+            // Exibe a ampulheta antes de enviar o formulário
+            showLoadingOverlay();
+
+            // Verifica se o formulário de importação existe e o envia
+            const entradaForm = document.getElementById(formulario);
+            if (entradaForm) {
+                entradaForm.submit(); // Envia o formulário
+
+            } else {
+                console.error('Formulário de análise não encontrado.');
+            }
+        }
+
+        // Função para ocultar ou exibir o campo "Código do Associado" e atualizar cor da seleção
+        function toggleAssociadoField(extratoId, selectElement) {
+            const associadoField = document.getElementById(`associado-field-${extratoId}`);
+    
+            // Obter a opção selecionada
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            
+            // Ler o atributo "id_key" da opção selecionada
+            const selectedValue = selectedOption.getAttribute('id_key'); // Obtém o valor de "id_key"
+            const selectedIdKey = selectedOption.value; 
+
+            // Obter o dicionário de cores (cor_transacao) do contexto Django
+            const corTransacao = JSON.parse(document.getElementById('cor-transacao-data').textContent);
+
+            // Obter a cor correspondente ao ID selecionado
+            newColor = corTransacao[selectedIdKey] || '#000000'; // Cor padrão: preto
+
+            if (selectedValue === null || selectedValue === '') { newColor = 'red'; } // Se não houver valor selecionado, define a cor como vermelho
+
+            // Atualizar a cor dos elementos na linha correspondente
+            const row = document.getElementById(`row-${extratoId}`);
+            if (row) {
+                row.querySelector('td:nth-child(1)').style.color = newColor; // Campo "índice"
+                row.querySelector('td:nth-child(2)').style.color = newColor; // Campo "data"
+                row.querySelector('td:nth-child(3)').style.color = newColor; // Campo "histórico"
+                
+                row.querySelector(`input[name="credito_${extratoId}"]`).style.color = newColor; // Campo "crédito"
+                row.querySelector(`input[name="debito_${extratoId}"]`).style.color = newColor; // Campo "débito"
+                row.querySelector(`select[name="transacao_tipo_${extratoId}"]`).style.color = newColor; 
+                toggleAssociadoId(extratoId); // Atualiza a cor do usuário selecionado
+            }
+
+            // Exibir ou ocultar o campo "Código do Associado" com base no valor selecionado
+            if (selectedValue === null || selectedValue === '') {
+                associadoField.style.display = "none"; // Oculta o campo se não houver valor selecionado
+            } else {
+                if (selectedValue.toLowerCase().includes("mensalidade")) {
+                    associadoField.style.display = "block";
+                } else {
+                    associadoField.style.display = "none";
+                }
+            }
+        }
+        
+        // Atualiza a cor do usuário selecionado
+        function toggleAssociadoId(extratoId) {
+            const row = document.getElementById(`row-${extratoId}`);
+            // Obter a opção selecionada
+            const user_id  = row.querySelector(`select[name="associado_codigo_${extratoId}"]`).value;
+
+            if (user_id === '') {
+                // mudar a cor para vermelho
+                row.querySelector(`select[name="associado_codigo_${extratoId}"]`).style.color = "red";
+            } else {
+                // muda a cor para verde
+                row.querySelector(`select[name="associado_codigo_${extratoId}"]`).style.color = "green";
+            }
+
+        }
+
+        // Faz uma requisição AJAX para buscar os dados da linha selecionada
+        function openPopup(id) {
+            // Exibe a ampulheta
+            showLoadingOverlay();
+
+            // Aguarda um pequeno intervalo para permitir que o navegador atualize a interface
+            setTimeout(() => {
+                openPopup_(id);
+            }, 1); // Executa imediatamente após a atualização da interface
+        }
+
+        function openPopup_(id) {
+            // Faz uma requisição AJAX para buscar os dados da linha selecionada
+
+            // verifica se o ID está presente no campo ids_duplicados no formato xx:id
+            const idsDuplicadosField = document.getElementById('ids_duplicados');
+            const idsDuplicados = idsDuplicadosField.value ? idsDuplicadosField.value.split(',') : [];
+            const isDuplicated = idsDuplicados.some(item => item.split(':')[0] === String(id));
+            if (isDuplicated) {
+                alert('Esta linha foi duplicada. Verifique o registro principal.');
+                // Esconder a ampulheta
+                hideLoadingOverlay()
+                return; // Não faz a requisição se a linha já foi duplicada
+            }
+
+            fetch(`/transaction/get-extrato-details/${id}/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erro ao buscar os detalhes do extrato com id ${id}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Preencher os campos do popup com os dados retornados
+                    document.getElementById('popup_title').innerText = `Registro: ${data.historico}`;
+
+                    document.getElementById('popup-data').value = data.data;
+                    document.getElementById('popup-credito').value = data.credito.replace('.', ',');
+                    document.getElementById('popup-debito').value = data.debito.replace('.', ',');
+                    document.getElementById('popup-nome').value = data.nome;
+                    document.getElementById('popup-cpf').value = data.cpf;
+                    document.getElementById('popup-nota').value = data.nota;
+                    document.getElementById('popup-user_id').value = `código de pagamento: ${data.codigo_pagamento}`;
+
+                    // Exibir o popup
+                    document.getElementById('popup-modal').style.display = 'block';
+
+                    // Adicionar classe ao corpo para impedir scroll e seleção
+                    document.body.classList.add('popup-active');
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+            
+        }
+
+        function closePopup() {
+            // Ocultar o popup
+            document.getElementById('popup-modal').style.display = 'none';
+
+            // Remover classe do corpo para permitir scroll e seleção
+            document.body.classList.remove('popup-active');
+            
+            // Esconder a ampulheta
+            hideLoadingOverlay()
+        }
+
+        // Ignora ou desfaz a ignorância de uma linha
+        function toggleIgnorarLinha(id) {
+            // Obter o campo oculto "ignorados"
+            const ignoradosField = document.getElementById('ignorados');
+            let ignorados = ignoradosField.value ? ignoradosField.value.split(',') : [];
+
+            // Obter os elementos da linha
+            const row = document.getElementById(`row-${id}`);
+            const img = document.getElementById(`ignore-img-${id}`);
+            const button = img.closest('button'); // Obter o botão pai do <img>
+            const duplicateBtn = document.getElementById(`duplicate-btn-${id}`); // Botão "Duplicar"
+
+            if (ignorados.includes(String(id))) {
+                // Remover o ID da lista "ignorados"
+                ignorados = ignorados.filter(item => item !== String(id));
+                ignoradosField.value = ignorados.join(',');
+
+                // Alterar a imagem para "cancel.png"
+                img.src = "{% static 'media/icons/cancel.png' %}";
+                img.alt = "Ignorar";
+                img.className = "ignore-icon"; // Garantir que a classe seja "ignore-icon"
+
+                // Alterar o texto de ajuda para "Ignorar o registro"
+                button.title = "Ignorar o registro";
+
+                // Restaurar a cor de fundo original
+                if (row) {
+                    row.style.backgroundColor = '';
+                    row.querySelector(`input[name="credito_${id}"]`).style.backgroundColor = "";
+                    row.querySelector(`input[name="debito_${id}"]`).style.backgroundColor = "";
+                    row.querySelector(`select[name="transacao_tipo_${id}"]`).style.backgroundColor = "";
+                    row.querySelector(`select[name="associado_codigo_${id}"]`).style.backgroundColor = "";
+                }
+
+                // Exibir o botão "Duplicar"
+                if (duplicateBtn) {
+                    duplicateBtn.style.display = 'inline-block';
+                }
+            } else {
+                // Adicionar o ID à lista "ignorados"
+                ignorados.push(String(id));
+                ignoradosField.value = ignorados.join(',');
+
+                // Alterar a imagem para "undo.png"
+                img.src = "{% static 'media/icons/undo.png' %}";
+                img.alt = "Desfazer";
+                img.className = "ignore-icon"; // Garantir que a classe seja "ignore-icon"
+
+                // Alterar o texto de ajuda para "Desfazer"
+                button.title = "Desfazer";
+
+                // Alterar a cor de fundo para "silver"
+                if (row) {
+                    row.style.backgroundColor = 'silver';
+                    row.querySelector(`input[name="credito_${id}"]`).style.backgroundColor = 'silver';
+                    row.querySelector(`input[name="debito_${id}"]`).style.backgroundColor = 'silver';
+                    row.querySelector(`select[name="transacao_tipo_${id}"]`).style.backgroundColor = 'silver';
+                    row.querySelector(`select[name="associado_codigo_${id}"]`).style.backgroundColor = 'silver';
+                }
+
+                // Ocultar o botão "Duplicar"
+                if (duplicateBtn) {
+                    duplicateBtn.style.display = 'none';
+                }
+            }
+        }
+    
+        let currentRowId = null; // Variável para armazenar o ID da linha atual
+        let fieldCredit = null; // Identifica se é uma operação usando credito
+
+        // Funções para duplicar uma linha ----
+        function openDuplicatePopup(id) {
+            currentRowId = id; // Armazena o ID da linha atual
+            const row = document.getElementById(`row-${id}`);
+            itemValue = document.querySelector(`input[name="credito_${id}"]`).value;
+
+            fieldCredit = true; // Define que é uma operação de crédito
+            if (itemValue === '') {
+                itemValue = document.querySelector(`input[name="debito_${id}"]`).value;
+                fieldCredit = false; // Define que é uma operação de débito
+            }
+
+            const description = row.querySelector('td:nth-child(3)').innerText;
+            
+            document.getElementById('duplicate-value').value = itemValue; // Preenche o campo com o valor atual
+            document.getElementById('duplicar-descricption').innerText = description;
+
+            document.getElementById('duplicate-popup').style.display = 'block'; // Exibe o popup
+
+        }
+
+        function cancelDuplicate() {
+            document.getElementById('duplicate-popup').style.display = 'none'; // Fecha o popup
+        }
+
+
+        function updateAttributes(element, attributes) {
+            if (!element) return; // Verifica se o elemento existe
+            Object.entries(attributes).forEach(([key, value]) => {
+                if (key === 'name' || key === 'id') {
+                    element[key] = value; // Atualiza diretamente os atributos "name" e "id"
+                } else {
+                    element.setAttribute(key, value); // Atualiza outros atributos usando setAttribute
+                }
+            });
+        }
+
+        function acceptDuplicate() {
+            const row = document.getElementById(`row-${currentRowId}`); // Obtém a linha atual usando o ID armazenado
+            const creditValue = parseFloat(document.querySelector(`input[name="credito_${currentRowId}"]`).value.replace(',', '.')); 
+            const debitValue = parseFloat(document.querySelector(`input[name="debito_${currentRowId}"]`).value.replace(',', '.')); 
+            const inputValue = parseFloat(document.getElementById('duplicate-value').value.replace(',', '.')); 
+
+            // Validação do valor
+            if (isNaN(inputValue)) {
+                alert('Por favor, insira um número válido no formato 123,45.');
+                return false;
+            }
+
+            if (inputValue <= 0 || inputValue >= creditValue) {
+                alert('O valor deve ser positivo, maior que zero e menor que valor original.');
+                return;
+            }
+
+            if (fieldCredit) {
+                // Atualiza o valor de crédito da linha original
+                document.querySelector(`input[name="credito_${currentRowId}"]`).value = (creditValue - inputValue).toFixed(2).replace('.', ',');
+
+            } else {
+                // Atualiza o valor de débito da linha original
+                document.querySelector(`input[name="debito_${currentRowId}"]`).value = (debitValue - inputValue).toFixed(2).replace('.', ',');
+            }
+
+            // Encontrar o maior valor de extrato_id
+            const rows = document.querySelectorAll('tbody tr');
+            let maxId = 0;
+            rows.forEach(row => {
+                const dataId = parseInt(row.getAttribute('data-id'), 10);
+                if (dataId > maxId) {
+                    maxId = dataId;
+                }
+            });
+
+            const newId = maxId + 1; // Novo ID para a linha duplicada
+
+            // Duplica a linha com o novo valor
+            const newRow = row.cloneNode(true);
+            newRow.id = `row-${newId}`; // Atualiza o ID da nova linha
+            newRow.setAttribute('data-id', newId); // Atualiza o atributo data-id
+
+            if (fieldCredit) {
+                document.querySelector(`input[name="credito_${currentRowId}"]`).value = inputValue.toFixed(2); // Atualiza o valor de crédito da nova linha
+            } else {
+                document.querySelector(`input[name="debito_${currentRowId}"]`).value = inputValue.toFixed(2); // Atualiza o valor de débito da nova linha
+            }
+
+            // Atualiza os atributos relacionados ao extrato.id na linha duplicada
+            updateAttributes(newRow.querySelector('.openPopup'),                            { onclick: `openPopup(${newId})`          });
+            updateAttributes(newRow.querySelector('.ignore-button'),                        { onclick: `toggleIgnorarLinha(${newId})` });
+            updateAttributes(newRow.querySelector('.ignore-icon'),                          { id: `ignore-img-${newId}`               });
+            updateAttributes(newRow.querySelector('.duplicate-button'),                     { onclick: `openDuplicatePopup(${newId})`,  id: `duplicate-btn-${newId}` });
+            updateAttributes(newRow.querySelector('.transacao-select'),                     { name: `transacao_tipo_${newId}`,          onchange: `toggleAssociadoField(${newId}, this)` });
+            updateAttributes(newRow.querySelector('.associado-select'),                     { name: `associado_codigo_${newId}`,        onchange: `toggleAssociadoId(${newId})` });
+            updateAttributes(newRow.querySelector('.associado-select'),                     { name: `associado_codigo_${newId}`,        id: `associado-field-${newId}` });
+            updateAttributes(newRow.querySelector(`input[name="credito_${currentRowId}"]`), { name: `credito_${newId}`                });
+            updateAttributes(newRow.querySelector(`input[name="debito_${currentRowId}"]`),  { name: `debito_${newId}`                 });
+            updateAttributes(newRow.querySelector(`input[name="extrato_id"]`),              { name: `extrato_id`,                       value: newId });
+
+            // Adiciona o novo ID ao campo invisível "ids_duplicados"
+            const idsDuplicadosField = document.getElementById('ids_duplicados');
+            let idsDuplicados = idsDuplicadosField.value ? idsDuplicadosField.value.split(',') : [];
+            idsDuplicados.push(`${newId}:${currentRowId}`);
+            idsDuplicadosField.value = idsDuplicados.join(',');
+
+            // Insere a nova linha na tabela
+            row.parentNode.insertBefore(newRow, row.nextSibling);
+
+            // Alterar a cor de fundo para "yellow"
+            if (newRow) {
+                newRow.style.backgroundColor = 'yellow';
+                document.querySelector(`input[name="credito_${newId}"]`).style.backgroundColor = 'yellow';
+                document.querySelector(`input[name="debito_${newId}"]`).style.backgroundColor = 'yellow';
+                document.querySelector(`select[name="transacao_tipo_${newId}"]`).style.backgroundColor = 'yellow';
+                document.querySelector(`select[name="associado_codigo_${newId}"]`).style.backgroundColor = 'yellow';
+            }
+
+            // Atualiza os índices das linhas
+            updateIndices();
+
+            // Fecha o popup
+            cancelDuplicate();
+        }
+
+        function updateIndices() {
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach((row, index) => {
+                row.querySelector('td:first-child').innerText = index + 1; // Atualiza o índice
+            });
+        }
+
+
+    </script>
+{% endblock %}
+

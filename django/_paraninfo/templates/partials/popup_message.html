@@ -1,0 +1,27 @@
+<div id="custom-popup" class="popup-overlay" style="display: none;">
+    <div class="popup-content">
+        <div class="popup-header">
+            <img id="popup-icon" src="" alt="Ícone" class="popup-icon">
+            <h2 id="popup-title" class="popup-title"></h2>
+        </div>
+        <div class="popup-body">
+            <p id="popup-message" class="popup-message"></p>
+            <input type="text" id="popup-input" class="popup-input" style="display: none;" placeholder="Digite aqui...">
+        </div>
+        <div class="popup-footer">
+            <button id="popup-cancel" class="popup-button" style="display: none;">Cancelar</button>
+            <button id="popup-close" class="popup-button">Fechar</button>
+            <button id="popup-confirm" class="popup-button" style="display: none;">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/popup_message.js"></script>
+
+<script>
+        showPopup('{{ message.type }}', 
+        '{{ message.text|escapejs }}', 
+        '{{ message.title|escapejs }}', 
+        '{{ message.function|escapejs }}'
+        );
+</script>

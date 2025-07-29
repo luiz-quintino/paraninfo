@@ -4,19 +4,31 @@
     {% if user.is_authenticated %}
         
             <li><a href="{% url 'user_list' %}">Usuários</a></li>
+
             <hr> <!-- Linha divisória -->
-            <li><a href="{% url 'balance' %}">Extatos</a></li>
-            <li><a href="{% url 'login' %}">Movimentação</a></li>
-            <li><a href="{% url 'login' %}">Pagamentos</a></li>
+            {% if request.is_admin %}
+                <li><a href="{% url 'transaction' %}">Movimentações</a></li>
+            {% endif %}
+            <li><a href="{% url 'balance' %}">Contabilidade</a></li>
+            <li><a href="{% url 'login' %}">Mensalidades</a></li>
+
             <hr> <!-- Linha divisória -->
             <li><a href="{% url 'login' %}">Documentos</a></li>
-            <li><a href="{% url 'login' %}">News</a></li>
-            <hr> <!-- Linha divisória -->
-            <li><a href="{% url 'login' %}">Configurações</a></li> 
-            {% if request.is_sys_admin %}
-                <li><a href="{% url 'client_list' %}">Lista de clientes</a></li>
+            {% if request.is_admin %}
+                <li><a href="{% url 'login' %}">News</a></li>
+                <hr> <!-- Linha divisória -->
             {% endif %}
-            <hr> <!-- Linha divisória -->
+
+            
+            {% if request.is_admin %}
+                <li><a href="{% url 'login' %}">Configurações</a></li> 
+            {% endif %}
+            {% if request.is_sys_admin %}
+                <li><a href="{% url 'client_list' %}">Clientes</a></li>
+                <hr> <!-- Linha divisória -->
+            {% endif %}
+
+            
             <li>
                 <form method="post" action="{% url 'logout' %}">
                     {% csrf_token %}

@@ -14,16 +14,17 @@
         <h2>Listagem de Usuários</h2>
 
         <!-- Botão "Adicionar novo usuário" visível apenas para usuários com request.is_admin -->
-        {% if request.is_admin %}
+        <!-- {% if request.is_admin %}
             <div class="action-buttons">
                 <a href="{% url 'user_record' %}" class="add-button">Incluir usuário</a>
             </div>
-        {% endif %}
+        {% endif %} -->
 
         {% if show_search %}
             <!-- Filtro de dados -->
             <form method="get" action="{% url 'user_list' %}" class="filter-form">
                 <input type="text" name="search" placeholder="Buscar..." value="{{ request.GET.search }}" class="filter-input">
+                
                 <button type="submit" class="filter-button">
                     <img src="{% static 'icons/search-icon.png' %}" alt="Buscar" class="filter-icon">
                 </button>

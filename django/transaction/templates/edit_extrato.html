@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar linha do extrato - Paraninfo{% endblock %}
+
+{% block content %}
+    <div class="form-container">
+        <div class="title-form-container">
+            <img src="{% static 'media/icons/edit.png' %}" alt="Editar linha do extrato" class="form-icon">
+            <h2>Editar linha do extrato</h2>
+        </div>
+
+        <form method="post" class="user-form">
+            {% csrf_token %}
+            <input type="hidden" name="extrato_id" value="{{ extrato.id }}">
+            <div class="form-group">
+                <label for="date">Data</label>
+                <input type="text" id="date" name="date" value="{{ extrato.data }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="doc">Documento</label>
+                <input type="text" id="doc" name="doc" value="{{ extrato.documento }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Descrição</label>
+                <input type="text" id="description" name="description" value="{{ extrato.historico }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="credit">Crédito</label>
+                <input type="text" id="credit" name="credit" value="{{ extrato.valor_credito }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="debit">Débito</label>
+                <input type="text" id="debit" name="debit" value="{{ extrato.valor_debito }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="note">Anotação</label>
+                <input type="text" id="note" name="note" value="{{ extrato.anotacao }}">
+            </div>
+            
+            <div class="action-buttons">
+                <button type="submit" class="save-button">Salvar</button>
+                <a href="{% url 'balance' %}" class="cancel-button">Cancelar</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

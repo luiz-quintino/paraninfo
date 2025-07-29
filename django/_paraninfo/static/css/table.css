@@ -68,14 +68,6 @@
     }
 }
 
-/* Estilo para o cabeçalho */
-h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 24px;
-    color: #4CAF50;
-}
-
 /* Estilo para o formulário de filtro */
 .filter-form {
     display: flex;
@@ -93,22 +85,23 @@ h2 {
 }
 
 /* Estilo para o botão de pesquisa */
-.filter-button {
+.filter-button, .ignore-button, .duplicate-button{
     border: none;
     padding: 4px; /* Ajusta o espaçamento interno */
     border-radius: 4px;
-    cursor: pointer;
     margin-right: 10px;
     width: 30px; /* Define a largura do botão */
     height: 30px; /* Define a altura do botão */
     display: flex;
-    align-items: center;
     justify-content: center;
+    background-color: #f9f9f9;
 }
 
-.filter-button img {
+.filter-button img, .ignore-button img, .duplciate-button img{
     width: 24px; /* Tamanho do ícone dentro do botão */
     height: 24px;
+    cursor: pointer; /* Muda o cursor para pointer ao passar o mouse */
+    
 }
 
 /* Estilo para o botão de cancelar pesquisa */
@@ -126,9 +119,10 @@ h2 {
     justify-content: center;
 }
 
-.cancel-icon {
+.cancel-icon, .filter-icon, .ignore-icon, .duplicate-icon{
     width: 24px; /* Tamanho do ícone dentro do botão */
     height: 24px;
+    border: none; /* Remove borda do botão */
 }
 
 /* Estilo para paginação */

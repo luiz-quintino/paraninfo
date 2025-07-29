@@ -1,0 +1,91 @@
+/* Menu lateral */
+.sidebar {
+    width: 30px;
+    background-color: #333;
+    transition: width 0.3s ease; /* Animação de expansão/retração */
+    overflow: hidden;
+}
+
+.sidebar.expanded {
+    width: 200px;
+}
+
+/* Barra de menu lateral */
+.menu-options_side {
+    display: none; /* Ocultar opções inicialmente */
+    opacity: 0;
+    list-style: none;
+    padding: 10px;
+    margin: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    
+}
+
+.sidebar.expanded .menu-options_side {
+    display: block; /* Mostrar opções quando o menu estiver expandido */
+    transition: opacity 0.3s ease; /* Animação de opacidade */
+    opacity: 1;
+}
+
+/* Estilo para botões no formulário */
+.menu-options_side button {
+    text-decoration: none;
+    color: #ffffff;
+    background-color: #333;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer; 
+    list-style: none;
+    padding: 10px 15px;
+    display: block;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    text-decoration: none;
+    margin: 10px 0;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    width: 100%; /* Faz o botão ocupar toda a largura do menu lateral */
+    text-align: left; /* Alinha o texto à esquerda */
+}
+
+.menu-options_side button:hover {
+    background-color: aquamarine;
+    color: #000000;
+    border-radius: 4px;
+}
+
+/* Estilo para links no menu lateral */
+.menu-options_side li{
+    margin: 10px 0;
+}
+
+.menu-options_side li a{
+    text-decoration: none;
+    color: #fff;
+    padding: 10px 15px;
+    display: block;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.menu-options_side li a:hover{
+    background-color: aquamarine;
+    color: #000000;
+    border-radius: 4px;
+}
+
+.toggle-btn {
+    display: flex; /* Usa flexbox para alinhar os itens */
+    justify-content: flex-end; /* Alinha os itens ao lado direito */
+    align-items: center; /* Centraliza verticalmente */
+    width: 100%; /* Garante que o botão ocupe toda a largura do contêiner */
+    height: 20px;
+    padding: 2px;
+    border: none; /* Remove bordas do botão */
+    background: none; /* Remove o fundo do botão */
+    cursor: pointer; /* Adiciona o cursor de clique */
+    margin: 5px 0;
+}
+
+.toggle-btn img {
+    width: 20px; /* Define o tamanho da imagem */
+    height: 20px; /* Define o tamanho da imagem */
+}

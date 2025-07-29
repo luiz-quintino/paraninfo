@@ -1,31 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        {% load static %}
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{% block title %}Paraninfo{% endblock %}</title>
-        
-        <link rel="icon" href="{% static 'icons/favicon.ico' %}" type="image/x-icon">
-        <link rel="stylesheet" href="{% static 'css/base.css' %}">
-        <link rel="stylesheet" href="{% static 'css/login.css' %}">
-        <link rel="stylesheet" href="{% static 'css/title.css' %}">
-        <link rel="stylesheet" href="{% static 'css/menu_user.css' %}">
-        <link rel="stylesheet" href="{% static 'css/menu_main.css' %}">
-        <link rel="stylesheet" href="{% static 'css/table.css' %}">
-        <link rel="stylesheet" href="{% static 'css/form.css' %}">
-        <link rel="stylesheet" href="{% static 'css/table_big_list.css' %}">
-        <link rel="stylesheet" href="{% static 'css/balance.css' %}">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Paraninfo{% endblock %}</title>
 
-        <script src="{% static 'js/menu_main.js' %}" defer></script>
-        <script src="{% static 'js/menu_user.js' %}" defer></script>
-    </head>
-    <body>
-        {% include 'partials/header.html' %}
-        <main>
-            {% block content %}
-            {% endblock %}
-        </main>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <link rel="stylesheet" href="{% static 'css/title.css' %}">
+    <link rel="stylesheet" href="{% static 'css/menu_main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/menu_user.css' %}">
+    <link rel="stylesheet" href="{% static 'css/menu_side.css' %}">
+    <link rel="stylesheet" href="{% static 'css/table.css' %}">
+    <link rel="stylesheet" href="{% static 'css/table_big_list.css' %}">
+    <link rel="stylesheet" href="{% static 'css/form.css' %}">
+    <link rel="stylesheet" href="{% static 'css/balance.css' %}">
+    <link rel="stylesheet" href="{% static 'css/hourglass.css' %}">
+    <link rel="stylesheet" href="{% static 'css/extrato_detail.css' %}">
+    <link rel="stylesheet" href="{% static 'css/popup_message.css' %}">
+    
+    
+    <link rel="icon" href="{% static 'icons/favicon.ico' %}" type="image/x-icon">
+
+    <script src="{% static 'js/menu_main.js' %}" defer></script>
+    <script src="{% static 'js/menu_user.js' %}" defer></script>
+    <script src="{% static 'js/menu_side.js' %}" defer></script>
+    <script src="{% static 'js/popup_message.js' %}" defer></script>
+</head>
+
+<body>
+    <div class="container-main">
+
+        <!-- Cabeçalho -->
+        <div class="header-main">
+            {% include 'partials/header.html' %}
+        </div>
+    
+        <!-- Corpo principal -->
+        <div class="main-body-main">
+
+            <!-- Menu lateral -->
+            {% if user.is_authenticated %}
+                <div id="sidebar" class="sidebar expanded" >
+                    {% include 'partials/menu_side.html' %}
+                </div>
+            {% endif %}
+
+            <!-- Corpo da página -->
+            <div class="body-main">
+                <main>
+                    {% block content %}
+                    {% endblock %}
+                </main>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rodapé -->
+    <div class="footer-main">
         {% include 'partials/footer.html' %}
-    </body>
+    </div>
+</body>
 </html>

@@ -43,7 +43,7 @@ label {
     font-weight: bold;
     color: #333;
     text-align: right;  /* Alinha o texto do rótulo à direita */
-    width: 40%;        /* Define uma largura fixa para os rótulos */
+    width: 100px;        /* Define uma largura fixa para os rótulos */
     max-width: 400px;   /* Limita a largura máxima a 300px */
     margin-bottom: 0px;   /* Remove a margem inferior */
 }
@@ -53,7 +53,7 @@ input, select{
     font-size: 14px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    width: 60%;        /* Garante que o campo ocupe todo o espaço disponível */
+    width: 300px;        /* Garante que o campo ocupe todo o espaço disponível */
     max-width: 700px;   /* Limita a largura máxima a 400px */
     box-sizing: border-box; /* Inclui o padding na largura total */
 }

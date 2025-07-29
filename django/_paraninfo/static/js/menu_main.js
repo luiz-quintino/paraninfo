@@ -62,3 +62,13 @@ menuButton.addEventListener('mouseleave', () => {
         }
     }, 300); // Timeout para evitar fechamento imediato
 });
+
+
+function showLoadingOverlay() {
+    // Exibe a ampulheta
+    document.getElementById('loading-overlay').style.display = 'block';
+}
+
+function hideLoadingOverlay() {
+    document.getElementById('loading-overlay').style.display = 'none';
+}

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Load balance{% endblock %}
+{% load static %}
+
+{% block content %}
+
+        <!-- Conteúdo principal -->
+        <div class="main-content">
+        
+            <h2>Importação de extrato</h2>
+
+            <div class="user-form">
+                {% if error %}
+                    <div class="alert-error">
+                        {{ error }}
+                    </div>
+                {% elif is_dataframe_empty and file %}
+                    <div class="alert">
+                        Nenhum dado encontrado no arquivo.
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Entrada de arquivo com extrato .xls -->
+            {% if is_dataframe_empty %}
+                <div class="file-upload-container ">
+                    <form method="post" enctype="multipart/form-data" class="action-buttons" id="formExtrato">
+                        {% csrf_token %}
+                        <span id="file-name" class="custom-file-label">Selecione o extrato bancário SICOOB no formato Excel</span>
+                        <div>
+                            <label for="file">
+                                <img src="{% static 'media/icons/open.png' %}" alt="Selecionar arquivo" class="upload-icon">
+                            </label>
+                            <input type="file" id="file" name="file" accept=".xls,.xlsx" class="hide-input">
+                        </div>
+                        
+                        <button type="button" class="generic-button" onclick="submitEnviarExtrato()">Enviar</button>
+                    </form>
+                </div>
+
+            <!-- Tabela com extrato -->
+            {% else %}
+
+                <form method="post" action="{% url 'aceitar_extrato' %}" id="formEntrada">
+                    <input type="hidden" name="linhasAceitas" id="linhasAceitas" value="">
+                    {% csrf_token %}
+                
+                    <h3>Extrato conta corrente: "{{ file_name }}"</h3>
+
+                    <table border="1" class="table_big_list">
+                        <thead>
+                            <tr>
+                                {% for column in dataframe.columns %}
+                                <th>{{ column }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in dataframe.values %}
+                            <!-- <tr onclick="submitExtratoForm({{ row.id }})" style="cursor: pointer;">
+                                <form method="post" action="{% url 'edit_extrato' %}" id="form-{{ linha.id }}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="extrato_id" value="{{ linha.id }}">
+                                </form> -->
+
+                                {% for cell in row %}
+                                <td>{{ cell }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </form>
+            {% endif %}
+
+        </div>
+
+    <script>
+        document.getElementById('file').addEventListener('change', function() {
+            const fileName = this.files.length > 0 ? this.files[0].name : 'Nenhum arquivo selecionado';
+            document.getElementById('file-name').textContent = fileName;
+        });
+        
+        function submitEntradaForm() {
+            // Exibe a ampulheta antes de enviar o formulário
+            showLoadingOverlay();
+
+            // Verifica se o formulário de importação existe e o envia
+            const entradaForm = document.getElementById('formEntrada');
+            if (entradaForm) {
+                entradaForm.submit(); // Envia o formulário de importacao.html
+            } else {
+                console.error('Formulário de entrada não encontrado.');
+            }
+        }
+
+    
+    function submitEnviarExtrato() {
+        // Exibe a ampulheta antes de enviar o formulário
+        showLoadingOverlay();
+
+        // Verifica se o formulário de importação existe e o envia
+        const formExtrato = document.getElementById('formExtrato');
+        if (formExtrato) {
+            formExtrato.submit(); // Envia o formulário de importacao.html
+        } else {
+            console.error('Formulário Extrato não encontrado.');
+        }
+
+
+    }
+
+    </script>
+{% endblock %}

@@ -32,12 +32,6 @@ class tbAssociados(models.Model):
     certificado = models.CharField(max_length=10, null=True, blank=True)
     kit = models.CharField(max_length=10, null=True, blank=True)
     inscricao = models.CharField(max_length=8, null=True, blank=True)
-    grupo_zap = models.CharField(max_length=8, null=True, blank=True)
-    senha_certificado = models.CharField(max_length=10, null=True, blank=True)
-    contatos = models.CharField(max_length=10, null=True, blank=True)
-    cadastro_cobranca = models.CharField(max_length=8, null=True, blank=True)
-    old_certificado = models.CharField(max_length=10, null=True, blank=True)
-    senha = models.CharField(max_length=255)
     comissao = models.IntegerField(null=False, blank=False)  # Referência a outra tabela (comissão)
 
     def __str__(self):

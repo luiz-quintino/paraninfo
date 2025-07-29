@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Load balance{% endblock %}
+{% load static %}
+
+
+
+{% block content %}
+    <h2>{{ titulo }}</h2>
+    <div class="user-form">
+        {% if error %}
+            <div class="alert-error">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        {% if message %}
+            <div class="alert-success">
+                {{ message }}
+            </div>
+        {% endif %}
+
+        {% if is_dataframe_empty and file %}
+            <div class="alert">
+                Nenhum dado encontrado no arquivo: {{ file }}.
+            </div>
+        {% endif %}
+    </div>
+
+    {% if duplicadas %}
+        <div>
+            <form method="post" action="{% url 'importacao' %}" id="formImportacao">
+                {% csrf_token %}
+                <input type="hidden" id="linhasAceitas" name="linhasAceitas" value="">
+
+                    <table class="table_big_list_simple">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Documento</th>
+                            <th>Histórico</th>
+                            <th>Crédito</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for linha in duplicadas %}
+                        <tr id="linha-{{ forloop.counter }}" style="background-color: #E0E0E0;">
+                            <td>{{ linha.data }}</td>
+                            <td>{{ linha.documento }}</td>
+                            <td>{{ linha.historico }}</td>
+                            <td>{{ linha.credito }}</td>
+                            <td class="action-buttons">
+                                <button onclick="aceitarLinha({{ forloop.counter }})" id="aceitar-{{ forloop.counter }}" >Aceitar</button>
+                                <button onclick="rejeitarLinha({{ forloop.counter }})" id="rejeitar-{{ forloop.counter }}" disabled>Rejeitar</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    {% endif %}
+
+    <script>
+        const linhasAceitas = [];
+
+        function aceitarLinha(id) {
+            const linha = document.getElementById(`linha-${id}`);
+            linha.style.backgroundColor = '#CCFFCC';
+            document.getElementById(`aceitar-${id}`).disabled = true;
+            document.getElementById(`rejeitar-${id}`).disabled = false;
+
+            // Adicionar o ID da linha à lista de aceitas
+            if (!linhasAceitas.includes(id)) {
+                linhasAceitas.push(id);
+            }
+
+            // Atualizar o campo oculto com os IDs das linhas aceitas
+            document.getElementById('linhasAceitas').value = JSON.stringify(linhasAceitas);
+        }
+
+        function rejeitarLinha(id) {
+            const linha = document.getElementById(`linha-${id}`);
+            linha.style.backgroundColor = '#E0E0E0';
+            document.getElementById(`aceitar-${id}`).disabled = false;
+            document.getElementById(`rejeitar-${id}`).disabled = true;
+
+            // Remover o ID da linha da lista de aceitas
+            const index = linhasAceitas.indexOf(id);
+            if (index !== -1) {
+                linhasAceitas.splice(index, 1);
+            }
+
+            // Atualizar o campo oculto com os IDs das linhas aceitas
+            document.getElementById('linhasAceitas').value = JSON.stringify(linhasAceitas);
+        }
+
+        function submitImportacaoForm() {
+            // Exibe a ampulheta antes de enviar o formulário
+            showLoadingOverlay();
+            // Verifica se o formulário de importação existe e o envia
+            const importacaoForm = document.getElementById('formImportacao');
+            if (importacaoForm) {
+                importacaoForm.submit(); // Envia o formulário de importacao.html
+            } else {
+                console.error('Formulário de importação não encontrado.');
+            }
+        }
+
+    </script>
+
+{% endblock %}

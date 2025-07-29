@@ -25,11 +25,11 @@
         {% csrf_token %}
 
         <!-- Botões de definição de acesso -->
-        {% if uuid %}
+        <!-- {% if uuid %}
             <div class="action-buttons">
                 <a href="{% url 'user_credential' uuid=associado.uuid %}" class="generic-button">Definição de acesso</a>
             </div>
-        {% endif %}
+        {% endif %} -->
 
         <!-- Campos do formulário -->
         
@@ -126,48 +126,6 @@
                 <input type="text" id="comissao" name="comissao" value="{{ associado.comissao }}" {% if not allow_edition %}readonly{% endif %} placeholder="comissao" required>
             </div>
         {% endif %}
-
-        <!-- <div class="form-group">
-            <label for="certificado">Certificado</label>
-            <input type="text" id="certificado" name="certificado" value="{{ associado.certificado }}" {% if not allow_edition %}readonly{% endif %} placeholder="Cerificado">
-        </div>
-        <div class="form-group">
-            <label for="kit">Kit</label>
-            <input type="text" id="kit" name="kit" value="{{ associado.kit }}" {% if not allow_edition %}readonly{% endif %} placeholder="Data de envio do kit" >>
-        </div>
-
-        <div class="form-group">
-            <label for="inscricao">Inscrição</label>
-            <input type="text" id="inscricao" name="inscricao" value="{{ associado.inscricao }}" {% if not allow_edition %}readonly{% endif %} placeholder="Data da inscrição">
-        </div>
-        <div class="form-group">
-            <label for="grupo_zap">Grupo Zap</label>
-            <input type="text" id="grupo_zap" name="grupo_zap" value="{{ associado.grupo_zap }}" {% if not allow_edition %}readonly{% endif %} placeholder="...">
-        </div>
-        <div class="form-group">
-            <label for="senha_certificado">Senha do Certificado</label>
-            <input type="text" id="senha_certificado" name="senha_certificado" value="{{ associado.senha_certificado }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome da Comissão" required>
-        </div>
-        <div class="form-group">
-            <label for="contatos">Contatos</label>
-            <input type="text" id="contatos" name="contatos" value="{{ associado.contatos }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome da Comissão" required>
-        </div>
-        <div class="form-group">
-            <label for="cadastro_cobranca">Cadastro de Cobrança</label>
-            <input type="text" id="cadastro_cobranca" name="cadastro_cobranca" value="{{ associado.cadastro_cobranca }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome da Comissão" required>
-        </div>
-        <div class="form-group">
-            <label for="old_certificado">Certificado Antigo</label>
-            <input type="text" id="old_certificado" name="old_certificado" value="{{ associado.old_certificado }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome da Comissão" required>
-        </div>
-        <div class="form-group">
-            <label for="senha">Senha</label>
-            <input type="password" id="senha" name="senha" value="{{ associado.senha }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome da Comissão" required>
-        </div>
-        <div class="form-group">
-            <label for="data">Data</label>
-            <input type="text" id="data" name="data" value="{{ associado.data }}" {% if not allow_edition %}readonly{% endif %} placeholder="Nome da Comissão" required>
-        </div> -->
 
         <!-- Botões de ação -->
         <div class="action-buttons">

@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
+
 {% load custom_filters %}
 
 {% block title %}Página Inicial - Paraninfo{% endblock %}
+{% load static %}
 
 {% block header_title %}
     Bem-vindo ao Paraninfo
@@ -22,9 +24,11 @@
             {% endwith %}
         </p>
         
+        
     {% else %}
         <h1>Bem-vindo ao Paraninfo!</h1>
         <p>Por favor, faça login para continuar.</p>
         <a href="{% url 'login' %}">Login</a>
     {% endif %}
+    
 {% endblock %}

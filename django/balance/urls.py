@@ -3,7 +3,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # path("", TemplateView.as_view(template_name="home.html"), name="home"),  # Rota para home.html
-    path("", views.balance_view, name="balance"),  # Rota para home.html
-
-]
+    path("", views.balance_view, name="balance"), 
+    path("fechar-balanco", views.close_balance_view, name="fechar_balanco"), 
+    path('get-extrato-details/<int:extrato_id>/', views.get_extrato_details, name='get_extrato_details')
+]   

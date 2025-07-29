@@ -1,0 +1,39 @@
+<!-- Menu lateral -->
+
+<button id="toggle-btn" class="toggle-btn">
+    {% load static %}
+    <img src="{% static 'media/icons/menu_right.svg' %}" alt="Logo">
+</button>
+
+<ul class="menu-options_side">
+    {% for option in menu_options %}
+        <!-- form -->
+        {% if option.type == 'form' %}
+            <li>
+                <form action="{% url option.url %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" {% if option.color %}style="color: {{ option.color }}" {% endif %}>{{ option.name }}</button>
+                </form>
+            </li>
+
+        <!-- JS -->
+        {% elif option.type == 'js' %}
+            <li>
+                <button type="button" onclick="{{ option.function }}" {% if option.color %}style="color: {{ option.color }}" {% endif %}>{{ option.name }}</button>
+            </li>
+
+        <!-- voltar -->
+        {% elif option.type == 'voltar' %}
+            <li>
+                <button type="button" onclick="history.back()" {% if option.color %}style="color: {{ option.color }}" {% endif %}>{{ option.name }}</button>
+            </li>
+
+        <!-- url -->
+        {% else %}
+            <li>
+                <a href="{{ option.url }}" {% if option.color %}style="color: {{ option.color }}" {% endif %}>{{ option.name }}</a>
+            </li>
+        {% endif %}
+    {% endfor %}
+</ul>
+

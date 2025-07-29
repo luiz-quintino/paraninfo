@@ -1,94 +1,168 @@
 {% extends 'base.html' %}
 
-{% block title %}Load balance{% endblock %}
 {% load static %}
 
+{% block title %}Contabilidade da Comissão {% endblock %}
+
 {% block content %}
+    {% include 'partials/popup_movimentacao.html' %}
 
-    <div class="container_side">
-        <!-- Menu lateral -->
-        <div id="sidebar" class="sidebar expanded">
-            <button id="toggle-btn" class="toggle-btn">⏪</button>
-            <ul class="menu-options_side">
-                <li><a href="#">Importar extrato</a></li>
-                <li><a href="#">Analisar extrato</a></li>
-                <li><a href="#">Incorporar extrato</a></li>
-            </ul>
-        </div>
+    {% if message.text %}
+        {% include 'partials/popup_message.html' with message=message %}
+    {% endif %}
 
-        <!-- Conteúdo principal -->
-        <div class="main-content">
-        
-            <h2>Importar extrato</h2>
+    <div class="table-container">
+        <h2>{{ message.title }}</h2>
 
-            <div class="messages">
-            {% if error %}
-                <div class="alert-error">
-                    {{ error }}
-                </div>
-            {% elif is_dataframe_empty and file %}
+        <div class="user-form">
+            {% if is_data_empty %}
                 <div class="alert">
-                    Nenhum dado encontrado no arquivo.
+                    Nenhum dado encontrado.
                 </div>
             {% endif %}
-            </div>
-
-            <div class="file-upload-container ">
-                <form method="post" enctype="multipart/form-data" class="action-buttons">
-                    {% csrf_token %}
-                    <span id="file-name" class="custom-file-label">Selecione o extrato bancário (.xls/.xlsx)</span>
-                    <div>
-                        <label for="file">
-                            <img src="{% static 'media/open.png' %}" alt="Selecionar arquivo" class="upload-icon">
-                        </label>
-                        <input type="file" id="file" name="file" accept=".xls,.xlsx" class="hide-input">
-                    </div>
-                    
-                    <button type="submit" class="generic-button">Enviar</button>
-                </form>
-            </div>
-
-            {% if not is_dataframe_empty %}
-                <h2>Extrato conta corrente: "{{ file_name }}"</h2>
-                <table border="1" class="table_blig_list">
-                    <thead>
-                        <tr>
-                            {% for column in dataframe.columns %}
-                            <th>{{ column }}</th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in dataframe.values %}
-                        <tr>
-                            {% for cell in row %}
-                            <td>{{ cell }}</td>
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% endif %}
         </div>
-    </div>
-    <script>
-        document.getElementById('file').addEventListener('change', function() {
-            const fileName = this.files.length > 0 ? this.files[0].name : 'Nenhum arquivo selecionado';
-            document.getElementById('file-name').textContent = fileName;
-        });
-        document.addEventListener('DOMContentLoaded', function () {
-            const sidebar = document.getElementById('sidebar');
-            const toggleBtn = document.getElementById('toggle-btn');
 
-            toggleBtn.addEventListener('click', function () {
-                if (sidebar.classList.contains('expanded')) {
-                    sidebar.classList.remove('expanded');
-                    toggleBtn.textContent = '⏩';
-                } else {
-                    sidebar.classList.add('expanded');
-                    toggleBtn.textContent = '⏪';
-                }
-            });
-        });
+        <!-- Filtro de dados -->
+        <form method="get" action="{% url 'balance' %}" class="filter-form" id='period_form'>
+
+            <label>Período: </label>
+            <select name="periodo_index" onchange="toggleFilterPeriod(this)" class="filter-select" id="select_control">
+                <option value="">Selecione o período</option>
+                {% for periodo in periodos %}
+                <option value="{{ forloop.counter }}" {% if search_query == forloop.counter|stringformat:"s" %} selected {% endif %}>
+                    {{ periodo.combinado }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <table class="table_big_list_simple">
+            <thead>
+                <tr>
+                    <th>Indice</th>
+                    <th>Data</th>
+                    <th>Histórico</th>
+                    <th>Crédito</th>
+                    <th>Débito</th>
+                    <th>Tipo de Transação</th>
+                    <th>Código do Associado</th>
+                </tr>
+
+            </thead>
+            <tbody>
+                {% for extrato in extrato_list %}
+                    <tr style="color: {{ extrato.cor }}; cursor: pointer;" data-id="{{ extrato.id }}" id="row-{{ extrato.id }}" class="openPopup" onclick="openPopupBalanceDetails({{ extrato.id }})">
+                        
+                        <td> {{ extrato.indice }} </td>
+                        <td> {{ extrato.data }} </td>
+                        <td>{{ extrato.historico }}</td> 
+                        <td> {{ extrato.credito }} </td>
+                        <td> {{ extrato.debito }} </td>
+                        <td> {{ extrato.transacao_key }} </td>
+                        <td> {{ extrato.associado_id }} </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            
+        </table>
+    </div>
+    
+    <script>
+        // Filtra extrato por período
+        function toggleFilterPeriod(selectElement) {
+            // Obter a opção selecionada
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            // Verifica se o período está selecionado
+            if (selectElement.selectedIndex) {
+                // Exibe a ampulheta
+                showLoadingOverlay();
+                // Se sim, envia o formulário
+                document.getElementById('period_form').submit();
+            } else {
+                // Se não, limpa o filtro
+                // window.location.href = "{% url 'balance' %}";
+            }
+        }
+
+
+    // Faz uma requisição AJAX para buscar os dados da linha selecionada
+        function openPopupBalanceDetails(id) {
+            // Exibe a ampulheta
+            showLoadingOverlay();
+
+            // Aguarda um pequeno intervalo para permitir que o navegador atualize a interface
+            setTimeout(() => {
+                openPopupBalanceDetails_(id);
+            }, 1); // Executa imediatamente após a atualização da interface
+        }
+
+        function openPopupBalanceDetails_(id) {
+            // Faz uma requisição AJAX para buscar os dados da linha selecionada
+            fetch(`/balance/get-extrato-details/${id}/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erro ao buscar os detalhes do extrato com id ${id}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Preencher os campos do popup com os dados retornados
+
+                    document.getElementById('popup_title').innerText = `Registro: ${data.historico}`;
+
+                    document.getElementById('popup-data').value = data.data;
+                    document.getElementById('popup-credito').value = data.credito.replace('.', ',');
+                    document.getElementById('popup-debito').value = data.debito.replace('.', ',');
+                    document.getElementById('popup-nome').value = data.nome;
+                    document.getElementById('popup-registro_name').value = data.registro_log.name;
+                    document.getElementById('popup-registro').value = data.registro_log.data;
+                    document.getElementById('popup-associacao_name').value = data.associacao_log.name;
+                    document.getElementById('popup-associacao').value = data.associacao_log.data;
+                    document.getElementById('popup-fechamento_name').value = data.fechamento_log.name;
+                    document.getElementById('popup-fechamento').value = data.fechamento_log.data;
+                    document.getElementById('popup-transacao').value = data.transacao;
+
+                    document.getElementById('popup-user_id').style.display = 'none';
+                    document.getElementById('default-movimentacao').style.display = 'none';
+                    document.getElementById('contabil-movimentacao').style.display = 'block';
+                    
+                    if (data.credito === '') {
+                        document.getElementById('popup-credito-group').style = 'display: none;';
+                        document.getElementById('popup-debito-group').style = 'display: block;';
+                    } else {
+                        document.getElementById('popup-credito-group').style = 'display: block;';
+                        document.getElementById('popup-debito-group').style = 'display: none;';
+                    }
+
+                    if (data.nome === '') {
+                        document.getElementById('popup-nome-group').style = 'display: none;';
+                    } else {
+                        document.getElementById('popup-nome-group').style = 'display: block;';
+                    }
+
+                    // Exibir o popup
+                    document.getElementById('popup-modal').style.display = 'block';
+
+                    // Adicionar classe ao corpo para impedir scroll e seleção
+                    document.body.classList.add('popup-active');
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+            
+        }
+
+        function closePopup() {
+            // Ocultar o popup
+            document.getElementById('popup-modal').style.display = 'none';
+
+            // Remover classe do corpo para permitir scroll e seleção
+            document.body.classList.remove('popup-active');
+            
+            // Esconder a ampulheta
+            hideLoadingOverlay()
+        }
     </script>
+
+
 {% endblock %}

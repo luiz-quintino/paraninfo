@@ -1,5 +1,7 @@
 from users.models import tbAssociados
-from paraninfo_admin.models import tbComissao  # Certifique-se de que o modelo tbComissao está definido corretamente
+from paraninfo_admin.models import tbComissao
+from home.models import tbSessao  # Importar o modelo tbSessao
+
 
 class PersistentUserDataMiddleware:
     def __init__(self, get_response):
@@ -7,48 +9,53 @@ class PersistentUserDataMiddleware:
 
     def __call__(self, request):
         if request.user.is_authenticated:
-            try:
-                # Busca o associado com base no usuário logado
-                associado = tbAssociados.objects.get(uuid=request.user.last_name)
-                request.comissao = associado.comissao
-                request.user_uuid = associado.uuid
-
-                # Busca o título da comissão com base no ID da comissão
+            # Verificar se os dados já estão na sessão
+            if 'user_data' not in request.session:
                 try:
-                    comissao = tbComissao.objects.get(id=associado.comissao)
-                    request.comissao_title = comissao.comissao
-                except tbComissao.DoesNotExist:
-                    request.comissao_title = None
-                
-                # Adiciona os grupos do usuário ao request
-                groups = list(request.user.groups.values_list('name', flat=True))
-                request.is_sys_admin = 'sys-admin' in groups
-                request.is_app_admin = 'app-admin' in groups
-                request.is_master = 'master' in groups
-                request.is_staff = 'staff' in groups
-                request.is_admin = request.is_sys_admin | request.is_app_admin | request.is_master
+                    associado = tbAssociados.objects.get(uuid=request.user.last_name)
+                    comissao = tbComissao.objects.filter(id=associado.comissao).first()
+                    groups = list(request.user.groups.values_list('name', flat=True))
 
-            except tbAssociados.DoesNotExist:
-                request.comissao = None
-                request.user_uuid = None
-                request.comissao_title = None
-                request.user_groups = []
-                request.is_sys_admin = False
-                request.is_admin = False
-                request.is_app_admin = False
-                request.is_master = False
-                request.is_staff = False
-                
+                    # Registra a sessão do usuário no banco de dados
+                    sessao = tbSessao.objects.create(
+                        usuario_id=request.user.id,
+                        auth_group_id=groups
+                    )
+
+                    # Atualiza os dados do usuário na sessão
+                    request.session['user_data'] = {
+                        'sessao_id': sessao.id,  # Armazena o ID da sessão
+                        'comissao': associado.comissao,
+                        'user_uuid': associado.uuid,
+                        'user_id': associado.id,
+                        'comissao_title': comissao.comissao if comissao else None,
+                        'groups': groups,
+                        'is_sys_admin': 'sys-admin' in groups,
+                        'is_app_admin': 'app-admin' in groups,
+                        'is_master': 'master' in groups,
+                        'is_staff': 'staff' in groups,
+                        'is_admin': any(group in groups for group in ['sys-admin', 'app-admin', 'master']),
+                    }
+
+                except tbAssociados.DoesNotExist:
+                    pass
+
+            # Atualiza os atributos do request com os dados da sessão
+            user_data = request.session['user_data']
+
+            for key, value in user_data.items():
+                setattr(request, key, value)
+
+            print('dados do usuário atualizados na sessão')
+
         else:
-            request.comissao = None
-            request.user_uuid = None
-            request.comissao_title = None
-            request.user_groups = []
-            request.is_sys_admin = False
-            request.is_admin = False
-            request.is_app_admin = False
-            request.is_master = False
-            request.is_staff = False
+            print('usuário não logado')
+            # Limpar os dados da sessão para usuários não autenticados
+            request.session.pop('user_data', None)
+            for key in ['comissao', 'user_id', 'user_uuid', 'comissao_title', 'user_groups', 
+                        'is_sys_admin', 'is_app_admin', 'is_master', 'is_staff', 'is_admin', 'sesssao']:
+                setattr(request, key, None if key != 'user_groups' else [])
 
         response = self.get_response(request)
+        print('response', response)
         return response

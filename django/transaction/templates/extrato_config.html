@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Load balance{% endblock %}
+{% load static %}
+
+{% block content %}
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Key</th>
+            <th>Action</th>
+            <th>Condition</th>
+            <th>Key</th>
+            <th>Value</th>
+            <th>color</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for extrato in extrato_configs %}
+        <tr>
+            <td>{{ extrato.id }}</td>
+            <td>{{ extrato.key }}</td>
+            <td>{{ extrato.action }}</td>
+            <td>{{ extrato.condition }}</td>
+            <td>{{ extrato.popup_config.key }}</td>
+            <td>{{ extrato.popup_config.value }}</td>
+            <td>{{ extrato.popup_config.color }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,53 @@
+/* Estilo geral */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 70vh; /* Garante que o corpo ocupe pelo menos a altura da janela */
+}
+
+
+.menu-logo-container {
+    display: flex; /* Alinha os itens horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+    left: 0;
+    width: 100px; /* Largura fixa para o contêiner do logo */
+    position: absolute;
+    flex: 1;
+    padding: 0px;
+}
+
+.container-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 70vh; /* Garante que o corpo ocupe pelo menos a altura da janela */
+}
+
+/* Cabeçalho */
+.header-main {
+    text-align: center;
+}
+
+/* Corpo principal */
+.main-body-main {
+    flex: 1;
+    display: flex; /* Define o layout em colunas */
+}
+
+/* Corpo da página */
+.body-main {
+    flex: 1; /* Faz o corpo ocupar o restante do espaço */
+    padding: 20px;
+    overflow-y: auto; /* Adiciona rolagem vertical se o conteúdo for muito longo */
+}
+
+/* Rodapé */
+.footer-main {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px;
+}
+

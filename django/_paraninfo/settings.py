@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "users",
     "home",
     "paraninfo_admin",
+    "transaction",
     "balance"
 ]
 
@@ -58,6 +59,7 @@ TEMPLATES = [
             BASE_DIR / "users/templates",
             BASE_DIR / "paraninfo_admin/templates",
             BASE_DIR / "home/templates",
+            BASE_DIR / "transaction/templates",
             BASE_DIR / "balance/templates",
                 ],  # Diretório para templates personalizados
         "APP_DIRS": True,
@@ -135,11 +137,13 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
+    BASE_DIR / "static",
     BASE_DIR / "_paraninfo/static",
     BASE_DIR / "users/static",
     BASE_DIR / "credential/static",
     BASE_DIR / "paraninfo_admin/static",
     BASE_DIR / "home/static",
+    BASE_DIR / "transaction/static",
     BASE_DIR / "balance/static",
     ]
 MEDIA_URL = '/media/'
