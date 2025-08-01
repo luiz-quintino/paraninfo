@@ -48,6 +48,7 @@ class PersistentUserDataMiddleware:
                         usuario_id=associado.id,
                         auth_group_id=groups,
                         usuario_ip = ip,
+                        localizacao=get_location_from_ip(ip).get('city', 'Desconhecido')
                     )
 
                     # Atualiza os dados do usuário na sessão

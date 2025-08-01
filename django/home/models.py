@@ -7,6 +7,7 @@ class tbSessao(models.Model):
     # usuario_id = models.IntegerField()  # Relacionamento com o modelo User
     auth_group_id = models.CharField(max_length=45)  # Campo varchar com limite de 45 caracteres
     usuario_ip = models.CharField(max_length=45, null=True, blank=True)  # Campo para armazenar o IP do usuário
+    localizacao = models.CharField(max_length=45, null=True, blank=True)  # Campo para armazenar a localização do usuário
 
     # Relacionamento com tbTransacao
     usuario = models.ForeignKey(
