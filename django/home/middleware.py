@@ -24,7 +24,7 @@ def get_location_from_ip( ip):
             "latitude": data.get("latitude"),
             "longitude": data.get("longitude"),
         }
-    return "Erro ao consultar API"
+    return {'city': 'Erro ao consultar API'}
 
 
 class PersistentUserDataMiddleware:
