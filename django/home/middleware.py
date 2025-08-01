@@ -1,6 +1,7 @@
 from users.models import tbAssociados
 from paraninfo_admin.models import tbComissao
 from home.models import tbSessao  # Importar o modelo tbSessao
+import requests
 
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -9,6 +10,22 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+
+def get_location_from_ip( ip):
+    response = requests.get(f"https://ipapi.co/{ip}/json/")
+    if response.status_code == 200:
+        data = response.json()
+        return {
+            "ip": ip,
+            "city": data.get("city"),
+            "region": data.get("region"),
+            "country": data.get("country_name"),
+            "latitude": data.get("latitude"),
+            "longitude": data.get("longitude"),
+        }
+    return "Erro ao consultar API"
+
 
 class PersistentUserDataMiddleware:
     def __init__(self, get_response):
@@ -25,6 +42,8 @@ class PersistentUserDataMiddleware:
 
                     # Registra a sessão do usuário no banco de dados
                     ip = get_client_ip(request)
+                    print(f"IP do usuário: {ip}")
+                    print(f'Região do usuário: {get_location_from_ip(ip)}')
                     sessao = tbSessao.objects.create(
                         usuario_id=associado.id,
                         auth_group_id=groups,
