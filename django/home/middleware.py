@@ -32,7 +32,7 @@ def get_location_from_ip( ip):
                 "latitude": data.get("latitude"),
                 "longitude": data.get("longitude"),}
         
-    return f"{region['cidy']}/{region['country']}"
+    return f"{region['city']}/{region['country']}"
 
 
 class PersistentUserDataMiddleware:
