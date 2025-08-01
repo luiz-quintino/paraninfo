@@ -13,18 +13,26 @@ def get_client_ip(request):
 
 
 def get_location_from_ip( ip):
-    response = requests.get(f"https://ipapi.co/{ip}/json/")
-    if response.status_code == 200:
-        data = response.json()
-        return {
-            "ip": ip,
-            "city": data.get("city"),
-            "region": data.get("region"),
-            "country": data.get("country_name"),
-            "latitude": data.get("latitude"),
-            "longitude": data.get("longitude"),
-        }
-    return {'city': 'Erro ao consultar API'}
+    region = {"ip": ip,
+        "city": None,
+        "region": None,
+        "country": None,
+        "latitude": None,
+        "longitude": None
+    }
+
+    if ip:
+        response = requests.get(f"https://ipapi.co/{ip}/json/")
+        if response.status_code == 200:
+            data = response.json()
+            region = {"ip": ip,
+                "city": data.get("city"),
+                "region": data.get("region"),
+                "country": data.get("country_name"),
+                "latitude": data.get("latitude"),
+                "longitude": data.get("longitude"),}
+        
+    return f"{region['cidy']}/{region['country']}"
 
 
 class PersistentUserDataMiddleware:
@@ -48,7 +56,7 @@ class PersistentUserDataMiddleware:
                         usuario_id=associado.id,
                         auth_group_id=groups,
                         usuario_ip = ip,
-                        localizacao=get_location_from_ip(ip).get('city', 'Desconhecido')
+                        localizacao=get_location_from_ip(ip).get('region', 'Desconhecido')
                     )
 
                     # Atualiza os dados do usuário na sessão
