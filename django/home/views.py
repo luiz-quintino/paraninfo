@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from config.menus import MENU_AJUDA
 
+
+
 def home_view(request):
     # Verificar o grupo do usuário
     user_groups = request.user.groups.values_list('name', flat=True) if request.user.is_authenticated else []
@@ -12,13 +14,13 @@ def home_view(request):
 
     # verifica todas as requisições
     print("Requisições do usuário: ---------------------------------")
-    for req in request.__dict__.items():
-        if type(req[1]) == dict:
-            print(f"{req[0]}:")
-            for key, value in req[1].items():
-                print(f"   [{key}]: {value}")
-        else:
-            print(f"{req[0]}: {req[1]}")
+    # for req in request.__dict__.items():
+    #     if type(req[1]) == dict:
+    #         print(f"{req[0]}:")
+    #         for key, value in req[1].items():
+    #             print(f"   [{key}]: {value}")
+    #     else:
+    #         print(f"{req[0]}: {req[1]}")
 
     if request.user.is_authenticated:
         # Divide o nome em partes e define o apelido
@@ -31,6 +33,11 @@ def home_view(request):
         # Armazena o apelido e o UUID na sessão
         request.session['apelido'] = apelido
         request.session['user_uuid'] = request.user.last_name
+
+        fields = ['COMPUTERNAME', 'HOMEPATH', 'LANG', 'LOGONSERVER', 'OS', 'USERDOMAIN', 'USERNAME', 'HTTP_HOST']
+        # for field in fields:
+            # print(f"Valor do campo {field}: {getattr(request.user, field, 'Campo não encontrado')}")
+    
 
     else:
         # Define valores padrão para usuários não autenticados

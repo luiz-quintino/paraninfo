@@ -2,6 +2,13 @@ from users.models import tbAssociados
 from paraninfo_admin.models import tbComissao
 from home.models import tbSessao  # Importar o modelo tbSessao
 
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 class PersistentUserDataMiddleware:
     def __init__(self, get_response):
@@ -17,9 +24,11 @@ class PersistentUserDataMiddleware:
                     groups = list(request.user.groups.values_list('name', flat=True))
 
                     # Registra a sessão do usuário no banco de dados
+                    ip = get_client_ip(request)
                     sessao = tbSessao.objects.create(
-                        usuario_id=request.user.id,
-                        auth_group_id=groups
+                        usuario_id=associado.id,
+                        auth_group_id=groups,
+                        usuario_ip = ip,
                     )
 
                     # Atualiza os dados do usuário na sessão
@@ -40,13 +49,16 @@ class PersistentUserDataMiddleware:
                 except tbAssociados.DoesNotExist:
                     pass
 
+                print('dados do usuário atualizados na sessão')
+                ip = get_client_ip(request)
+                print(f"IP do usuário: {ip}")
+
             # Atualiza os atributos do request com os dados da sessão
             user_data = request.session['user_data']
 
             for key, value in user_data.items():
                 setattr(request, key, value)
 
-            print('dados do usuário atualizados na sessão')
 
         else:
             print('usuário não logado')
