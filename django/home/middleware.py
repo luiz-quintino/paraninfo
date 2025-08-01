@@ -14,9 +14,9 @@ def get_client_ip(request):
 
 def get_location_from_ip( ip):
     region = {"ip": ip,
-        "city": None,
+        "city": 'Desconhecido',
         "region": None,
-        "country": None,
+        "country": 'Desconhecido',
         "latitude": None,
         "longitude": None
     }
@@ -32,7 +32,7 @@ def get_location_from_ip( ip):
                 "latitude": data.get("latitude"),
                 "longitude": data.get("longitude"),}
         
-    return f"{region['city']}/{region['country']}"
+    return {'region': f"{region['city']}/{region['country']}"}
 
 
 class PersistentUserDataMiddleware:
