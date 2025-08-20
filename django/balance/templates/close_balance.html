@@ -3,3 +3,37 @@
 {% load static %}
 
 {% block title %}Contabilidade da Comissão {% endblock %}
+
+{% block content %} 
+    {% if message.text %}
+        {% include 'partials/popup_message.html' with message=message %}
+    {% endif %}
+
+    <div class="table-container">
+        <h2>{{ message.title }}</h2>
+
+        <div class="user-form">
+            {% if is_data_empty %}
+                <div class="alert">
+                    Nenhum dado encontrado para análise.
+                </div>
+            {% endif %}
+        </div>
+        
+        <form method="post" action="{% url 'fechar_balanco' %}" id="formCloseBalance">
+            {% csrf_token %}
+            <input type="hidden" id="close" name="close" value="close"> 
+        </form>
+        
+        <form method="post" action="{% url 'fechar_balanco' %}" id="formConfirmCloseBalance">
+            {% csrf_token %}
+            <input type="hidden" id="confirm" name="confirm" value="confirm"> 
+        </form>
+
+
+
+    </div>
+
+
+
+{% endblock %}

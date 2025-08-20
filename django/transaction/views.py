@@ -9,9 +9,16 @@ from datetime import datetime
 import pandas as pd
 import json
 import os
-from .models import tbExtratoConfig, tbExtrato, tbTransacao
+from .models import tbExtratoConfig, tbExtrato, tbTransacao, tbBoleto, tbResumoComissao
 from users.models import tbAssociados
-from .utils import process_sicoob_input, convert_date, identify_transaction, save_log, get_user_by_responsible_name
+from config.constants import MESSAGE_TYPE_INFO, MESSAGE_TYPE_ERROR, MESSAGE_TYPE_WARNING
+
+from .utils import  process_sicoob_input_xls, \
+                    processar_sicoob_input_txt, \
+                    convert_date, \
+                    identify_transaction, \
+                    save_log, \
+                    get_user_by_responsible_name
 from config.menus import    MENU_VOLTAR, \
                             MENU_BALANCE_IMPORTAR_EXTRATO, \
                             MENU_BALANCE_ENTRADA_MANUAL, \
@@ -22,6 +29,10 @@ from config.menus import    MENU_VOLTAR, \
                             MENU_BALANCE_SALVAR_MOVIMENTACOES, \
                             MENU_BALANCE_REVISAR_ANALISE, \
                             MENU_BALANCE_FECHAR_ANALISE, \
+                            MENU_BALANCE_BOLETO, \
+                            MENU_BALANCE_BOLETO_ADICIONAR, \
+                            MENU_BALANCE_BOLETO_IMPORTAR, \
+                            MENU_BALANCE_BOLETO_SALVAR, \
                             MENU_BALANCE_FECHAR_ANALISE_CONFIRMAR
 
 # Função para verificar se o usuário pertence ao grupo 'admin'
@@ -31,6 +42,161 @@ def is_sys_admin(user):
                 user.groups.filter(name='master').exists()
     return is_admin
 
+
+@user_passes_test(is_sys_admin)
+def boleto_view(request):
+    """
+        Cria e faz gestão de boletos de mensalidades
+    """
+    message = {'type': 'info', 'text': '', 'title': 'Boleto', 'function': ''}
+    is_data_empty = True
+    
+    # Cria side menu
+    menu_options = [
+        MENU_VOLTAR,
+        MENU_BALANCE_EXTRATO,
+        MENU_BALANCE_BOLETO_ADICIONAR, 
+        MENU_BALANCE_BOLETO_IMPORTAR, 
+        MENU_BALANCE_BOLETO_SALVAR, 
+    ]
+
+    # lê os boletos da comissão com status = 1:novo, 2: aberto e 3: atrasado
+    boletos = tbBoleto.objects.filter(
+        comissao_id=request.comissao if request.comissao else 1,
+        boleto_status__status__in=['novo', 'aberto', 'atrasado']
+        ).order_by('id')
+    
+    lista_boletos = []
+
+    if request.method == 'POST':
+
+        if request.POST.get('novo_boleto', ''):
+            mensalidade = 0.0
+            # Resgata configuração 
+            config = tbResumoComissao.objects.filter(comissao_id=request.comissao).first()  # Pega a configuração da comissão atual
+            if config:
+                mensalidade = config.valor_mensalidade if config.valor_mensalidade else 0
+            
+            # Lista associados com pagamento em aberto > 20% do valor da mensalidade
+            # mensalidade20 = mensalidade * 0.2  # 20% do valor da mensalidade
+            # resumo_associado = tbAssociados.objects.filter(
+            #     comissao=request.comissao,
+            #     situacao="ativo",  # Filtra apenas associados ativos
+            #     resumo_associado__valor_em_aberto__gt=mensalidade20
+            # ).annotate(
+            #     valor_em_aberto=Subquery(
+            #         tbAssociados.objects.filter(id=OuterRef('id')).values('resumo_associado__valor_em_aberto')[:1]
+            #     )
+            # ).order_by('id')
+
+            resumo_associado = tbAssociados.objects.filter(
+                comissao=request.comissao,
+                situacao="ativo",  # Filtra apenas associados ativos
+                ).order_by('id')
+            
+            # cria registro de boleto     
+            if resumo_associado.exists():
+                # Data de vencimento
+                dt_vencimento = datetime.now().date()  # Data atual como vencimento
+                log = save_log(request, 'tbBoleto', evento_log_id=12)  # log: Criação de boleto
+                # Cria um novo boleto para cada associado com pagamento em aberto
+                for associado in resumo_associado:
+                    lista_boletos.append({
+                        'data': f'{datetime.now().date():%d/%m/%Y}',  # Data atual formatada como dd/mm/yyyy,
+                        'documento': associado.codigo_associado,
+                        'nosso_numero': '',
+                        'associado': associado,
+                        'valor_boleto': mensalidade,
+                        'dt_vencimento': f'{dt_vencimento:%d/%m/%Y}',
+                        'valor_pago': '',
+                        'dt_pagamento': '',
+                        'mensagem': '',
+                        'situacao': 'novo',  # Status do boleto
+                    })
+                
+            #     message['text'] = f'Foram criados {resumo_associado.count()} boletos para associados com pagamento em aberto.'
+            #     message['type'] = MESSAGE_TYPE_INFO
+            
+
+            else:
+                message['text'] = 'Não existem boletos para serem gerados.'
+                message['type'] = MESSAGE_TYPE_WARNING
+
+        
+        elif request.POST.get('importar_boleto', ''):
+            file = 'G:/My Drive/COMISSÃO DE FORMATURA/TESOURARIA/Boletos/2507_boletos.xls'
+            try:
+                df = pd.read_excel(file, header=None)  # Carrega sem cabeçalho para identificar a estrutura
+                
+                # Localiza título para identificar se é um "Relatório - Títulos por Período"
+                if 'Títulos por Período' not in df.iloc[:2, :7].to_string():
+                    message['text'] = 'O arquivo selecionado não é um relatório de boletos válido.'
+                    message['type'] = MESSAGE_TYPE_ERROR
+                
+                else:
+                    # Localizar a linha que contém o cabeçalho da tabela
+                    header_row_index = df[df.iloc[:, 1] == 'Sacado'].index[0]  # Localiza a linha onde a segunda coluna contém 'Sacado'
+
+                    # Carrega sem cabeçalho para identificar a estrutura
+                    df = pd.read_excel(file, header=header_row_index)  
+
+                    # Localizar a última linha onde a segunda coluna está em branco
+                    last_row_index = df.iloc[1:, 1][df.iloc[1:, 1].isna()].index[0]
+                    
+                    # Excluir todas as colunas não(~) nomeadas
+                    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+
+                    # Exibir a tabela isolada
+                    df = df.iloc[:last_row_index]
+
+            except Exception as e:
+                message['text'] = f'Erro ao importar boletos: {str(e)}'
+                message['type'] = MESSAGE_TYPE_ERROR
+        
+        elif request.POST.get('salvar_boleto', ''):
+            # Salvar boletos no banco de dados
+            lista_boletos = json.loads(request.POST.get('lista_boletos', '[]')) 
+            if lista_boletos:
+                for boleto in lista_boletos:
+                    # Verifica se o boleto já existe
+                    if not tbBoleto.objects.filter(
+                        comissao_id=request.comissao,
+                        documento=boleto['documento'],
+                        dt_vencimento=convert_date(boleto['dt_vencimento']),
+                        valor_boleto=float(boleto['valor_boleto'].replace(',', '.')),
+                    ).exists():
+                        # Cria um novo registro de boleto
+                        tbBoleto.objects.create(
+                            comissao_id=request.comissao,
+                            data=convert_date(boleto['data']),
+                            documento=boleto['documento'],
+                            nosso_numero=boleto['nosso_numero'] if boleto['nosso_numero'] else None,
+                            associado_id=boleto['associado'].get('id', None),
+                            valor_boleto=float(boleto['valor_boleto'].replace(',', '.')),
+                            dt_vencimento=convert_date(boleto['dt_vencimento']),
+                            valor_pago=float(boleto['valor_pago'].replace(',', '.')) if boleto['valor_pago'] else None,
+                            dt_pagamento=convert_date(boleto['dt_pagamento']) if boleto['dt_pagamento'] else None,
+                            mensagem=boleto['mensagem'],
+                            situacao=boleto['situacao'],
+                        )
+                
+                message['text'] = 'Boletos salvos com sucesso.'
+                message['type'] = MESSAGE_TYPE_INFO
+
+    df_boletos = pd.DataFrame(lista_boletos)
+    df_boletos = df_boletos.fillna('')  # Preenche valores NaN com string vazia
+    is_data_empty = False if not df_boletos.empty else True
+    # Serializar o DataFrame para JSON e armazená-lo na sessão
+    request.session['df_boletos'] = df_boletos.to_json(orient='records')  # Armazena o DataFrame na sessão
+
+    context = {
+        'menu_options': menu_options,
+        'message': message,
+        'boletos': df_boletos,
+        'is_data_empty': is_data_empty,
+    }
+
+    return render(request, 'boleto.html', context)
 
 @user_passes_test(is_sys_admin)
 def analise_movimentacao_view(request):
@@ -85,7 +251,7 @@ def analise_movimentacao_view(request):
                                     
                 message['text'] = f'{reg_closed}{reg_out}Tem certeza que deseja fechar a análise de movimentação?\n \
                                     Essa operação não poderá ser revertida'
-                message['type'] = 'confirm'
+                message['type'] = MESSAGE_TYPE_INFO
                 message['function'] = 'submitForm("formConfirmarFechamento")'  # Função JS para confirmar fechamento
 
             else:
@@ -387,9 +553,7 @@ def entrada_manual_view(request):
     # Cria side menu
     menu_options = [  
         MENU_VOLTAR,
-        MENU_BALANCE_IMPORTAR_EXTRATO,
-        MENU_BALANCE_ENTRADA_MANUAL,
-        MENU_BALANCE_ANALISAR_MOVIMENTACAO,
+        MENU_BALANCE_EXTRATO,
     ]
 
     if request.method == 'POST':
@@ -455,20 +619,14 @@ def transaction_view(request):
         Lê um extrato bancário e o prepara para importação
     """
     user_groups = request.user.groups.values_list('name', flat=True) if request.user.is_authenticated else []
-    menu_options = []
     dataframe = None
+    context = {}
+    error = ''
+    is_dataframe_empty = True
+    file=''
 
     # Cria side menu
-    menu_options = [
-        MENU_VOLTAR,
-        MENU_BALANCE_IMPORTAR_EXTRATO,
-        MENU_BALANCE_ENTRADA_MANUAL,
-        MENU_BALANCE_ANALISAR_MOVIMENTACAO,  
-    ]
-    context = {
-                'is_dataframe_empty': True,
-                'menu_options': menu_options,
-            }
+    menu_options = [MENU_VOLTAR]
     
     # POST request para upload de arquivo Excel
     if request.method == 'POST' and 'file' in request.FILES:
@@ -477,49 +635,64 @@ def transaction_view(request):
         filename = fs.save(file.name, file)
         file_path = fs.path(filename)
 
-        try:
-            # Ler o arquivo Excel e convertê-lo em um DataFrame
-            dataframe = pd.read_excel(file_path)
-            is_dataframe_empty = dataframe.empty if dataframe is not None else True
-            # print("DataFrame loaded successfully:", dataframe.head(5))  # Debug: Exibe as primeiras linhas do DataFrame
-        except Exception as e:
-            context['error'] = f'O arquivo não e um Excel válido: "{file}"'
-            is_dataframe_empty = True
-        finally:
-            # Apagar o arquivo após o processamento
-            if os.path.exists(file_path):  # Verifica se o arquivo existe
-                os.remove(file_path)  # Remove o arquivo
-        
-        if not is_dataframe_empty:
-            # print("DataFrame is not empty, processing...")  # Debug: Confirma que o DataFrame não está vazio
-            if 'EXTRATO CONTA CORRENTE' in dataframe.head(0):
-                dataframe.drop(1, inplace=True)  # Remove a primeira linha do DataFrame
-                dataframe.columns = ['data', 'documento', 'historico', 'credito']
-                dataframe = dataframe.fillna('')  # Preenche valores NaN com string vazia
-                
+        # Ler o arquivo de extrato e convertê-lo em um DataFrame
+        if file_path.endswith('xlsx') or file_path.endswith('xls'):
+            try:
+                dataframe = pd.read_excel(file_path)
+                is_dataframe_empty = dataframe.empty if dataframe is not None else True
+
                 # Processar o DataFrame para reorganizar as linhas adicionais
-                dataframe = process_sicoob_input(dataframe)
+                if 'EXTRATO CONTA CORRENTE' in dataframe.head(0):
+                    dataframe.drop(1, inplace=True)  # Remove a primeira linha do DataFrame
+                    dataframe.columns = ['data', 'documento', 'historico', 'credito']
+                    dataframe = process_sicoob_input_xls(dataframe)
+                else: 
+                    error = f'O arquivo "{file}" não e um extrato váliod'
+                    is_dataframe_empty = True
 
-                # Serializar o DataFrame para JSON e armazená-lo na sessão
-                request.session['dataframe'] = dataframe.to_json(orient='records')
+            except Exception as e:
+                error = f'O arquivo não e um Excel válido: "{file}"'
+                is_dataframe_empty = True
 
-                # Cria side menu para extrato
-                menu_options = [
-                    MENU_VOLTAR,
-                    MENU_BALANCE_EXTRATO,
-                    MENU_BALANCE_ACEITAR_EXTRATO,
-                ]
-                                
-                context = { 
-                    'is_dataframe_empty': False,
-                    'menu_options': menu_options,
-                    'file_name': file.name,
-                    'dataframe': dataframe,
-                }
-            else:
-                context['error'] = f'O arquivo "{file.name}" não contém um extrato do banco Sicoob.'
-        
+        elif file_path.endswith('txt'): 
+            dataframe, error = processar_sicoob_input_txt(file_path)
+            is_dataframe_empty = dataframe.empty if dataframe is not None else True
+            
+        # Apagar o arquivo após o processamento
+        if os.path.exists(file_path):  # Verifica se o arquivo existe
+            os.remove(file_path)  # Remove o arquivo
 
+        if not is_dataframe_empty:
+            dataframe = dataframe.fillna('')  # Preenche valores NaN com string vazia
+            # print("DataFrame is not empty, processing...")  # Debug: Confirma que o DataFrame não está vazio
+            # Serializar o DataFrame para JSON e armazená-lo na sessão
+            request.session['dataframe'] = dataframe.to_json(orient='records')
+
+            context['file_name'] = filename
+            context['dataframe'] = dataframe,
+            
+            # Cria side menu para extrato
+            menu_options.extend([
+                MENU_BALANCE_EXTRATO,
+                MENU_BALANCE_ACEITAR_EXTRATO,
+            ])
+
+    else:
+        menu_options.extend([
+            MENU_BALANCE_IMPORTAR_EXTRATO,
+            MENU_BALANCE_BOLETO,
+            MENU_BALANCE_ENTRADA_MANUAL,
+            MENU_BALANCE_ANALISAR_MOVIMENTACAO,  
+        ])
+    
+    context = {
+                'is_dataframe_empty': is_dataframe_empty,
+                'menu_options': menu_options,
+                'error': error,
+                'file_name': file,
+                'dataframe': dataframe,
+            }
+    print(context)
     return render(request, 'transaction.html', context)
 
 

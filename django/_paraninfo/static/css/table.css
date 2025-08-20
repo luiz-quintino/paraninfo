@@ -38,7 +38,7 @@
 }
 
 /* Responsividade */
-@media (max-width: 768px) {
+@media (max-width: 990px) {
     .table {
         font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
     }

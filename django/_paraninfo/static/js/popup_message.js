@@ -35,7 +35,7 @@ function showPopup(type, message, title, callback) {
             title = title || 'Erro'; // Definir título padrão se não for fornecido
             break;
         case 'confirm':
-            popupIcon.src = "/static/media/icons/confirm.png";
+            popupIcon.src = "/static/media/icons/question.png";
             popupTitle.style.color = '#4caf50';
             popupCancel.style.display = 'inline-block';
             popupConfirm.style.display = 'inline-block';

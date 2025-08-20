@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Gerenciamento de boletos {% endblock %}
+
+{% block content %}
+    {% if message.text %}
+        {% include 'partials/popup_message.html' with message=message %}
+    {% endif %}
+    <div class="main-content">
+        <h2>{{ message.title }}</h2>
+
+        <div class="user-form">
+            {% if is_data_empty %}
+                <div class="alert">
+                    Nenhum dado encontrado.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div>
+        <form method="post" action="{% url 'boleto' %}" id='formNovoboleto'>
+            {% csrf_token %}
+            <input type="hidden" name="novo_boleto" value="novo_boleto">
+        </form>
+
+        <form method="post" action="{% url 'boleto' %}" id='formImportarBoleto'>
+            {% csrf_token %}
+            <input type="hidden" name="importar_boleto" value="importar_boleto">
+        </form>
+    </div>
+
+    <div class="table-container">
+            {% if not is_data_empty %}
+                <form method="post" action="{% url 'boleto' %}" id='formSalvarBoleto'>
+                    {% csrf_token %}
+                    <input id="linhasIgnoradas" name="linhasIgnoradas" value="">
+                    <!-- <input type="hidden" id="linhasIgnoradas" name="linhasIgnoradas" value=""> -->
+                    
+                    <input type="hidden" name="salvar_boleto" value="salvar_boleto">
+                    <table border="1" class="table_big_list_simple">
+                        <thead>
+                            <tr>
+                                {% for column in boletos.columns %}
+                                    <th>{{ column }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in boletos.values %}
+                            <tr id="linha-{{ forloop.counter }}" style="background-color: #CCFFCC;">
+                                {% for cell in row %}
+                                    <td>
+                                        {{ cell }}
+                                    </td>
+                                {% endfor %}
+                                <td class="action-buttons">
+                                    <button onclick="aceitarLinha({{ forloop.counter }})" id="aceitar-{{ forloop.counter }}" disabled>Emitir recibo</button>
+                                    <button onclick="rejeitarLinha({{ forloop.counter }})" id="rejeitar-{{ forloop.counter }}">Ignorar</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    
+                    
+                </form>
+            {% endif %}
+        </div>
+    </div>
+    <script>
+        const linhasIgnoradas = [];
+
+        function aceitarLinha(id) {
+            const linha = document.getElementById(`linha-${id}`);
+            linha.style.backgroundColor = '#CCFFCC';
+            document.getElementById(`aceitar-${id}`).disabled = true;
+            document.getElementById(`rejeitar-${id}`).disabled = false;
+
+            // Remover o ID da linha da lista de aceitas
+            const index = linhasIgnoradas.indexOf(id);
+            if (index !== -1) {
+                linhasIgnoradas.splice(index, 1);
+            }
+
+            // Atualizar o campo oculto com os IDs das linhas aceitas
+            document.getElementById('linhasIgnoradas').value = JSON.stringify(linhasIgnoradas);
+        }
+
+        function rejeitarLinha(id) {
+            const linha = document.getElementById(`linha-${id}`);
+            linha.style.backgroundColor = '#E0E0E0';
+            document.getElementById(`aceitar-${id}`).disabled = false;
+            document.getElementById(`rejeitar-${id}`).disabled = true;
+
+            
+            // Adicionar o ID da linha à lista de aceitas
+            if (!linhasIgnoradas.includes(id)) {
+                linhasIgnoradas.push(id);
+            }
+
+            // Atualizar o campo oculto com os IDs das linhas aceitas
+            document.getElementById('linhasIgnoradas').value = JSON.stringify(linhasIgnoradas);
+        }
+
+    </script>
+{% endblock %}

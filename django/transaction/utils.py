@@ -116,7 +116,7 @@ def extract_cnpj(text):
 
     return cnpjs
 
-def process_sicoob_input(dataframe):
+def process_sicoob_input_xls(dataframe):
     # Preenche valores NaN com string vazia
     dataframe = dataframe.fillna('')
 
@@ -217,3 +217,145 @@ def process_sicoob_input(dataframe):
     processed_df = pd.DataFrame(processed_data)
 
     return processed_df
+
+import re
+import pandas as pd
+from datetime import datetime
+
+def processar_sicoob_input_txt(file_name):
+    """
+    Processa o texto do extrato bancário e retorna um DataFrame.
+
+    Args:
+        texto_extrato (str): Texto completo do extrato bancário.
+
+    Returns:
+        pd.DataFrame: DataFrame contendo os dados processados do extrato.
+    """
+    error = ''
+
+    # Abre o arquivo de texto
+    with open(file_name, 'r', encoding='utf-8') as file:
+        linhas = file.readlines()
+
+    # Verifica se o texto está vazio
+    if not linhas:
+        error = f'O arquivo de extrato "{file_name}" está vazio.'
+        return pd.DataFrame(), error
+
+    if not "SICOOB - Sistema de Cooperativas de Crédito do Brasil" in linhas[0]:
+        error = f'O arquivo "{file}" não e um extrato SICOOB válido'
+        return pd.DataFrame(), error
+
+    # Regex para identificar as linhas do extrato
+    regex_linha = re.compile(r"(?P<data>\d{2}/\d{2}/\d{4})\s+")
+
+    # Lista para armazenar os dados do extrato
+    dados_extrato = []
+
+    # Iterar pelas linhas e aplicar o regex
+    for i, linha in enumerate(linhas):
+        if linha:
+            match = regex_linha.match(linha)
+            if match:
+                tipo = ""
+                nome = ""
+                cpf = ""
+                nota = ""
+                documento = ""
+                historico = ""
+                credito = ""
+                debito = ""
+                tab_historico = 32 # coluna do histórico
+                tab_valor = 76 # coluna do valor
+                
+                if 'SALDO DO DIA' in linha:
+                    tab_historico = linha.find('SALDO DO DIA')
+
+                if 'EXTRATO CONTA CORRENTE' in linha or 'SALDO DO DIA' in linha:
+                    continue
+
+                # Extrair os dados da linha
+                data = datetime.strptime(match.group("data"), "%d/%m/%Y").date()
+            
+                documento = linha[10:tab_historico].strip()  # Extrai o documento (pode ser vazio)  
+                historico = linha[tab_historico:tab_valor:].strip()
+                valor = linha[tab_valor:].strip()
+                # Determinar se é crédito ou débito
+                if valor.endswith("C"):
+                    credito = float(valor[:-1].replace(".", "").replace(",", "."))
+                    debito = None
+                elif valor.endswith("D"):
+                    debito = float(valor[:-1].replace(".", "").replace(",", "."))
+                    if debito < 0:
+                        debito = -debito
+                    credito = None
+                else:
+                    credito = debito = None
+
+                # Extrair informações adicionais do histórico (linhas subsequentes)
+                additional_info = True
+                next_line = i + 1
+                rem = False
+                while additional_info:
+                    if next_line < len(linhas):
+                        # Verifica se a próxima linha é uma linha adicional
+                        if linhas[next_line].replace('-', '').strip() == "":
+                            additional_info = False
+                            continue
+
+                        match = regex_linha.match(linhas[next_line])
+                        if not match:
+                            # Assume que as próximas linhas contêm informações adicionais
+                            if next_line - i == 1:
+                                if 'REM' in linhas[next_line]:
+                                    rem = True
+                                    nota += linhas[next_line].strip() + " "
+                                else:
+                                    tipo = linhas[next_line].strip() 
+                            elif next_line - i == 2:
+                                if rem:
+                                    tipo = linhas[next_line].strip() 
+                                else:
+                                    nome = linhas[next_line].strip() 
+                            elif next_line - i == 3:
+                                if rem:
+                                    nome = linhas[next_line].strip() 
+                                else:
+                                    cpf = linhas[next_line].strip()
+                            elif next_line - i == 4:
+                                if rem:
+                                    cpf = linhas[next_line].strip()
+                                else:
+                                    nota += linhas[next_line].strip() + " "
+                            elif 4 < (next_line - i) < 7:
+                                 nota += linhas[next_line].strip() + " "
+                            else:
+                                additional_info = False
+                            
+                            next_line += 1
+                        else:
+                            # Se a próxima linha não for uma linha adicional, sai do loop
+                            additional_info = False
+                    else:
+                        # Se não houver mais linhas, sai do loop
+                        additional_info = False
+
+                # print(i, data, documento, historico, credito, debito, tipo, nome, cpf, nota)
+                # Adicionar os dados à lista
+                dados_extrato.append({
+                    "data": data,
+                    "documento": documento,
+                    "historico": historico,
+                    "tipo": tipo,
+                    "nome": nome,
+                    "cpf": cpf,
+                    "nota": nota,
+                    "credito": credito,
+                    "debito": debito,
+                })
+
+    # Criar o DataFrame a partir dos dados
+    df_extrato = pd.DataFrame(dados_extrato)
+
+    return df_extrato, error

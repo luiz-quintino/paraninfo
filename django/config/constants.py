@@ -12,3 +12,9 @@ MONTHS = {
     11:'NOVEMBRO', 
     12:'DEZEMBRO'
           }
+
+MESSAGE_TYPE_WARNING = 'warning'
+MESSAGE_TYPE_INFO = 'info'
+MESSAGE_TYPE_ERROR = 'error'
+MESSAGE_TYPE_CONFIRM = 'confirm'
+MESSAGE_TYPE_INPUT = 'input'

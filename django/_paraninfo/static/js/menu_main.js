@@ -4,6 +4,7 @@ const menuButton = document.querySelector('.menu-button');
 
 // Variável para rastrear se o mouse está sobre o menu ou o botão
 let isMouseOverMenuOrButton = false;
+let menuTimeout = 900;
 
 // Alterna o menu ao clicar no botão
 menuButton.addEventListener('click', () => {
@@ -18,16 +19,19 @@ menuButton.addEventListener('click', () => {
 
 // Abre o menu
 function openMenu() {
+    
     menu.style.display = 'block'; // Torna o menu visível
     setTimeout(() => {
         menu.style.opacity = '1'; // Torna o menu opaco
     }, 10); // Pequeno atraso para ativar a transição
     menu.classList.add('active');
     menuButton.classList.add('active'); // Adiciona a classe 'active' ao botão
+    isMouseOverMenuOrButton = true;
 }
 
 // Fecha o menu
 function closeMenu() {
+    isMouseOverMenuOrButton = false;
     menu.classList.remove('active');
     menuButton.classList.remove('active'); // Remove a classe 'active' do botão
     menu.style.opacity = '0'; // Torna o menu transparente
@@ -43,27 +47,33 @@ menu.addEventListener('mouseenter', () => {
 
 menu.addEventListener('mouseleave', () => {
     isMouseOverMenuOrButton = false;
+
     setTimeout(() => {
-        if (!isMouseOverMenuOrButton) {
-            closeMenu();
-        }
-    }, 300); // Timeout para evitar fechamento imediato
+        confirmCloseMenu();
+    }, menuTimeout); // Timeout para evitar fechamento imediato
 });
 
 menuButton.addEventListener('mouseenter', () => {
     isMouseOverMenuOrButton = true;
 });
 
+
 menuButton.addEventListener('mouseleave', () => {
     isMouseOverMenuOrButton = false;
+
     setTimeout(() => {
-        if (!isMouseOverMenuOrButton) {
-            closeMenu();
-        }
-    }, 300); // Timeout para evitar fechamento imediato
+        confirmCloseMenu();
+    }, menuTimeout); // Timeout para evitar fechamento imediato
 });
 
+function confirmCloseMenu() {
+    if (!isMouseOverMenuOrButton) {
+        closeMenu();
+    }
+}
 
+
+// Ampulheta
 function showLoadingOverlay() {
     // Exibe a ampulheta
     document.getElementById('loading-overlay').style.display = 'block';

@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Contabilidade da Comissão {% endblock %}
+
+{% block content %} 
+
+    {% if message.text %}
+        {% include 'partials/popup_message.html' with message=message %}
+    {% endif %}
+
+    <div class="table-container">
+        <h2>{{ message.title }}</h2>
+
+        {% if is_data_empty %}
+            <div class="user-form">
+                <div class="alert">
+                    Nenhum dado encontrado.
+                </div>
+            </div>
+        {% else %}
+        <div>
+                <form method="post" action="{% url 'emitir_recibo' %}" id="formRecibo">
+                    {% csrf_token %}
+                    <input type="hidden" id="linhasIgnoradas" name="linhasIgnoradas" value="">
+
+                        <table class="table_big_list_simple">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Histórico</th>
+                                <th>Crédito</th>
+                                <th>Débido</th>
+                                <th>Transação</th>
+                                <th>Associado</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for linha in extrato_list %}
+                            <tr id="linha-{{ forloop.counter }}" style="background-color: #CCFFCC;">
+                                <td>{{ linha.data }}</td>
+                                <td>{{ linha.historico }}</td>
+                                <td>{{ linha.credito }}</td>
+                                <td>{{ linha.debito }}</td>
+                                <td>{{ linha.transacao_key }}</td>
+                                <td>{{ linha.associado_nome }}</td>
+                                <td class="action-buttons">
+                                    <button onclick="aceitarLinha({{ forloop.counter }})" id="aceitar-{{ forloop.counter }}" disabled>Emitir recibo</button>
+                                    <button onclick="rejeitarLinha({{ forloop.counter }})" id="rejeitar-{{ forloop.counter }}">Ignorar</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </form>
+            </div>
+        {% endif %}
+
+    </div>  
+
+    <script>
+        const linhasIgnoradas = [];
+
+        function aceitarLinha(id) {
+            const linha = document.getElementById(`linha-${id}`);
+            linha.style.backgroundColor = '#CCFFCC';
+            document.getElementById(`aceitar-${id}`).disabled = true;
+            document.getElementById(`rejeitar-${id}`).disabled = false;
+
+            // Remover o ID da linha da lista de aceitas
+            const index = linhasIgnoradas.indexOf(id);
+            if (index !== -1) {
+                linhasIgnoradas.splice(index, 1);
+            }
+
+            // Atualizar o campo oculto com os IDs das linhas aceitas
+            document.getElementById('linhasIgnoradas').value = JSON.stringify(linhasIgnoradas);
+        }
+
+        function rejeitarLinha(id) {
+            const linha = document.getElementById(`linha-${id}`);
+            linha.style.backgroundColor = '#E0E0E0';
+            document.getElementById(`aceitar-${id}`).disabled = false;
+            document.getElementById(`rejeitar-${id}`).disabled = true;
+
+            
+            // Adicionar o ID da linha à lista de aceitas
+            if (!linhasIgnoradas.includes(id)) {
+                linhasIgnoradas.push(id);
+            }
+
+            // Atualizar o campo oculto com os IDs das linhas aceitas
+            document.getElementById('linhasIgnoradas').value = JSON.stringify(linhasIgnoradas);
+        }
+
+        function submitForm(formName) {
+            // Exibe a ampulheta antes de enviar o formulário
+            showLoadingOverlay();
+            // Verifica se o formulário de importação existe e o envia
+            const importacaoForm = document.getElementById(formName);
+            if (importacaoForm) {
+                importacaoForm.submit(); // Envia o formulário de importacao.html
+            } else {
+                console.error('Formulário de importação não encontrado.');
+            }
+        }
+
+    </script>
+
+{% endblock %}
+

@@ -50,8 +50,6 @@ class PersistentUserDataMiddleware:
 
                     # Registra a sessão do usuário no banco de dados
                     ip = get_client_ip(request)
-                    print(f"IP do usuário: {ip}")
-                    print(f'Região do usuário: {get_location_from_ip(ip)}')
                     sessao = tbSessao.objects.create(
                         usuario_id=associado.id,
                         auth_group_id=groups,
@@ -78,8 +76,6 @@ class PersistentUserDataMiddleware:
                     pass
 
                 print('dados do usuário atualizados na sessão')
-                ip = get_client_ip(request)
-                print(f"IP do usuário: {ip}")
 
             # Atualiza os atributos do request com os dados da sessão
             user_data = request.session['user_data']

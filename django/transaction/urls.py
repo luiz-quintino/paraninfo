@@ -14,4 +14,6 @@ urlpatterns = [
     path("edit-extrato", views.edit_extrato_view, name="edit_extrato"),             # configurações de entrada de extrato
     
     path("get-extrato-details/<int:extrato_id>/", views.get_extrato_details, name='get_extrato_details'),
+    
+    path("boleto", views.boleto_view, name="boleto"),             
 ]

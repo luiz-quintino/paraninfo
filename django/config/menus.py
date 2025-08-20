@@ -39,15 +39,42 @@ MENU_BALANCE_EXTRATO                    = {'name': 'Menu movimentações',
                                            'tip': 'Acesse o menu de extratos para visualizar, importar e analisar movimentações financeiras',
                                            'color': '#b5e2fa',}
 
-MENU_BALANCE_IMPORTAR_EXTRATO           = {'name': 'Importar novo extrato',       
+MENU_BALANCE_BOLETO                     = {'name': 'Gerenciar boletos',
+                                           'url': "boleto",                     
+                                           'tip': 'Acesse o menu de boletos para visualizar, emitir e gerenciar boletos bancários',
+                                           }
+
+MENU_BALANCE_BOLETO_IMPORTAR            = {'name': 'Importar dados de boletos',
+                                           'url': "/boleto",   
+                                           'type': 'js',
+                                           'function': 'submitForm("formImportarBoleto")',                
+                                           'tip': 'Acesse o menu de boletos para visualizar, emitir e gerenciar boletos bancários',
+                                           }
+
+MENU_BALANCE_BOLETO_ADICIONAR           = {'name': 'Adiciona novos boletos',
+                                           'url': "/boleto",  
+                                           'type': 'js',
+                                           'function': 'submitForm("formNovoboleto")',      
+                                           'tip': 'Acesse o menu de boletos para visualizar, emitir e gerenciar boletos bancários',
+                                           }
+
+MENU_BALANCE_BOLETO_SALVAR              = {'name': 'Salvar modificações',
+                                           'url': "/boleto",   
+                                           'type': 'js',
+                                           'function': 'submitForm("formSalvarBoleto")',     
+                                           'tip': 'Salvar as modificações realizadas nos boletos bancários',
+                                           'color': 'yellow',
+                                           }
+
+MENU_BALANCE_IMPORTAR_EXTRATO           = {'name': 'Importar extrato bancário',       
                                            'url': "/transaction",
                                            'tip': 'Acesse o formulário para importar um novo extrato bancário'}
 
-MENU_BALANCE_ENTRADA_MANUAL             = {'name': 'Entrada manual',              
+MENU_BALANCE_ENTRADA_MANUAL             = {'name': 'Entrada manual de movimentação',              
                                            'url': "/transaction/entrada-manual",
                                            'tip': 'Acesse o formulário para entrada manual de movimentações financeiras'}
 
-MENU_BALANCE_ANALISAR_MOVIMENTACAO      = {'name': 'Analisar movimentação',       
+MENU_BALANCE_ANALISAR_MOVIMENTACAO      = {'name': 'Classificar movimentação',       
                                            'url': "analise-movimentacao", 
                                            'type': 'js', 
                                            'function': 'openAnalisePage()',
@@ -70,20 +97,20 @@ MENU_BALANCE_ACEITAR_ENTRADAS_EXTRATO   = {'name': 'Aceitar entradas de extrato'
                                            'function': 'submitImportacaoForm()',
                                            'tip': 'Aceitar as entradas de extrato bancário importadas para análise',}
 
-MENU_BALANCE_SALVAR_MOVIMENTACOES       = {'name': 'Salvar movimentação',         
+MENU_BALANCE_SALVAR_MOVIMENTACOES       = {'name': 'Salvar classificação',         
                                            'url': "analise-movimentacao", 
                                            'type': 'js', 
                                            'function': 'submitForm("formAnalise")',         
                                            'color': 'yellow',
                                            'tip': 'Salvar as análises de movimentações financeiras realizadas'}
 
-MENU_BALANCE_REVISAR_ANALISE            = {'name': 'Revisar análise',             
+MENU_BALANCE_REVISAR_ANALISE            = {'name': 'Revisar movimentação',             
                                            'url': "analise-movimentacao", 
                                            'type': 'js', 
                                            'function': 'submitForm("formRevisao")',
                                            'tip': 'Revisar as análises de movimentações financeiras realizadas'}
 
-MENU_BALANCE_FECHAR_ANALISE             = {'name': 'Concluir análise',              
+MENU_BALANCE_FECHAR_ANALISE             = {'name': 'Incorporar movimentação à contabilidade',              
                                            'url': "analise-movimentacao", 
                                            'type': 'js', 
                                            'function': 'submitForm("formFechamento")',
@@ -97,38 +124,51 @@ MENU_BALANCE_FECHAR_ANALISE_CONFIRMAR   = {'name': 'Confirmar fechamento',
                                            'tip': 'Confirmar o fechamento da análise de movimentações financeiras realizadas'}
 
 MENU_CONTABILIDADE_VER_EXTRATO          = {'name': 'Extrato de movimentações',
-                                           'url': "", 
+                                           'url': "/balance", 
                                            'tip': 'Acesse o extrato para visualizar as movimentações financeiras'}
 
 MENU_CONTABILIDADE_FECHAR_BALANCO       = {'name': 'Fechar balanço mensal',
-                                           'url': "balance/fechar-balanco", 
+                                           'url': "fechar-balanco", 
                                            'tip': 'Fechar o balanço contábil para o período selecionado',
                                            'color': 'yellow'}
 
 MENU_CONTABILIDADE_RESUMO_OPERACOES     = {'name': 'Resumo de operações',
-                                            'url': "contabilidade/resumo-operacoes",
+                                            'url': "resumo-operacoes",
                                             'tip': 'Acesse o resumo de operações para visualizar as movimentações financeiras resumidas'}
 
 MENU_CONTABILIDADE_LIVRO_CAIXA          = {'name': 'Livro caixa',
-                                           'url': "contabilidade/livro-caixa",
+                                           'url': "livro-caixa",
                                            'tip': 'Acesse o livro caixa para visualizar as movimentações financeiras registradas'}
 
 MENU_CONTABILIDADE_MENSALIDADDES        = {'name': 'Mensalidades',
-                                           'url': "contabilidade/mensalidades",
+                                           'url': "emitir-recibo",
                                            'tip': 'Acesse as mensalidades para visualizar as movimentações financeiras mensais'}
 
-MENU_CONTABILIDADE_EMITIR_RECIBOS       = {'name': 'Emitir recibos',
-                                           'url': "contabilidade/emitir-recibos",
+MENU_MENU_CONTABILIDADE                 = {'name': 'Menu contabilidade',
+                                           'url': "/balance",
+                                           'tip': 'Acessa o menu inicial de contabilidade',
+                                           'color': '#b5e2fa',}
+
+MENU_CONTABILIDADE_RECIBOS              = {'name': 'Emitir recibos',
+                                           'url': "emitir-recibo",
                                            'tip': 'Acesse o formulário para emitir recibos de pagamentos realizados'}
 
+MENU_CONTABILIDADE_RECIBOS_EMITIR       = {'name': 'Emitir',
+                                           'url': "emitir-recibo",
+                                           'type': 'js', 
+                                           'function': 'submitForm("formRecibo")',
+                                           'color': 'yellow',
+                                           'tip': 'Acesse o formulário para emitir recibos de pagamentos realizados',
+                                           }
+
 MENU_CONTABILIDADE_INADIMPLENTES        = {'name': 'Inadimplentes',
-                                            'url': "contabilidade/inadimplentes",
+                                            'url': "inadimplentes",
                                             'tip': 'Acesse a lista de inadimplentes para visualizar os associados com pendências financeiras'}
 
 MENU_CONTABILIDADE_EMITIR_COBRANCA      = {'name': 'Emitir cobrança',
-                                           'url': "contabilidade/emitir-cobranca",
+                                           'url': "emitir-cobranca",
                                            'tip': 'Acesse o formulário para emitir cobranças para associados inadimplentes'}
 
 MENU_CONTABILIDADE_ASSINAR_LIVRO_CAIXA  = {'name': 'Assinar livro caixa',
-                                           'url': "contabilidade/assinar-livro-caixa",
+                                           'url': "assinar-livro-caixa",
                                            'tip': 'Acesse o formulário para assinar o livro caixa'}
