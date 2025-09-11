@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Registro de novo usuário{% endblock %}
+
+{% block content %}
+    <div class="form-container">
+
+        <h2>{{ message.title }}</h2>
+        <h3>{{ message.text}}</h3>
+        <!-- Exibir mensagens de sucesso ou erro -->
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            <p>Preencha a Ficha de Cadastro abaixo e submeta os dados para registro.</p>
+            <p>Assim que a comissão de formatura verificar os seus dados, você receberá um email com a confirmação de acesso</p>
+            <p>Todos os campos em vermelho são obrigatórios</p>
+        </div>
+
+        <form method="post" class="user-form" id="formEntrada" enctype="multipart/form-data" urlaction="{% url 'invitation' uuid %}">
+            {% csrf_token %}
+
+            <input type="hidden" name="uuid" value="{{ uuid }}">
+            <!-- Campos do formulário -->
+            <div class="form-group">
+                <label for="nome_responsavel">Nome completo do responsável</label>
+                <input type="text" id="nome_responsavel" name="nome_responsavel" value="{{ associado.nome_responsavel }}"  placeholder="" required>
+            </div>
+            <div class="form-group">
+                <label for="nascimento_responsavel">Nascimento do responsável</label>
+                <input type="text" id="nascimento_responsavel" name="nascimento_responsavel" value="{{ associado.nascimento_responsavel }}"  placeholder="dd/mm/aaaa" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email do responsável</label>
+                <input type="email" id="email" name="email" value="{{ associado.email }}"  placeholder="" required>
+            </div>
+            <div class="form-group">
+                <label for="cpf">CPF</label>
+                <input type="text" id="cpf" name="cpf" value="{{ associado.cpf }}"  placeholder="xxx.xxx.xxx-xx" required>
+            </div>
+            <div class="form-group">
+                <label for="telefone">Telefone</label>
+                <input type="text" id="telefone" name="telefone" value="{{ associado.telefone }}" placeholder="(xx)xxxxx-xxxx" required>
+            </div>
+            <div class="form-group">
+                <label for="aluno">Nome completo do aluno</label>
+                <input type="text" id="aluno" name="aluno" value="{{ associado.aluno }}"  placeholder="" required>
+            </div>
+            <div class="form-group">
+                <label for="nome_de_guerra">Nome de guerra</label>
+                <input type="text" id="nome_de_guerra" name="nome_de_guerra" value="{{ associado.nome_de_guerra }}"  placeholder="" required>
+            </div>
+            <div class="form-group">
+                <label for="nascimento_aluno">Nascimento do Aluno</label>
+                <input type="text" id="nascimento_aluno" name="nascimento_aluno" value="{{ associado.nascimento_aluno }}" placeholder="dd/mm/yyyy" required>
+            </div>
+            <div class="form-group">
+                <label for="sexo">Sexo do aluno</label>
+                <!-- combo list -->
+                 <select id="sexo" name="sexo" required>
+                    <option value="" disabled selected>Selecione o sexo</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Feminino">Feminino</option>
+                </select>   
+            </div>
+            <div class="form-group">
+                <label for="matricula">Matrícula</label>
+                <input type="text" id="matricula" name="matricula" value="{{ associado.matricula }}"  placeholder="Matrículo do aluno no colégio" required>
+            </div>
+            <div class="form-group">
+                <label for="endereco">Endereço</label>
+                <input type="text" id="endereco" name="endereco" value="{{ associado.endereco }}"  placeholder="" required>
+            </div>
+            <div class="form-group">
+                <label for="numero">Número</label>
+                <input type="text" id="numero" name="numero" value="{{ associado.numero }}" placeholder="" required>
+            </div>
+            <div class="form-group">
+                <label for="complemento">Complemento</label>
+                <input type="text" id="complemento" name="complemento" value="{{ associado.complemento }}"  placeholder="">
+            </div>
+            <div class="form-group">
+                <label for="bairro">Bairro</label>
+                <input type="text" id="bairro" name="bairro" value="{{ associado.bairro }}" placeholder="" required>
+            </div>
+            <div class="form-group">
+                <label for="cidade">Cidade</label>
+                <input type="text" id="cidade" name="cidade" value="{{ associado.cidade }}" placeholder="" required>
+            </div>
+            <div class="form-group">
+                <label for="cep">CEP</label>
+                <input type="text" id="cep" name="cep" value="{{ associado.cep }}" placeholder="xx.xxx-xxx" required>
+            </div>
+
+            <!-- submeter documento de identidade e comprovante de endereço -->
+            <div class="form-group">
+                <label for="RG">Identificação</label>
+                <span id="file1-name" style="border: 1px solid red; ">Documento de identidade do responsável com foto</span>
+                <label for="file1">
+                    <img src="{% static 'media/icons/open.png' %}" alt="Selecionar arquivo" class="upload-icon">
+                </label>
+                <input type="file" id="file1" name="file1" accept=".jpg" class="hide-input">
+            </div>
+
+            <div class="form-group">
+                <label for="Residencia">Residência</label>
+                <span id="file2-name" style="border: 1px solid red;" >Comprovante de endereço no nome do responsável</span>
+                <label for="file2">
+                    <img src="{% static 'media/icons/open.png' %}" alt="Selecionar arquivo" class="upload-icon">
+                </label>
+                <input type="file" id="file2" name="file2" accept=".jpg" class="hide-input">
+            </div>
+
+            <!-- Aceite -->
+            <div class="form-group">
+                <label for="Aceite1">Aceite</label>
+                    <div class="aceite-termos">
+                    <input type="checkbox" id="aceite1" name="aceite1" required>
+                    <label for="aceite">Declaro que li e estou de acordo com o <bold>Regimento Interno da Comissão de Formatura</bold>.</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="Aceite2">Aceite</label>
+                <div class="aceite-termos">
+                    <input type="checkbox" id="aceite2" name="aceite2" required>
+                    <label for="aceite2" style="width: 300;">Declaro que li e estou de acordo com a Declaracao de Praticas de Certificacao da Autoridade Certificadora.</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="Aceite3">Aceite</label>
+                <div class="aceite-termos" required>
+                    <input type="checkbox" id="aceite3" name="aceite3" required>
+                    <label for="aceite3">Declaro que as informações fornecidas são verdadeiras e autorizo o uso dos meus dados para os fins relacionados à minha participação na comissão de formatura em conformidade com LGPD.</label>
+                </div>
+            </div>
+
+            <!-- Botões de ação -->
+            <div class="action-buttons">
+                <button type="submit" class="save-button" onclick="submitRequest()" >Eviar registro</button>
+                <button type="reset" class="cancel-button">Cancelar</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        ['file1', 'file2'].forEach((fileId) => {
+            document.getElementById(fileId).addEventListener('click', 
+                function() {
+                    // Exibe a ampulheta antes de ler o arquivo
+                    showLoadingOverlay();
+                });
+
+            document.getElementById(fileId).addEventListener('change', 
+                function() {
+                    // Função para manipular a seleção do arquivo
+                    hideLoadingOverlay();
+
+                    if (this.files.length > 0 ) {
+                        const fileName = this.files[0].name;
+                        document.getElementById(`${fileId}-name`).textContent = fileName;
+                        document.getElementById(`${fileId}-name`).style.border = '1px solid green';
+                        
+                    } else {
+                        const fileName = 'Nenhum arquivo selecionado';
+                        document.getElementById(`${fileId}-name`).textContent = fileName;
+                    }
+                    
+                }
+            );
+        });
+        
+        function submitRequest() {
+            // Campos do formulário
+            const email = document.getElementById('email').value.trim();
+            const nascimentoResponsavel = document.getElementById('nascimento_responsavel').value.trim();
+            const cpf = document.getElementById('cpf').value.trim();
+            const telefone = document.getElementById('telefone').value.trim();
+            const nascimentoAluno = document.getElementById('nascimento_aluno').value.trim();
+            const cep = document.getElementById('cep').value.trim();
+            const file1 = document.getElementById('file1').files.length;
+            const file2 = document.getElementById('file2').files.length;
+            const aceite1 = document.getElementById('aceite1').checked;
+            const aceite2 = document.getElementById('aceite2').checked;
+            const aceite3 = document.getElementById('aceite3').checked;
+
+            // Regex para validação
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/; // Formato: 000.000.000-00
+            const telefoneRegex = /^\(\d{2}\)\d{4,5}-\d{4}$/; // Formato: (00) 00000-0000
+            const cepRegex = /^\d{2}\.\d{3}-\d{3}$/; // Formato: 00.000-000
+            const dataRegex = /^\d{2}\/\d{2}\/\d{4}$/; // Formato: DD/MM/AAAA
+
+            // Validação dos campos
+            let errors = [];
+
+            if (!email || !emailRegex.test(email)) errors.push('O campo "Email" está vazio ou em formato inválido.');
+            if (!cpf || !cpfRegex.test(cpf)) errors.push('O campo "CPF" está vazio ou em formato inválido (ex: 000.000.000-00).');
+            if (!telefone || !telefoneRegex.test(telefone)) errors.push('O campo "Telefone" está vazio ou em formato inválido (ex: (00) 00000-0000).');
+            if (!cep || !cepRegex.test(cep)) errors.push('O campo "CEP" está vazio ou em formato inválido (ex: 00.000-000).');
+            if (!nascimentoResponsavel || !dataRegex.test(nascimentoResponsavel)) errors.push('O campo "Nascimento do Responsável" está vazio ou em formato inválido (ex: DD/MM/AAAA).');
+            if (!nascimentoAluno || !dataRegex.test(nascimentoAluno)) errors.push('O campo "Nascimento do Aluno" está vazio ou em formato inválido (ex: DD/MM/AAAA).');
+            if (file1 === 0) errors.push('O campo "Documento de identidade do responsável com foto" é obrigatório.');
+            if (file2 === 0) errors.push('O campo "Comprovante de endereço no nome do responsável" é obrigatório.');    
+            if (!aceite1) errors.push('Você deve aceitar o Regimento Interno da Comissão de Formatura.');
+            if (!aceite2) errors.push('Você deve aceitar a Declaração de Práticas de Certificação da Autoridade Certificadora.');
+            if (!aceite3) errors.push('Você deve aceitar a autorização para uso dos seus dados conforme LGPD.');
+
+            // Exibir erros ou enviar o formulário
+            if (errors.length > 0) {
+                alert('Erros encontrados:\n\n' + errors.join('\n'));
+            } else {
+                // Exibe a ampulheta antes de submeter o formulário
+                showLoadingOverlay();
+                document.getElementById('formEntrada').submit();
+            }
+        }
+    </script>
+{% endblock %}

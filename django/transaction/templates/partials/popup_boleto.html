@@ -1,0 +1,75 @@
+
+<div id="popup-boleto" class="popup-modal" style="display: none;">
+    <div class="form-container">
+        <h3 id="popup-title">Detalhes do registro</h3>
+        <form id="popup-form">
+
+            <div class="form-group">
+                <label for="popup-data">Emissão:</label>
+                <input type="text" id="popup-data" name="data" disabled>
+            </div>
+
+            <div id="popup-nome-group">
+                <div class="form-group">
+                    <label for="popup-nome">Associado:</label>
+                    <input type="text" id="popup-nome" name="nome" disabled>
+                </div>
+            </div>
+
+            <div id="popup-credito-group">
+                <div class="form-group">
+                    <label for="popup-documento">Documento:</label>
+                    <input type="text" id="popup-documento" name="documento" >
+                </div>
+            </div>
+
+            <div id="popup-nossoNumero-group">
+                <div class="form-group">
+                    <label for="popup-nossoNumero">Nosso número:</label>
+                    <input type="text" id="popup-nossoNumero" name="nossoNumero">
+                </div>
+            </div>
+            
+            <div id="popup-valorBoleto-group">
+                <div class="form-group">
+                    <label for="popup-valorBoleto">Valor boleto:</label>
+                    <input type="text" id="popup-valorBoleto" name="valorBoleto">
+                </div>
+            </div>
+
+            <div id="popup-dtVencimento-group">
+                <div class="form-group">
+                    <label for="popup-dtVencimento">Vencimento:</label>
+                    <input type="text" id="popup-dtVencimento" name="dtVencimento">
+                </div>
+            </div>
+            
+            <div id="popup-valorPago-group">
+                <div class="form-group">
+                    <label for="popup-valorPago">Valor pago:</label>
+                    <input type="text" id="popup-valorPago" name="valorPago" disabled>
+                </div>
+            </div>
+
+            <div id="popup-dtPagamento-group">
+                <div class="form-group">
+                    <label for="popup-dtPagamento">Pagamento:</label>
+                    <input type="text" id="popup-dtPagamento" name="dtPagamento" disabled>
+                </div>
+            </div>
+
+            <div id="popup-mensagem-group">
+                <div class="form-group">
+                    <label for="popup-mensagem">Mensagem:</label>
+                    <input type="text" id="popup-mensagem" name="mensagem">
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" onclick="closePopup()" id="popup-cancel-button" class="cancel-button" style="display: block;">Cancelar</button>
+                <button type="button" onclick="savePopup()" id="popup-save-button" class="save-button" style="display: block;">Aceitar</button>
+            </div>
+
+        </form>
+    </div>
+</div>

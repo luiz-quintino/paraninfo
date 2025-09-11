@@ -1,50 +1,9 @@
-import pandas as pd
-import regex as re
-from datetime import datetime
-from home.models import tbPagina, tbLog
-from users.models import tbAssociados
+from utils import get_user_by_codigo_pagamento
 from transaction.models import tbExtratoConfig, tbTransacao
+import pandas as pd
+from decimal import Decimal
 
-
-def save_log(request, description, evento_log_id) -> int:
-    # Registra log de evento no banco de dados
-    pagina = tbPagina.objects.get(pagina=request.resolver_match.url_name)
-    seessao_ativa_id = request.session['user_data']['sessao_id']
-
-    log = tbLog.objects.create(
-        pagina_id = pagina.id,
-        evento_log_id = evento_log_id,
-        sessao_ativa_id = seessao_ativa_id,
-        descricao = description,
-    )
-
-    return log.id
-
-
-def get_user_by_codigo_pagamento(comissao: str, codigo_pagamento: int) -> tbAssociados:
-    """
-        Localiza o usuário pelo código de pagamento.
-    """
-    user = tbAssociados.objects.filter(comissao=comissao, codigo_pagamento=codigo_pagamento).first()  # retorna o primeiro usuário encontrado ou None
-
-    if user:
-        return user
-    
-    return None
-
-def get_user_by_responsible_name(comissao: str, name: str) -> tbAssociados:
-    """
-        Localiza o usuário pelo código de pagamento.
-    """
-    name = name.strip().lower()
-    user = tbAssociados.objects.filter(comissao=comissao, nome_responsavel__iexact=name).first()  # retorna o primeiro usuário encontrado ou None
-
-    if user:
-        return user
-    
-    return None
-
-def identify_transaction(comissao: str, description: str, value: float) -> dict:
+def identify_transaction(comissao: str, description: str, value: Decimal) -> dict:
     """
         Identifica o tipo de transação e/ou o usuário com base na descrição e no valor.
         transaction = {
@@ -93,16 +52,6 @@ def identify_transaction(comissao: str, description: str, value: float) -> dict:
     transaction['id'] = transacao_db.id if transacao_db else None
 
     return transaction
-            
-def convert_date(date_str) -> str:
-    date = ""
-    if date_str:
-        try:
-            date = datetime.strptime(date_str, '%d/%m/%Y').date()
-        except ValueError:
-            pass
-    return date
-
 
 def extract_cnpj(text):
     """
@@ -116,7 +65,65 @@ def extract_cnpj(text):
 
     return cnpjs
 
-def process_sicoob_input_xls(dataframe):
+def import_boletos_xls(file_name):
+    error = ''
+    
+    # try:
+    df = pd.read_excel(file_name, header=None)  # Carrega sem cabeçalho para identificar a estrutura
+
+    # Localiza título para identificar se é um "Relatório - Títulos por Período"
+    if 'Títulos por Período' not in df.iloc[:2, :7].to_string():
+        error = 'O arquivo selecionado não é um relatório de boletos válido.'
+    
+    else:
+        # Localizar a linha que contém o cabeçalho da tabela
+        header_row_index = df[df.iloc[:, 1] == 'Sacado'].index[0]  # Localiza a linha onde a segunda coluna contém 'Sacado'
+
+        # Carrega com cabeçalho 
+        df = pd.read_excel(file_name, header=header_row_index)  # Carrega o DataFrame com o cabeçalho encontrado
+
+        # Localizar fim da tabela
+        last_row_index = df.iloc[1:, 1][df.iloc[1:, 1].isna()].index[0]
+        
+        # Excluir todas as colunas não(~) nomeadas
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+
+        # Exibir a tabela isolada
+        df = df.iloc[:last_row_index]
+        # Modifica título das colunas
+        df.columns = ['associado', 'nosso_numero', 'documento', 'dt_prev_credito', 'vencimento', 'dt_limite_pg', 'valor_boleto', 'vlr_mora', 'vlr_desc.', 'vlr.outros Acresc.', 'dt_pagamento', 'valor_pago']  # Renomeia as colunas
+        # df.columns = ['Sacado', 'Nosso Número', 'Seu Número', 'Dt. Previsão Crédito', 'Vencimento', 'Dt. Limite Pgto', 'Valor (R$)', 'Vlr. Mora', 'Vlr. Desc.', 'Vlr. Outros Acresc.', 'Dt. Liquid.', 'Vlr. Cobrado']
+        df['documento'].dttype = str  # Converte a coluna 'documento' para string
+
+    return df, error
+
+def process_sicoob_input_xls(file_path):
+    dataframe = pd.DataFrame()
+    error = ''
+
+    try:
+        print(file_path)
+        dataframe = pd.read_excel(file_path)
+
+            # Processar o DataFrame para reorganizar as linhas adicionais
+        if 'EXTRATO CONTA CORRENTE' in dataframe.head(0):
+            # procura pela linha onde está a palavra 'DATA'
+            title_line = dataframe.index[dataframe.iloc[:, 0] == 'DATA'].tolist()
+            
+            if title_line:
+                dataframe.drop(title_line, inplace=True)  # Remove a primeira linha do DataFrame
+            
+            dataframe.columns = ['data', 'documento', 'historico', 'credito']
+        else: 
+            error = 'O arquivo "{file}" não e um extrato válido'
+
+    except Exception as e:
+        error = 'O arquivo não e um Excel válido: "{file}"'
+
+    if error:
+        return pd.DataFrame(), error
+    
+
     # Preenche valores NaN com string vazia
     dataframe = dataframe.fillna('')
 
@@ -139,6 +146,7 @@ def process_sicoob_input_xls(dataframe):
     processed_data = []
 
     extra_line = 0
+    
     # Iterar sobre as linhas do DataFrame
     for index, row in dataframe.iterrows():
         if row['data']:  # Linha principal
@@ -149,11 +157,10 @@ def process_sicoob_input_xls(dataframe):
 
             # Processar a coluna 'valor' para separar o valor numérico e a transação
             valor_str = row['credito']
+            valor_decimal = Decimal(valor_str[:-1].replace('.', '').replace(',', '.').replace('\xa0', '').replace('-', ''))  # Remove ',' e '.' e converte para float
             
-            valor_float = float(valor_str[:-1].replace('.', '').replace(',', '.'))  # Remove ',' e '.' e converte para float
-            
-            debito = valor_float if valor_str[-1] == "D"  else ''  # Último caractere é 'C' ou 'D'
-            current_valor = valor_float if valor_str[-1] == "C" else ''  # Último caractere é 'C' ou 'D'
+            debito = valor_decimal if valor_str[-1] == "D"  else ''  # Último caractere é 'C' ou 'D'
+            current_valor = valor_decimal if valor_str[-1] == "C" else ''  # Último caractere é 'C' ou 'D'
             processed_data.append({
                 'data': current_data,
                 'documento': current_documento,
@@ -202,11 +209,11 @@ def process_sicoob_input_xls(dataframe):
 
             if row['credito']:
                 valor_str = row['credito']
-                valor_float = float(valor_str[:-1].replace('.', '').replace(',', '.'))  # Remove ',' e '.' e converte para float
+                valor_decimal = float(valor_str[:-1].replace('.', '').replace(',', '.'))  # Remove ',' e '.' e converte para float
                 if valor_str[-1] == 'D':
-                    valor_float = -valor_float
+                    valor_decimal = -valor_decimal
                     
-                processed_data[-1]['saldo'] = valor_float
+                processed_data[-1]['saldo'] = valor_decimal
 
             if row['documento']:
                 processed_data[-1]['nota'] = f"{processed_data[-1][header_]} {row['documento']}"
@@ -216,13 +223,13 @@ def process_sicoob_input_xls(dataframe):
     # Converter os dados processados em um novo DataFrame
     processed_df = pd.DataFrame(processed_data)
 
-    return processed_df
+    return processed_df, error
 
 import re
 import pandas as pd
 from datetime import datetime
 
-def processar_sicoob_input_txt(file_name):
+def process_sicoob_input_txt(file_name):
     """
     Processa o texto do extrato bancário e retorna um DataFrame.
 
@@ -240,11 +247,11 @@ def processar_sicoob_input_txt(file_name):
 
     # Verifica se o texto está vazio
     if not linhas:
-        error = f'O arquivo de extrato "{file_name}" está vazio.'
+        error = 'O arquivo de extrato "{file}" está vazio.'
         return pd.DataFrame(), error
 
     if not "SICOOB - Sistema de Cooperativas de Crédito do Brasil" in linhas[0]:
-        error = f'O arquivo "{file}" não e um extrato SICOOB válido'
+        error = 'O arquivo "{file}" não e um extrato SICOOB válido'
         return pd.DataFrame(), error
 
     # Regex para identificar as linhas do extrato

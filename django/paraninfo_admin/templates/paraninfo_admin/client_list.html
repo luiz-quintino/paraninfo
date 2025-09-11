@@ -38,7 +38,7 @@
         <tbody>
             {% for client in clients %}
             <tr onclick="window.location.href='{% url 'client_details' uuid=client.uuid %}'" style="cursor: pointer;">
-                <td>{{ client.comissao }}</td>
+                <td>{{ client.nome_comissao }}</td>
                 <td>{{ client.cnpj }}</td>
                 <td>{{ client.inscricao }}</td>
                 <td>{{ client.endereco }}</td>

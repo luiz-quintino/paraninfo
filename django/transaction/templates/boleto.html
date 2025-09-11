@@ -5,9 +5,11 @@
 {% block title %}Gerenciamento de boletos {% endblock %}
 
 {% block content %}
+
     {% if message.text %}
         {% include 'partials/popup_message.html' with message=message %}
     {% endif %}
+
     <div class="main-content">
         <h2>{{ message.title }}</h2>
 
@@ -20,7 +22,7 @@
         </div>
     </div>
 
-    <div>
+    <div class="table-container">
         <form method="post" action="{% url 'boleto' %}" id='formNovoboleto'>
             {% csrf_token %}
             <input type="hidden" name="novo_boleto" value="novo_boleto">
@@ -30,52 +32,237 @@
             {% csrf_token %}
             <input type="hidden" name="importar_boleto" value="importar_boleto">
         </form>
-    </div>
 
-    <div class="table-container">
-            {% if not is_data_empty %}
-                <form method="post" action="{% url 'boleto' %}" id='formSalvarBoleto'>
-                    {% csrf_token %}
-                    <input id="linhasIgnoradas" name="linhasIgnoradas" value="">
-                    <!-- <input type="hidden" id="linhasIgnoradas" name="linhasIgnoradas" value=""> -->
-                    
-                    <input type="hidden" name="salvar_boleto" value="salvar_boleto">
-                    <table border="1" class="table_big_list_simple">
-                        <thead>
-                            <tr>
-                                {% for column in boletos.columns %}
-                                    <th>{{ column }}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in boletos.values %}
-                            <tr id="linha-{{ forloop.counter }}" style="background-color: #CCFFCC;">
-                                {% for cell in row %}
-                                    <td>
-                                        {{ cell }}
-                                    </td>
-                                {% endfor %}
+        {% if not is_data_empty %}
+            <form method="post" action="{% url 'boleto' %}" id='formSalvarBoletos'>
+                {% csrf_token %}
+                <input type="hidden" id="linhasIgnoradas" name="linhasIgnoradas" value="">
+                <input type="hidden" id="linhasCanceladas" name="linhasCanceladas" value="">
+                <input type="hidden" id="linhasModificadas" name="linhasModificadas" value="">
+                <input type="hidden" name="salvar_boleto" value="salvar_boleto">
+                
+                <table border="1" class="table_big_list_simple">
+
+                    <thead>
+                        <tr>
+                            {% for column in boletos.columns %}
+                                <th>{{ column }}</th>
+                            {% endfor %}
+                            <th>ações</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in boletos.values %}
+                        <tr id="row-{{ forloop.counter }}" {% if row|last == "novo" or row|last == "importado" %} style="cursor: pointer; background-color: #CCFFCC;" {% elif row|last == "pago" %} style="cursor: pointer; background-color: #bfbff3; height: 50px;" {% else %} style="cursor: pointer;  {% endif %} class="openPopup" onclick="handleRowClick(event, {{ forloop.counter }})">
+                            
+                            {% for cell in row %}
+                                <td>
+                                    {{ cell }} 
+                                </td>
+                            {% endfor %}
+
+                            {% if row|last == "novo" or row|last == "importado" %}
                                 <td class="action-buttons">
-                                    <button onclick="aceitarLinha({{ forloop.counter }})" id="aceitar-{{ forloop.counter }}" disabled>Emitir recibo</button>
+                                    <button onclick="aceitarLinha({{ forloop.counter }})" id="aceitar-{{ forloop.counter }}" disabled>Gerar boleto</button>
                                     <button onclick="rejeitarLinha({{ forloop.counter }})" id="rejeitar-{{ forloop.counter }}">Ignorar</button>
                                 </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
 
-                    
-                    
-                </form>
-            {% endif %}
-        </div>
+                            {% elif row|last == "aberto" or row|last == "pago" %}
+                                <td class="action-buttons">
+                                    <button onclick="cancelarLinha({{ forloop.counter }})" id="rejeitar-{{ forloop.counter }}">Cancelar boleto</button>
+                                </td>
+                                
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+
+                
+                
+            </form>
+        {% endif %}
+
+        {% include 'partials/popup_boleto.html' %}
+        
     </div>
+    
     <script>
         const linhasIgnoradas = [];
+        const linhasModificadas = []
+        // Variável para armazenar o ID da linha selecionada
+        let id_linha = 0;
+
+        function handleRowClick(event, id) {
+            // Verifica se o clique foi dentro da última célula (ações)
+            if (event.target.closest('.action-buttons')) {
+                return; // Não faz nada se o clique foi na última célula
+            }
+
+            // Caso contrário, abre o popup
+            openPopup(id);
+        }
+
+        function openPopup(id) {
+            // Abra a janela de edição
+
+            // Verifica se a linha foi ignorada
+            const index = linhasIgnoradas.indexOf(id);
+            if (index !== -1) {
+                return;
+            }
+
+            // Carrega valores dos campos dos registros das colunas 2, 3, 5, 7, 8, 9, equivalalentes à documento, nosso_numero, valor_boleto dt_vencimento, mensagem
+            id_linha = id;
+            const data = document.querySelector(`#row-${id} td:nth-child(1)`).innerText;
+            const documento = document.querySelector(`#row-${id} td:nth-child(2)`).innerText;
+            const nossoNumero = document.querySelector(`#row-${id} td:nth-child(3)`).innerText;
+            const nome = document.querySelector(`#row-${id} td:nth-child(4)`).innerText; 
+            const valorBoleto = document.querySelector(`#row-${id} td:nth-child(5)`).innerText;
+            const dtVencimento = document.querySelector(`#row-${id} td:nth-child(6)`).innerText;
+            const mensagem = document.querySelector(`#row-${id} td:nth-child(9)`).innerText;
+            const situacao = document.querySelector(`#row-${id} td:nth-child(10)`).innerText;
+            
+            let title = 'Boleto'
+            let valorPago = ''
+            let dtPagamento = ''
+
+            // Preencher os campos do popup com os dados
+            if (situacao === 'novo') {
+                title = 'Novo boleto';
+            } else if (situacao === 'aberto') {
+                title = 'Boleto criado';
+            } else if (situacao === 'pago') {
+                title = 'Boleto pago';
+            } else if (situacao === 'importado') {
+                title = 'Novo boleto importado';
+            }
+            
+            if (situacao === 'pago' | situacao === 'importado') {
+                valorPago = document.querySelector(`#row-${id} td:nth-child(7)`).innerText;
+                dtPagamento = document.querySelector(`#row-${id} td:nth-child(8)`).innerText;
+            }
+            
+            document.getElementById('popup-title').innerText = title;
+            
+            document.getElementById('popup-data').value = data;
+            document.getElementById('popup-nome').value = nome;
+            document.getElementById('popup-documento').value = documento;
+            document.getElementById('popup-nossoNumero').value = nossoNumero;
+            document.getElementById('popup-valorBoleto').value = valorBoleto;
+            document.getElementById('popup-dtVencimento').value = dtVencimento;
+            document.getElementById('popup-mensagem').value = mensagem;
+            document.getElementById('popup-valorPago').value = valorPago;
+            document.getElementById('popup-dtPagamento').value = dtPagamento;
+
+            if (situacao === 'pago' | situacao === 'importado') {
+                // document.getElementById('popup-data').disabled = true;
+                // document.getElementById('popup-nome').disabled = true;
+                document.getElementById('popup-documento').disabled = true;
+                document.getElementById('popup-nossoNumero').disabled = true;
+                document.getElementById('popup-valorBoleto').disabled = true;
+                document.getElementById('popup-dtVencimento').disabled = true;
+                document.getElementById('popup-mensagem').disabled = true;
+                document.getElementById('popup-save-button').style.display = 'none';
+            } else {
+                // document.getElementById('popup-data').disabled = false;
+                // document.getElementById('popup-nome').disabled = false;
+                document.getElementById('popup-documento').disabled = false;
+                document.getElementById('popup-nossoNumero').disabled = false;
+                document.getElementById('popup-valorBoleto').disabled = false;
+                document.getElementById('popup-dtVencimento').disabled = false;
+                document.getElementById('popup-mensagem').disabled = false;
+                document.getElementById('popup-save-button').style.display = 'block';
+            }
+
+            // Exibir o popup
+            document.getElementById('popup-boleto').style.display = 'block';
+
+            // Adicionar classe ao corpo para impedir scroll e seleção
+            document.body.classList.add('popup-active');
+        }
+
+
+        function closePopup() {
+            // Ocultar o popup
+            document.getElementById('popup-boleto').style.display = 'none';
+
+            // Remover classe do corpo para permitir scroll e seleção
+            document.body.classList.remove('popup-active');
+            
+        }
+        
+        function savePopup() {
+            // Salva dados do pupup no formulário           
+            const id = id_linha;
+
+            const data = document.getElementById('popup-data').value;
+            const documento = document.getElementById('popup-documento').value;
+            const nossoNumero = document.getElementById('popup-nossoNumero').value;
+            const nome = document.getElementById('popup-nome').value;
+            const valorBoleto = document.getElementById('popup-valorBoleto').value;
+            const dtVencimento = document.getElementById('popup-dtVencimento').value;
+            const mensagem = document.getElementById('popup-mensagem').value;
+
+            if (!validarNumero(valorBoleto)) {
+                alert('Valor do boleto inválido. Por favor, insira um número válido.');
+                return;
+            }
+
+            if (!validarData(dtVencimento)) {
+                alert('Data de vencimento inválida. Por favor, insira uma data no formato DD/MM/AAAA.');
+                return;
+            }
+
+            document.querySelector(`#row-${id} td:nth-child(1)`).innerText = data;
+            document.querySelector(`#row-${id} td:nth-child(2)`).innerText = documento;
+            document.querySelector(`#row-${id} td:nth-child(3)`).innerText = nossoNumero;
+            document.querySelector(`#row-${id} td:nth-child(4)`).innerText = nome; 
+            document.querySelector(`#row-${id} td:nth-child(5)`).innerText = valorBoleto;
+            document.querySelector(`#row-${id} td:nth-child(6)`).innerText = dtVencimento;
+            document.querySelector(`#row-${id} td:nth-child(9)`).innerText = mensagem;
+
+            // Pinta a linha modificada de amarelo
+            const linha = document.getElementById(`row-${id}`);
+            linha.style.backgroundColor = '#FFFF99';
+
+            // Adicionar o ID da linha e os dados ao dicionário de linhas modificadas
+            const linhaModificada = {
+                id: id,
+                documento: documento,
+                nosso_numero: nossoNumero,
+                valor_boleto: valorBoleto,
+                dt_vencimento: dtVencimento,
+                mensagem: mensagem
+            };
+
+            // Verifica se a linha já está na lista de modificadas
+            const index = linhasModificadas.findIndex(item => item.id === id);
+            if (index !== -1) {
+                // Atualiza os dados da linha já existente
+                linhasModificadas[index] = linhaModificada;
+            } else {
+                // Adiciona a nova linha modificada
+                linhasModificadas.push(linhaModificada);
+            }
+
+            // Atualizar o campo oculto com os IDs das linhas modificadas
+            document.getElementById('linhasModificadas').value = JSON.stringify(linhasModificadas);
+
+            // Ocultar o popup
+            document.getElementById('popup-boleto').style.display = 'none';
+
+            // Remover classe ao corpo para impedir scroll e seleção
+            document.body.classList.remove('popup-active');
+        }
 
         function aceitarLinha(id) {
-            const linha = document.getElementById(`linha-${id}`);
+            const linha = document.getElementById(`row-${id}`);
             linha.style.backgroundColor = '#CCFFCC';
             document.getElementById(`aceitar-${id}`).disabled = true;
             document.getElementById(`rejeitar-${id}`).disabled = false;
@@ -91,7 +278,7 @@
         }
 
         function rejeitarLinha(id) {
-            const linha = document.getElementById(`linha-${id}`);
+            const linha = document.getElementById(`row-${id}`);
             linha.style.backgroundColor = '#E0E0E0';
             document.getElementById(`aceitar-${id}`).disabled = false;
             document.getElementById(`rejeitar-${id}`).disabled = true;
@@ -104,6 +291,21 @@
 
             // Atualizar o campo oculto com os IDs das linhas aceitas
             document.getElementById('linhasIgnoradas').value = JSON.stringify(linhasIgnoradas);
+        }
+
+        function cancelarLinha(id) {
+            const linha = document.getElementById(`row-${id}`);
+            linha.style.backgroundColor = '#E0E0E0';
+            document.getElementById(`rejeitar-${id}`).disabled = true;
+
+            
+            // Adicionar o ID da linha à lista de aceitas
+            if (!linhasIgnoradas.includes(id)) {
+                linhasIgnoradas.push(id);
+            }
+
+            // Atualizar o campo oculto com os IDs das linhas aceitas
+            document.getElementById('linhasCanceladas').value = JSON.stringify(linhasIgnoradas);
         }
 
     </script>

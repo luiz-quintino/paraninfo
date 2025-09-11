@@ -1,6 +1,14 @@
 from django.db import models
 from users.models import tbAssociados
 
+class lstPagina(models.Model):
+    id = models.AutoField(primary_key=True)  # Campo ID como chave primária
+    pagina = models.CharField(max_length=45)  # Campo varchar com limite de 45 caracteres
+
+    class Meta:
+        db_table = 'lstPagina'  # Nome da tabela no banco de dados
+
+    
 class tbSessao(models.Model):
     id = models.AutoField(primary_key=True)  # Campo ID como chave primária
     data = models.DateTimeField(auto_now_add=True)  # Campo de data com valor padrão como a data atual
@@ -38,13 +46,5 @@ class tbLog(models.Model):
     def __str__(self):
         return f"{self.id} - {self.data} - Página: {self.pagina_id} - Evento: {self.evento_id}"
     
-class tbPagina(models.Model):
-    id = models.AutoField(primary_key=True)  # Campo ID como chave primária
-    pagina = models.CharField(max_length=45)  # Campo varchar com limite de 45 caracteres
 
-    class Meta:
-        db_table = 'tbPagina'  # Nome da tabela no banco de dados
-
-    def __str__(self):
-        return f"{self.id} - {self.pagina}"
     

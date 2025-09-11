@@ -22,9 +22,19 @@ MENU_USERS_INCLUIR_USUARIO              = {'name': 'Incluir usuário',
                                            'url': '/users/user-record',
                                            'tip': 'Acesse o formulário para inclusão de um novo usuário'}
 
-MENU_USERS_GERAR_CONVITE                = {'name': 'Gerar convite',               
+MENU_USERS_GERAR_CONVITE                = {'name': 'Gerar novo convite',               
                                            'url': '#',
-                                           'tip': 'Acesse o formulário para gerar um convite para um novo usuário'}
+                                           'color': 'yellow',
+                                           'tip': 'Acesse o formulário para gerar link de convite para um novos usuários'}
+
+MENU_USERS_CONVIDADOS                   = {'name': 'Convidados',               
+                                           'url': '/users/invited',
+                                           'tip': 'Gerenciar convidados por link de convite e gerencia convites'}
+
+MENU_USERS_ACEITAR_CONVIDADOS           = {'name': 'Aceitar convidados',               
+                                           'url': '/users/invited',
+                                           'color': 'yellow',
+                                           'tip': 'Gerenciar convidados por link de convite e gerencia convites'}
 
 MENU_USERS_DEFINICAO_ACESSO             = {'name': 'Definição de acesso',         
                                            'url': '#',
@@ -42,27 +52,31 @@ MENU_BALANCE_EXTRATO                    = {'name': 'Menu movimentações',
 MENU_BALANCE_BOLETO                     = {'name': 'Gerenciar boletos',
                                            'url': "boleto",                     
                                            'tip': 'Acesse o menu de boletos para visualizar, emitir e gerenciar boletos bancários',
-                                           }
+                                           'color': '#b5e2fa',}
 
-MENU_BALANCE_BOLETO_IMPORTAR            = {'name': 'Importar dados de boletos',
+MENU_BALANCE_BOLETO_IMPORTAR            = {'name': 'Importar boletos de arquivo',
                                            'url': "/boleto",   
                                            'type': 'js',
                                            'function': 'submitForm("formImportarBoleto")',                
                                            'tip': 'Acesse o menu de boletos para visualizar, emitir e gerenciar boletos bancários',
                                            }
 
-MENU_BALANCE_BOLETO_ADICIONAR           = {'name': 'Adiciona novos boletos',
+MENU_BALANCE_BOLETO_ADICIONAR           = {'name': 'Adiciona boletos automaticamente',
                                            'url': "/boleto",  
                                            'type': 'js',
                                            'function': 'submitForm("formNovoboleto")',      
                                            'tip': 'Acesse o menu de boletos para visualizar, emitir e gerenciar boletos bancários',
                                            }
 
+MENU_BALANCE_BOLETO_MANUAL              = {'name': 'Adiciona boletos manualmente',
+                                           'url': "boleto-manual",  
+                                           'tip': 'Acesse o menu de boletos para visualizar, emitir e gerenciar boletos bancários',
+                                           }
+
 MENU_BALANCE_BOLETO_SALVAR              = {'name': 'Salvar modificações',
                                            'url': "/boleto",   
                                            'type': 'js',
-                                           'function': 'submitForm("formSalvarBoleto")',     
-                                           'tip': 'Salvar as modificações realizadas nos boletos bancários',
+                                           'function': 'submitForm("formSalvarBoletos")',     
                                            'color': 'yellow',
                                            }
 
@@ -78,7 +92,8 @@ MENU_BALANCE_ANALISAR_MOVIMENTACAO      = {'name': 'Classificar movimentação',
                                            'url': "analise-movimentacao", 
                                            'type': 'js', 
                                            'function': 'openAnalisePage()',
-                                           'tip': 'Acesse o formulário para analisar movimentações financeiras'}
+                                           'tip': 'Acesse o formulário para analisar movimentações financeiras',
+                                           'color': '#b5e2fa',}
 
 MENU_BALANCE_INCORPORAR_MOVIMENTACAO    = {'name': 'Aceitar movimentação',     
                                            'url': "#",
@@ -94,6 +109,7 @@ MENU_BALANCE_ACEITAR_EXTRATO            = {'name': 'Aceitar extrato',
 MENU_BALANCE_ACEITAR_ENTRADAS_EXTRATO   = {'name': 'Aceitar entradas de extrato', 
                                            'url': "importacao",           
                                            'type': 'js', 
+                                           'color': 'yellow',
                                            'function': 'submitImportacaoForm()',
                                            'tip': 'Aceitar as entradas de extrato bancário importadas para análise',}
 
@@ -108,7 +124,8 @@ MENU_BALANCE_REVISAR_ANALISE            = {'name': 'Revisar movimentação',
                                            'url': "analise-movimentacao", 
                                            'type': 'js', 
                                            'function': 'submitForm("formRevisao")',
-                                           'tip': 'Revisar as análises de movimentações financeiras realizadas'}
+                                           'tip': 'Revisar as análises de movimentações financeiras realizadas',
+                                           'color': '#b5e2fa',}
 
 MENU_BALANCE_FECHAR_ANALISE             = {'name': 'Incorporar movimentação à contabilidade',              
                                            'url': "analise-movimentacao", 

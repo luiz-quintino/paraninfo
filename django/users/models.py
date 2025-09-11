@@ -3,27 +3,34 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
+class lstSituacao(models.Model):
+    id = models.AutoField(primary_key=True)  # Campo ID como chave primária
+    situacao = models.CharField(max_length=10, null=True, blank=False)  # Descrição da situação
+
+    class Meta:
+        db_table = 'lstSituacao'  # Nome da tabela no banco de dados
+
 class tbAssociados(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.CharField(max_length=36, unique=True, default=uuid.uuid4)  # Campo UUID
 
     # Campos da tabela
     data = models.CharField(max_length=20, null=True, blank=True)
-    email = models.EmailField(max_length=255, null=True, blank=True)
-    nome_responsavel = models.CharField(max_length=255, null=True, blank=True)
+    email = models.EmailField(max_length=100, null=True, blank=True)
+    nome_responsavel = models.CharField(max_length=100, null=True, blank=True)
     nascimento_responsavel = models.CharField(max_length=8, null=True, blank=True)
     cpf = models.CharField(max_length=14, null=True, blank=True)
-    telefone = models.CharField(max_length=15, null=True, blank=True)
-    aluno = models.CharField(max_length=38, null=True, blank=True)
+    telefone = models.CharField(max_length=45, null=True, blank=True)
+    aluno = models.CharField(max_length=100, null=True, blank=True)
     nome_de_guerra = models.CharField(max_length=30, null=True, blank=True)
     sexo = models.CharField(max_length=9, null=True, blank=True)
     nascimento_aluno = models.CharField(max_length=8, null=True, blank=True)
-    matricula = models.CharField(max_length=4, null=True, blank=True)
-    endereco = models.CharField(max_length=36, null=True, blank=True)
-    numero = models.CharField(max_length=4, null=True, blank=True)
-    complemento = models.CharField(max_length=23, null=True, blank=True)
-    bairro = models.CharField(max_length=16, null=True, blank=True)
-    cidade = models.CharField(max_length=14, null=True, blank=True)
+    matricula = models.CharField(max_length=11, null=True, blank=True)
+    endereco = models.CharField(max_length=100, null=True, blank=True)
+    numero = models.CharField(max_length=50, null=True, blank=True)
+    complemento = models.CharField(max_length=50, null=True, blank=True)
+    bairro = models.CharField(max_length=50, null=True, blank=True)
+    cidade = models.CharField(max_length=50, null=True, blank=True)
     cep = models.CharField(max_length=10, null=True, blank=True)
     tipo = models.CharField(max_length=19, null=True, blank=True)
     situacao = models.CharField(max_length=7, null=True, blank=True)
@@ -39,6 +46,44 @@ class tbAssociados(models.Model):
 
     class Meta:
         db_table = 'tbAssociados'  # Define explicitamente o nome da tabela
+
+class tbConvidado(models.Model):
+    id = models.AutoField(primary_key=True)
+
+    # Campos da tabela
+    data = models.CharField(max_length=20, null=True, blank=True)
+    uuid = models.CharField(max_length=36, unique=True, default=uuid.uuid4)  # Campo UUID
+    comissao = models.IntegerField(null=False, blank=False)  # Referência a outra tabela (comissão)
+    email = models.EmailField(max_length=100, null=True, blank=True)
+    nome_responsavel = models.CharField(max_length=100, null=True, blank=True)
+    nascimento_responsavel = models.CharField(max_length=8, null=True, blank=True)
+    cpf = models.CharField(max_length=14, null=True, blank=True)
+    telefone = models.CharField(max_length=45, null=True, blank=True)
+    aluno = models.CharField(max_length=100, null=True, blank=True)
+    nome_de_guerra = models.CharField(max_length=30, null=True, blank=True)
+    sexo = models.CharField(max_length=9, null=True, blank=True)
+    nascimento_aluno = models.CharField(max_length=8, null=True, blank=True)
+    matricula = models.CharField(max_length=11, null=True, blank=True)
+    endereco = models.CharField(max_length=100, null=True, blank=True)
+    numero = models.CharField(max_length=50, null=True, blank=True)
+    complemento = models.CharField(max_length=50, null=True, blank=True)
+    bairro = models.CharField(max_length=50, null=True, blank=True)
+    cidade = models.CharField(max_length=50, null=True, blank=True)
+    cep = models.CharField(max_length=10, null=True, blank=True)
+    log_id = models.IntegerField(null=True, blank=True)
+    foto_endereco = models.CharField(max_length=100, null=True, blank=True)
+    foto_identidade = models.CharField(max_length=100, null=True, blank=True)
+
+    situacao = models.ForeignKey(
+        lstSituacao,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='situacao_convidado'
+    )
+
+    class Meta:
+        db_table = 'tbConvidado'  # Define explicitamente o nome da tabela
 
 class tbAssociadosListView(tbAssociados):
     """

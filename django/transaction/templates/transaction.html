@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Load balance{% endblock %}
+{% block title %}Carrega extrato{% endblock %}
 {% load static %}
 
 {% block content %}
@@ -8,13 +8,12 @@
         <!-- Conteúdo principal -->
         <div class="main-content">
         
-            <h2>Importação de extrato</h2>
+            <h2>{{ message.title }}</h2>
 
             <div class="user-form">
-                {% if error %}
-                    <div class="alert-error">
-                        {{ error }}
-                    </div>
+                {% if message.text %}
+                    {% include 'partials/popup_message.html' with message=message %}
+
                 {% elif is_dataframe_empty and file %}
                     <div class="alert">
                         Nenhum dado encontrado no arquivo.
@@ -24,18 +23,27 @@
             
             <!-- Entrada de arquivo com extrato .xls -->
             {% if is_dataframe_empty %}
-                <div class="file-upload-container ">
-                    <form method="post" enctype="multipart/form-data" class="action-buttons" id="formExtrato">
+                <div >
+                    <form method="post" enctype="multipart/form-data" id="formExtrato">
                         {% csrf_token %}
-                        <span id="file-name" class="custom-file-label">Selecione o extrato bancário SICOOB no formato Excel</span>
-                        <div>
-                            <label for="file">
-                                <img src="{% static 'media/icons/open.png' %}" alt="Selecionar arquivo" class="upload-icon">
-                            </label>
-                            <input type="file" id="file" name="file" accept=".xls,.xlsx,.txt" class="hide-input">
+
+                        <!-- popup list com a lista de bancos -->
+                         <div class="menu-user-container">
+                            <div class="menu-home-container">
+                                <label for="banco">Banco:</label>
+                                <input type="text" id="banco" name="banco" disabled value="{{ nome_banco }}">
+                            </div>
+                            
+                            <div class="menu-home-container">
+                                <span id="file-name" >Selecione o extrato bancário</span>
+                                <label for="file">
+                                    <img src="{% static 'media/icons/open.png' %}" alt="Selecionar arquivo" class="upload-icon">
+                                </label>
+                                <input type="file" id="file" name="file" accept=".xls,.xlsx,.txt" class="hide-input">
+                            </div>
                         </div>
                         
-                        <button type="button" class="generic-button" onclick="submitEnviarExtrato()">Enviar</button>
+                        <!-- <button type="button" class="generic-button" onclick="submitEnviarExtrato()">Enviar</button> -->
                     </form>
                 </div>
 
@@ -77,10 +85,37 @@
         </div>
 
     <script>
-        document.getElementById('file').addEventListener('change', function() {
-            const fileName = this.files.length > 0 ? this.files[0].name : 'Nenhum arquivo selecionado';
-            document.getElementById('file-name').textContent = fileName;
+        document.getElementById('file').addEventListener('click', 
+            function() {
+                // Exibe a ampulheta antes de ler o arquivo
+                showLoadingOverlay();
         });
+
+        document.getElementById('file').addEventListener('cancel', 
+            function() {
+                // Exibe a ampulheta antes de cancelar o arquivo
+                hideLoadingOverlay();
+        });
+
+        document.getElementById('file').addEventListener('change', 
+            function() {
+                // Função para manipular a seleção do arquivo
+                hideLoadingOverlay();
+
+                if (this.files.length > 0 ) {
+                    console.log('1');
+                    const fileName = this.files[0].name;
+                    document.getElementById('file-name').textContent = fileName;
+                    submitEnviarExtrato();
+                    
+                } else {
+                    console.log('2');
+                    const fileName = 'Nenhum arquivo selecionado';
+                    document.getElementById('file-name').textContent = fileName;
+                }
+                
+            }
+        );
         
         function submitEntradaForm() {
             // Exibe a ampulheta antes de enviar o formulário
@@ -96,20 +131,20 @@
         }
 
     
-    function submitEnviarExtrato() {
-        // Exibe a ampulheta antes de enviar o formulário
-        showLoadingOverlay();
+        function submitEnviarExtrato() {
+            // Exibe a ampulheta antes de enviar o formulário
+            showLoadingOverlay();
 
-        // Verifica se o formulário de importação existe e o envia
-        const formExtrato = document.getElementById('formExtrato');
-        if (formExtrato) {
-            formExtrato.submit(); // Envia o formulário de importacao.html
-        } else {
-            console.error('Formulário Extrato não encontrado.');
+            // Verifica se o formulário de importação existe e o envia
+            const formExtrato = document.getElementById('formExtrato');
+            if (formExtrato) {
+                formExtrato.submit(); // Envia o formulário de importacao.html
+            } else {
+                console.error('Formulário Extrato não encontrado.');
+            }
+
+
         }
-
-
-    }
 
     </script>
 {% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Convidados{% endblock %}
+
+{% block content %}
+
+    {% if message.text %}
+        {% include 'partials/popup_message.html' with message=message %}
+    {% endif %}
+
+    <div >
+        <h2>{{ message.title }}</h2>
+
+        <div>
+            {% if validade and not convite_link %}
+                O convite venceu em {{ validade }}. Gere um novo convite.
+
+            {% elif not convite_link %}
+                Nenhum convite disponível. Gere um novo convite.
+
+            {% else %}
+            <div class='form-container'>
+                    <h3>Convite para geração de Ficha de Inscrição</h3>
+                    Envie o link abaixo para o usuário que deseja convidar. Ele irá preencher uma Ficha de Inscrição com suas informações pessoais.<p>A Ficha de Inscrição será avaliada para aceitação do usuário.</p>
+                    <p>Link de convite</p>
+                    <input type="text" id="convite_link" value="{{ convite_link }}" readonly style="width: 100%; padding: 8px; margin-top: 5px;"/>
+                    <p>Válido até: {{ validade }}</p>
+                
+                    <div class="action-buttons">
+                        <button onclick="copyToClipboard()">Copiar Link</button>
+                    </div>
+                </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard() {
+            var copyText = document.getElementById("convite_link");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); // For mobile devices
+            document.execCommand("copy");
+            alert("Link copiado: " + copyText.value);
+        }
+    </script>
+{% endblock %}

@@ -63,7 +63,7 @@ class PersistentUserDataMiddleware:
                         'comissao': associado.comissao,
                         'user_uuid': associado.uuid,
                         'user_id': associado.id,
-                        'comissao_title': comissao.comissao if comissao else None,
+                        'comissao_title': comissao.nome_comissao if comissao else None,
                         'groups': groups,
                         'is_sys_admin': 'sys-admin' in groups,
                         'is_app_admin': 'app-admin' in groups,

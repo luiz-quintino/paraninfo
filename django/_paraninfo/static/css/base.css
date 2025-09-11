@@ -38,18 +38,21 @@ h3 {
     background-color: #4CAF50; /* Cor de fundo */
     color: white; /* Cor do texto */
     border: none;
-    padding: 10px 0; /* Espaçamento interno ajustado */
+    padding: 5px 0; /* Espaçamento interno ajustado */
     border-radius: 4px; /* Bordas arredondadas */
     cursor: pointer;
     text-decoration: none; /* Remove o sublinhado dos links */
-    font-size: 14px; /* Tamanho da fonte */
+    font-size: 12px; /* Tamanho da fonte */
     font-weight: bold; /* Negrito no texto */
     text-align: center;
     white-space: nowrap; /* Garante que o texto não quebre em várias linhas */
-    width: 150px; /* Define a largura fixa dos botões */
-    margin-bottom: 5px; /* Espaçamento inferior */
+    width: 120px; /* Define a largura fixa dos botões */
+    /* margin-bottom: 5px; Espaçamento inferior */
     transition: background-color 0.3s ease;
-    
+    /* centraliza o botão verticalmente */
+    position: relative; /* Necessário para o tooltip */
+    /* elimina linha no box externo do botão */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .action-buttons .save-button {
@@ -100,8 +103,8 @@ h3 {
     
 }
 
-.action-buttons button:hover,
-.action-buttons a:hover {
+.action-buttons button:not(:disabled):hover,
+.action-buttons a:not(:disabled):hover {
     background-color: #333; /* Cor de fundo ao passar o mouse */
     color: #fff; /* Cor do texto ao passar o mouse */
 }
@@ -137,7 +140,7 @@ h3 {
     margin-top: 2px;
     border-width: 5px;
     border-style: solid;
-    border-color: #333 transparent transparent transparent;
+    border-color: #333; /* transparent transparent transparent; */
     z-index: 10;
     opacity: 1;
     visibility: visible;
@@ -149,6 +152,8 @@ h3 {
     opacity: 0;
     visibility: hidden;
 }
+
+
 
 /* Mensagens */
 .messages {

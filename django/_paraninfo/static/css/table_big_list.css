@@ -34,6 +34,8 @@
 .table_big_list th, .table_big_list td, .table_big_list_simple td, .table_big_list_simple th {
     padding: 3px 3px; /* Espaçamento interno */
     border: 1px solid #ddd; /* Borda fina e clara */
+    width: auto;
+    box-sizing: border-box;
 }
 
 /* Cor alternada para linhas pares */
@@ -51,6 +53,16 @@
     width: 100px; 
     border: none;
     text-align: right;
+    
+    white-space: normal; /* Permite quebra de linha */
+    word-wrap: break-word; /* Quebra palavras longas */
+    overflow-wrap: break-word; /* Alternativa moderna */
+
+}
+
+#lista-boletos.table_big_list_simple td input {
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Estilo para os campos de entrada de texto */

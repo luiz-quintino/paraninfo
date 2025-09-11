@@ -175,6 +175,6 @@ MESSAGE_TAGS = {
 # Configuração de sessões
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Usa o banco de dados para armazenar sessões
 SESSION_COOKIE_NAME = 'sessionid'  # Nome do cookie de sessão
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Sessão não expira ao fechar o navegador
-SESSION_COOKIE_AGE = 1209600  # Tempo de vida da sessão em segundos (2 semanas)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Sessão expira ao fechar o navegador
+SESSION_COOKIE_AGE = 3600  # Tempo de vida da sessão em segundos (1 h)
 SESSION_SAVE_EVERY_REQUEST = True  # Salva a sessão a cada requisição

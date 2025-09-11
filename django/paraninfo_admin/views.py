@@ -24,7 +24,7 @@ def client_details(request, uuid=None):
         comissao = tbComissao()
 
     # Garantir que os campos sejam strings vazias se estiverem None
-    comissao.comissao = comissao.comissao or ''
+    comissao.nome_comissao = comissao.nome_comissao or ''
     comissao.cnpj = comissao.cnpj or ''
     comissao.inscricao = comissao.inscricao or ''
     comissao.endereco = comissao.endereco or ''
@@ -39,7 +39,7 @@ def client_details(request, uuid=None):
                 comissao.uuid = str(uuid_generate.uuid4())
                 
             # Atualiza ou salva os dados do registro
-            comissao.comissao = request.POST.get('comissao')
+            comissao.nome_comissao = request.POST.get('nome_comissao')
             comissao.cnpj = request.POST.get('cnpj')
             comissao.inscricao = request.POST.get('inscricao')
             comissao.endereco = request.POST.get('endereco')

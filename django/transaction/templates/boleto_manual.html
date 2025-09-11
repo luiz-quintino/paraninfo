@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Gerenciamento de boletos {% endblock %}
+
+{% block content %}
+
+    {% if message.text %}
+        {% include 'partials/popup_message.html' with message=message %}
+    {% endif %}
+
+    <div class="main-content">
+        <h2>{{ message.title }}</h2>
+    </div>
+
+    <!-- Campos para criação dos boletos -->
+    <div id="criar-boletos">
+        <h3>Criação de Boletos</h3>
+        <div style="display: flex; gap: 20px;">
+            <!-- Primeira Coluna -->
+            <div style="flex: 1; background-color: #eee; padding: 10px; margin-bottom: 20px; ">
+                <h4>Listagem de associados</h4>
+                <div class="form-group">
+                    <label for="filtro-nome">Filtrar Associados:</label>
+                    <div style="display: flex; align-items: center; gap: 10px;" class="action-buttons">
+                        <input type="text" id="filtro-nome" name="filtro_nome" placeholder="Digite o nome do associado">
+                        <button type="button" onclick="filtrarAssociados()" class="primary-button">Filtrar</button>
+                    </div>
+                </div>
+                <table border="1" id="tabela-associados" class="table_big_list_simple">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Código</th>
+                            <th>Nome</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Associados filtrados serão adicionados aqui dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+    
+            <!-- Segunda Coluna -->
+            <div style="flex: 1; background-color: #eee; padding: 10px; margin-bottom: 20px; ">
+                <h4>Campos do boleto</h4>
+                <form id="form-criar-boletos">
+                    
+    
+                    <div class="form-group">
+                        <label for="filter-data">Emissão:</label>
+                        <input type="text" id="filter-data" name="data" value="{{ boletos.data.0 }}">
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="filter-valorBoleto">Valor do Boleto:</label>
+                        <input type="text" id="filter-valorBoleto" name="valor_boleto" value="{{ boletos.valor_boleto.0 }}" placeholder="Ex: 100,00">
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="filter-dtVencimento">Vencimento:</label>
+                        <input type="text" id="filter-dtVencimento" name="dt_vencimento" value="{{ boletos.dt_vencimento.0 }}" placeholder="DD/MM/AAAA">
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="filter-mensagem">Mensagem:</label>
+                        <input type="text" id="filter-mensagem" name="mensagem" value="{{ boletos.mensagem.0 }}" placeholder="Mensagem no boleto">
+                    </div>
+    
+                    <div class="action-buttons">
+                        <button type="button" onclick="criarBoletos()" class="default-button">Adicionar boletos</button>
+                    </div>
+                </form>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Lista dos boletos criados -->
+    <div id="lista-boletos" >
+        <h3>Lista de boletos a serem criados</h3>
+        
+        <form method="post" action="{% url 'boleto' %}" id="formSalvarBoletos" >
+            {% csrf_token %}
+            <input type="hidden" name="salvar_boleto_manual" value="salvar_boleto_manual">
+
+            <table border="1" class="table_big_list_simple" id="lista-boletos">
+                <thead>
+                    <tr>
+                        {% for column in boletos.columns %}
+                            <th>{{ column }}</th>
+                        {% endfor %}
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+    
+                <tbody class="table_big_list_simple">
+                    <!-- Boletos criados serão adicionados aqui dinamicamente -->
+                </tbody>
+            </table>
+        </form>
+    </div>
+
+    {% include 'partials/popup_boleto.html' %}
+
+    <script>
+        const associados = {{ tabela_associados|safe }};
+    </script>
+
+    <script>
+        const boletos = []; // Array para armazenar os boletos criados
+        const associadosFiltrados = []; // Lista de associados filtrados
+        
+        function filtrarAssociados() {
+            const filtroNome = document.getElementById('filtro-nome').value.toLowerCase();
+            // Filtra os associados com base no nome
+            associadosFiltrados.length = 0; // Limpa a lista de associados filtrados
+            Object.entries(associados).forEach(([id, associado]) => {
+                if (associado.nome.toLowerCase().includes(filtroNome)) {
+                    associadosFiltrados.push({ id, ...associado });
+                }
+            });
+
+            filtrarAssociadoAtualiza(); // Atualiza a tabela com os associados filtrados
+        }
+
+        function filtrarAssociadoAtualiza() {
+            const tabelaAssociados = document.querySelector('#tabela-associados tbody');
+            tabelaAssociados.innerHTML = ''; // Limpa a tabela
+
+            // Adiciona os associados filtrados à tabela
+            associadosFiltrados.forEach((associado, index) => {
+                const row = document.createElement('tr');
+                row.id = `associado-${index}`;
+
+                row.innerHTML = `
+                    <th>${index + 1}</th>
+                    <td>${associado.codigo}</td>
+                    <td>${associado.nome}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button type="button" class="cancel-button" onclick="excluirAssociado(${index})">Excluir</button>
+                        </div>
+                    </td>
+                `;
+
+                tabelaAssociados.appendChild(row);
+            });
+        }
+
+        function excluirAssociado(index) {
+            associadosFiltrados.splice(index, 1); // Remove o associado da lista filtrada
+            filtrarAssociadoAtualiza(); // Atualiza a tabela
+        }
+
+        function criarBoletos() {
+            const data = document.getElementById('filter-data').value;
+            const valorBoleto = document.getElementById('filter-valorBoleto').value;
+            const dtVencimento = document.getElementById('filter-dtVencimento').value;
+            const mensagem = document.getElementById('filter-mensagem').value;
+
+            if (!data || !valorBoleto || !dtVencimento) {
+                alert('Preencha todos os campos obrigatórios!');
+                return;
+
+            } else if (associadosFiltrados.length === 0) {
+                alert('Filtre os associados para adicionar boletos!');
+                return;
+            }
+
+            associadosFiltrados.forEach((associado) => {
+                // Verifica se o boleto já existe no array
+                const boletoDuplicado = boletos.some((boleto) => 
+                    boleto.documento === associado.codigo &&
+                    boleto.valor_boleto === valorBoleto &&
+                    boleto.dt_vencimento === dtVencimento
+                );
+
+                if (!boletoDuplicado) {
+                    // Cria um novo boleto
+                    const novoBoleto = {
+                        data,
+                        documento: associado.codigo,
+                        nosso_numero: '',
+                        associado: associado.nome,
+                        valor_boleto: valorBoleto,
+                        dt_vencimento: dtVencimento,
+                        valor_pago: '',
+                        dt_pagamento: '',
+                        mensagem: mensagem,
+                        situacao: 'novo',
+                    };
+
+                    boletos.push(novoBoleto); // Adiciona o boleto à lista de boletos
+                }
+            });
+
+            atualizarTabela(); // Atualiza a tabela de boletos
+        }
+
+        function excluirLinha(index) {
+            // Remove o boleto do array
+            boletos.splice(index, 1);
+
+            // Atualiza a tabela
+            atualizarTabela();
+        }
+
+        function atualizarTabela() {
+            const tbody = document.querySelector('#lista-boletos tbody');
+            tbody.innerHTML = ''; // Limpa a tabela
+
+            boletos.forEach((boleto, index) => {
+                const row = document.createElement('tr');
+                row.id = `row-${index + 1}`;
+                
+                Object.keys(boleto).forEach((key) => {
+                    const cell = document.createElement('td');
+
+                    // Cria um campo de entrada para cada valor do boleto
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.name = `boletos[${index}][${key}]`; // Estrutura o nome para ser lido no backend
+                    input.value = boleto[key];
+                    input.style.cursor = 'pointer';
+                    input.addEventListener('click', (event) => {openPopup(index);});
+
+                    cell.style.whiteSpace = 'nowrap'; // Impede quebra de linha no conteúdo
+                    cell.style.overflow = 'hidden'; // Esconde conteúdo que ultrapassa a célula
+                    cell.style.textOverflow = 'ellipsis';
+                    cell.appendChild(input);
+                    row.appendChild(cell);
+                });
+
+                const actionCell = document.createElement('td');
+                actionCell.classList.add('action-buttons');
+
+                // Cria o botão "Excluir" dinamicamente e adiciona o evento de clique
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.classList.add('cancel-button');
+                deleteButton.textContent = 'Excluir';
+                deleteButton.addEventListener('click', (event) => {
+                    event.stopPropagation(); // Impede que o clique no botão abra o popup
+                    excluirLinha(index); // Chama a função para excluir a linha
+                });
+
+                actionCell.appendChild(deleteButton);
+                row.appendChild(actionCell);
+                tbody.appendChild(row);
+            });
+        }
+
+        // Popoup para atualização de um boleto criado
+        function openPopup(index) {
+            const boleto = boletos[index]; // Recupera o boleto correspondente
+
+            // Preenche os campos do popup com os dados do boleto
+            document.getElementById('popup-data').value = boleto.data;
+            document.getElementById('popup-documento').value = boleto.documento;
+            document.getElementById('popup-nossoNumero').value = boleto.nosso_numero;
+            document.getElementById('popup-nome').value = boleto.associado;
+            document.getElementById('popup-valorBoleto').value = boleto.valor_boleto;
+            document.getElementById('popup-dtVencimento').value = boleto.dt_vencimento;
+            document.getElementById('popup-mensagem').value = boleto.mensagem;
+            document.getElementById('popup-valorPago').value = boleto.valor_pago;
+            document.getElementById('popup-dtPagamento').value = boleto.dt_pagamento;
+
+            // Exibe o popup
+            document.getElementById('popup-boleto').style.display = 'block';
+
+            // Adiciona classe ao corpo para impedir scroll e seleção
+            document.body.classList.add('popup-active');
+
+            // Salva o índice do boleto para uso posterior
+            id_linha = index;
+        }
+
+
+        function closePopup() {
+            // Ocultar o popup
+            document.getElementById('popup-boleto').style.display = 'none';
+
+            // Remover classe do corpo para permitir scroll e seleção
+            document.body.classList.remove('popup-active');
+            
+        }
+        
+        function savePopup() {
+            // Recupera o índice do boleto
+            const index = id_linha;
+
+            // Atualiza os dados do boleto no array
+            boletos[index].data = document.getElementById('popup-data').value;
+            boletos[index].documento = document.getElementById('popup-documento').value;
+            boletos[index].nosso_numero = document.getElementById('popup-nossoNumero').value;
+            boletos[index].associado = document.getElementById('popup-nome').value;
+            boletos[index].valor_boleto = document.getElementById('popup-valorBoleto').value;
+            boletos[index].dt_vencimento = document.getElementById('popup-dtVencimento').value;
+            boletos[index].mensagem = document.getElementById('popup-mensagem').value;
+            boletos[index].valor_pago = document.getElementById('popup-valorPago').value;
+            boletos[index].dt_pagamento = document.getElementById('popup-dtPagamento').value;
+
+            // Atualiza a tabela
+            atualizarTabela();
+
+            // Oculta o popup
+            document.getElementById('popup-boleto').style.display = 'none';
+
+            // Remove a classe do corpo
+            document.body.classList.remove('popup-active');
+        }
+
+    </script>
+{% endblock %}

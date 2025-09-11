@@ -1,12 +1,21 @@
 from django.db import models
 from users.models import tbAssociados
+from paraninfo_admin.models import tbComissao 
+from decimal import Decimal
+
+
+class lstBoletoStatus(models.Model):
+    id = models.AutoField(primary_key=True)  # Campo ID como chave primária
+    status = models.CharField(max_length=15, null=True, blank=False)
+
+    class Meta:
+        db_table = 'lstBoletoStatus'  # Nome da tabela no banco de dados
 
 class tbTransacao(models.Model):
     key = models.CharField(max_length=45, unique=True)
     value = models.CharField(max_length=45)
     color_name = models.CharField(max_length=45)
     value = models.CharField(max_length=45)
-
 
     class Meta:
         db_table = 'tbTransacao'
@@ -24,17 +33,23 @@ class tbExtratoConfig(models.Model):
 
 class tbResumoComissao(models.Model):   
     id = models.AutoField(primary_key=True)  # Campo ID como chave primária
-    comissao_id = models.IntegerField(null=True, blank=False)
+    comissao_id = models.IntegerField(null=True, blank=False)  # ID da comissão associada
     mes_corrente = models.IntegerField(null=True, blank=False)
     ano_corrente = models.IntegerField(null=True, blank=False)
     sequencia = models.IntegerField(null=True, blank=False)
-    valor_mensalidade = models.FloatField(null=True, blank=False)
-    valor_mensalidade_reajuste = models.FloatField(null=True, blank=False)
-    valor_cota = models.FloatField(null=True, blank=False)
-    valor_objetivo_mensalidade = models.FloatField(null=True, blank=False)
-    saldo_total = models.FloatField(null=True, blank=False)
-    saldo_total_aplicado = models.FloatField(null=True, blank=False)
-    valor_taxa_boleto = models.FloatField(null=True, blank=False)
+    valor_cota = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
+    valor_objetivo_mensalidade = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
+    saldo_total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
+    saldo_total_aplicado = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
+
+    # Relacionamento com tbComissao
+    # comissao = models.ForeignKey(
+    #     tbComissao,  # Referência à tabela tbComissao
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name='comissao'
+    # )
 
     class Meta:
         db_table = 'tbResumoComissao'
@@ -42,11 +57,11 @@ class tbResumoComissao(models.Model):
 class tbResumoAssociado(models.Model):
     id = models.AutoField(primary_key=True)  # Campo ID como chave primária
     mensalidades_pagas = models.IntegerField(null=True, blank=True)
-    valor_pago = models.FloatField(null=True, blank=True)
-    valor_em_aberto = models.FloatField(null=True, blank=True)
-    valor_credito = models.FloatField(null=True, blank=True)
-    valor_outros = models.FloatField(null=True, blank=True)
-    valor_acordo = models.FloatField(null=True, blank=True)
+    valor_pago = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
+    valor_em_aberto = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
+    valor_credito = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
+    valor_outros = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
+    valor_acordo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
 
     # Relacionamento com tbAssociado
     associado = models.ForeignKey(
@@ -60,25 +75,14 @@ class tbResumoAssociado(models.Model):
     class Meta:
         db_table = 'tbResumoAssociado'
 
-
-
-
-class tbBoletoStatus(models.Model):
-    id = models.AutoField(primary_key=True)  # Campo ID como chave primária
-    status = models.CharField(max_length=15, null=True, blank=False)
-
-    class Meta:
-        db_table = 'tbBoletoStatus'  # Nome da tabela no banco de dados
-
-
 class tbBoleto(models.Model):
     id = models.AutoField(primary_key=True)  # Campo ID como chave primária
     data = models.DateField(max_length=8, null=True, blank=False)
     comissao_id = models.IntegerField(null=True, blank=False)
-    seu_numero = models.CharField(max_length=10, null=True, blank=False)
+    documento = models.CharField(max_length=10, null=True, blank=False)
     nosso_numero = models.CharField(max_length=20, null=True, blank=False)
-    valor_boleto = models.FloatField(null=True, blank=False)
-    valor_pg = models.FloatField(null=True, blank=False)
+    valor_boleto = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
+    valor_pg = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
     dt_vencimento = models.DateField(max_length=8, null=True, blank=False)
     dt_pagamento = models.DateField(max_length=8, null=True, blank=False)
     log_criacao_id = models.IntegerField(null=True, blank=True)
@@ -91,12 +95,12 @@ class tbBoleto(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='boletos'
+        related_name='associado_boleto'
     )   
 
     # Relacionamento com tbBoletoStatus
     boleto_status = models.ForeignKey(
-        tbBoletoStatus,
+        lstBoletoStatus,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -113,13 +117,13 @@ class tbExtrato(models.Model):
     data = models.DateField(max_length=8, null=True, blank=False)
     documento = models.CharField(max_length=45, null=True, blank=False)
     historico = models.CharField(max_length=255)
-    credito = models.FloatField(null=True, blank=True)
-    debito = models.FloatField(null=True, blank=True)
+    credito = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
+    debito = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
     tipo = models.CharField(max_length=45, null=True, blank=True)
     nome = models.CharField(max_length=45, null=True, blank=True)
     nota = models.CharField(max_length=255, null=True, blank=True)
     cpf = models.CharField(max_length=45, null=True, blank=True)
-    saldo = models.FloatField(null=True, blank=True)
+    saldo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
     status = models.IntegerField(null=True, blank=True)
     log_registro_id = models.IntegerField(null=True, blank=True)
     log_associacao_id = models.IntegerField(null=True, blank=True)

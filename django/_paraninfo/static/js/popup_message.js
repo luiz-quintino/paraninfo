@@ -42,6 +42,13 @@ function showPopup(type, message, title, callback) {
             popupInput.style.display = 'none';
             title = title || 'Confirmação'; // Definir título padrão se não for fornecido
             break;
+        case 'success':
+            popupIcon.src = "/static/media/icons/check.png";
+            popupTitle.style.color = '#4caf50';
+            popupCancel.style.display = 'inline-block';
+            popupConfirm.style.display = 'inline-block';
+            popupInput.style.display = 'none';
+            title = title || 'Confirmação'; // Definir título padrão se não for fornecido
             break;
         case 'input':
             popupIcon.src = "/static/media/icons/entrada.png";
@@ -65,6 +72,12 @@ function showPopup(type, message, title, callback) {
 
     // Fechar o popup ao clicar em "Fechar"
     popupClose.onclick = () => {
+        console.log(callback); // Log para depuração
+
+        if (callback && popupConfirm.style.display === 'none') {
+            console.log('Callback function is valid'); // Log para depuração
+            eval(callback); 
+        }
         popup.style.display = 'none';
     };
 

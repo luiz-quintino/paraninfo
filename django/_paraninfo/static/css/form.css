@@ -33,7 +33,30 @@ form.h2 {
     gap: 1px;
 }
 
-.form-group {
+.aceite-termos {
+    display: flex;
+    gap: 10px; /* Espaçamento entre o checkbox e o texto */
+    margin-top: 10px; /* Espaçamento superior */
+    margin-bottom: 20px; /* Espaçamento inferior */
+}
+
+.aceite-termos label {
+    font-weight: normal;
+    color: #333;
+    text-align: left;  /* Alinha o texto do rótulo à direita */
+    width: 500px;        /* Define uma largura fixa para os rótulos */
+    margin-bottom: 0px;   /* Remove a margem inferior */
+}
+
+.aceite-termos input{
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 30px;
+}
+
+.form-group{
     display: flex;
     align-items: center; /* Alinha o rótulo e o campo verticalmente */
     gap: 10px; /* Espaçamento entre o rótulo e o campo */
@@ -43,12 +66,12 @@ label {
     font-weight: bold;
     color: #333;
     text-align: right;  /* Alinha o texto do rótulo à direita */
-    width: 100px;        /* Define uma largura fixa para os rótulos */
+    width: 200px;        /* Define uma largura fixa para os rótulos */
     max-width: 400px;   /* Limita a largura máxima a 300px */
     margin-bottom: 0px;   /* Remove a margem inferior */
 }
 
-input, select{
+input, select, span{
     padding: 10px;
     font-size: 14px;
     border: 1px solid #ddd;
@@ -59,30 +82,31 @@ input, select{
 }
 
 /* Estilo para campos obrigatórios */
-input:required {
+input:required, select:required, span:required, .aceite-termos:required {
     border: 1px solid red; /* Borda vermelha para campos obrigatórios */
     outline: none; /* Remove o contorno padrão */
 }
 
 /* Estilo para campos obrigatórios quando focados */
-input:required:focus {
+input:required:focus, select:required:focus {
     border: 1px solid darkred; /* Borda vermelha mais escura ao focar */
     box-shadow: 0 0 5px rgba(255, 0, 0, 0.5); /* Adiciona um efeito de sombra */
 }
 
 /* Estilo para campos obrigatórios quando inválidos */
-input:required:invalid {
+input:required:invalid, select:required:invalid {
     border: 1px solid red; /* Borda vermelha para campos inválidos */
     background-color: #ffe6e6; /* Fundo levemente vermelho */
 }
 
 /* Estilo para campos obrigatórios quando válidos */
-input:required:valid {
+input:required:valid, select:required:valid {
     border: 1px solid green; /* Borda verde para campos válidos */
 }
 
 .form-group input:focus,
-.form-group select:focus {
+.form-group select:focus, 
+.form-group span:focus{
     border-color: #4CAF50; /* Cor de destaque ao focar */
     outline: none;
 }

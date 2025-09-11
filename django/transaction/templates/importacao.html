@@ -1,25 +1,18 @@
 {% extends 'base.html' %}
 
-{% block title %}Load balance{% endblock %}
+{% block title %}Carrega extratos{% endblock %}
 {% load static %}
 
 
 
 {% block content %}
-    <h2>{{ titulo }}</h2>
+    {% if message.text %}
+        {% include 'partials/popup_message.html' with message=message %}
+    {% endif %}
+
+    <h2>{{ message.title }}</h2>
+
     <div class="user-form">
-        {% if error %}
-            <div class="alert-error">
-                {{ error }}
-            </div>
-        {% endif %}
-
-        {% if message %}
-            <div class="alert-success">
-                {{ message }}
-            </div>
-        {% endif %}
-
         {% if is_dataframe_empty and file %}
             <div class="alert">
                 Nenhum dado encontrado no arquivo: {{ file }}.

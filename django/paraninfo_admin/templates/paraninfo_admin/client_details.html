@@ -26,7 +26,7 @@
         <!-- Campos do formulário -->
         <div class="form-group">
             <label for="comissao">Comissão</label>
-            <input type="text" id="comissao" name="comissao" value="{{ comissao.comissao }}" placeholder="Nome da Comissão" required>
+            <input type="text" id="comissao" name="comissao" value="{{ comissao.nome_comissao }}" placeholder="Nome da Comissão" required>
         </div>
         <div class="form-group">
             <label for="cnpj">CNPJ</label>
@@ -51,6 +51,21 @@
         <div class="form-group">
             <label for="presidente">Presidente</label>
             <input type="text" id="presidente" name="presidente" value="{{ comissao.presidente }}" placeholder="Nome do Presidente da Comissão">
+        </div>
+
+        </div>
+
+        <div class="form-group">
+            <label for="dia_vencimento">Dia vencimento</label>
+            <input type="text" id="dia_vencimento" name="dia_vencimento" value="{{ comissao.dia_vencimento }}" placeholder="Dia do vencimento">
+        </div>
+        <div class="form-group">
+            <label for="tipo_boleto_id">Tipo de boleto</label>
+            <input type="text" id="tipo_boleto_id" name="tipo_boleto_id" value="{{ comissao.tipo_boleto.tipo }}" placeholder="Tipo de boleto">
+        </div>
+        <div class="form-group">
+            <label for="tipo_identificacao_id">Tipo de indentificação</label>
+            <input type="text" id="tipo_identificacao_id" name="tipo_identificacao_id" value="{{ comissao.tipo_identificacao.tipo }}" placeholder="Dia do vencimento">
         </div>
 
         <!-- Botões de ação -->

@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.db.models.functions import TruncMonth, TruncYear
 
 from config.constants import MONTHS
-from transaction.utils import save_log
+from utils import save_log
 from .services.balance_calc import month_enclosed
 
 from config.constants import MESSAGE_TYPE_INFO, \
