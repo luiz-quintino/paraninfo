@@ -13,6 +13,12 @@
     <div >
         <h2>{{ message.title }}</h2>
 
+        <!-- form para geração de convite -->
+         <form method="post" action="{% url 'invited' %}" id="formGenerateInvite">
+            <input type="hidden" id="generate_invite" name="generate_invite" value="generate_invite">
+            {% csrf_token %}
+         </form>
+
         <div>
             {% if validade and not convite_link %}
                 O convite venceu em {{ validade }}. Gere um novo convite.

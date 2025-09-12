@@ -23,7 +23,9 @@ MENU_USERS_INCLUIR_USUARIO              = {'name': 'Incluir usuário',
                                            'tip': 'Acesse o formulário para inclusão de um novo usuário'}
 
 MENU_USERS_GERAR_CONVITE                = {'name': 'Gerar novo convite',               
-                                           'url': '#',
+                                           'url': '/users/invited',
+                                           'type': 'js',
+                                           'function': 'submitForm("formGenerateInvite")',  
                                            'color': 'yellow',
                                            'tip': 'Acesse o formulário para gerar link de convite para um novos usuários'}
 

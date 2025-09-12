@@ -9,7 +9,7 @@ import uuid as uuid_generate # Certifique-se de que o módulo uuid está importa
 from django.utils.timezone import localtime, get_current_timezone, timezone, now
 from datetime import timedelta, datetime
 from django.urls import reverse
-from users.models import tbAssociados, tbAssociadosListView, tbAssociadosCredentials, tbConvidado
+from users.models import tbAssociados, tbAssociadosListView, tbAssociadosCredentials, tbConvidado, lstTipoAssociado, lstSituacao
 from home.models import tbLog
 from paraninfo_admin.models import tbComissao
 from utils import convert_date, save_log
@@ -20,6 +20,14 @@ from config.menus import menu_url,  MENU_USERS_INCLUIR_USUARIO, \
                                     MENU_USERS_GERAR_CONVITE, \
                                     MENU_USERS_ACEITAR_CONVIDADOS, \
                                     MENU_VOLTAR
+
+from config.constants import MESSAGE_TYPE_INFO, \
+                                MESSAGE_TYPE_ERROR, \
+                                    MESSAGE_TYPE_WARNING, \
+                                        MESSAGE_TYPE_SUCCESS, \
+                                            MESSAGE_TYPE_CONFIRM
+
+
 
 # Função para verificar se o usuário pertence ao grupo 'admin'
 def is_sys_admin(user):
@@ -150,6 +158,28 @@ def invited_view(request):
     convite_link = ''
     validade = ''
 
+    if request.method == 'POST':
+        # Gera novo convite
+        if request.POST.get('generate_invite', ''):
+            new_uuid = str(uuid_generate.uuid4())
+            log_id = save_log(request, 'Geração de Convite', 12) # 12=Geração de convite
+            tbComissao.objects.filter(id=request.comissao).update(convite_uuid=new_uuid, convite_log_id=log_id)
+            message['text'] = 'Convite gerado com sucesso!'
+            message['type'] = MESSAGE_TYPE_SUCCESS
+        
+        elif request.POST.get('refused', ''):
+            # Convidado foi recusado
+            convidado_uuid = request.POST.get('refused', '')
+            convidado_field = tbConvidado.objects.filter(uuid=convidado_uuid, comissao=request.comissao).first()
+            if convidado_field:
+                convidado_field.situacao_id = 3 # cancelado
+                convidado_field.save()
+                message['text'] = f'Convidado {convidado_field.nome_responsavel} recusado com sucesso!'
+                message['type'] = MESSAGE_TYPE_SUCCESS
+            else:
+                message['text'] = f'Convidado não encontrado, uuid:"{convidado_uuid}"'
+                message['type'] = MESSAGE_TYPE_ERROR
+
     convite_field = tbComissao.objects.filter(id=request.comissao).first()
     if convite_field:
         convite_log_id = convite_field.convite_log_id
@@ -185,7 +215,6 @@ def invited_view(request):
     menu_options = [
         MENU_VOLTAR,
         MENU_USERS_GERAR_CONVITE,
-        MENU_USERS_ACEITAR_CONVIDADOS
     ]
 
     context = {
@@ -273,29 +302,32 @@ def user_list(request):
 
 @login_required()
 def user_record(request, uuid=None):
+    message = {'type': 'info', 'text': '', 'title': 'Registro de usuário', 'function': ''}
     user_groups = request.user.groups.values_list('name', flat=True) if request.user.is_authenticated else []
     menu_options = [MENU_VOLTAR]
     convidado = False
+    allow_edition = False  
 
     if uuid:
         # Busca o registro pelo UUID
         associado = tbAssociados.objects.filter(uuid=uuid).first()  # Busca pelo UUID
-        allow_edition = False  
     else:
         # Cria um registro vazio para adição
+        message['title'] = 'Registro de novo usuário'
         associado = tbAssociados()
 
     if not associado:
         # Verifica se tem convite de novo usuário para analisar
         associado = tbConvidado.objects.filter(uuid=uuid, situacao__situacao='novo').first()
-        allow_edition = False
-        convidado = True
-
-        if not associado:
+        if associado:
+            convidado = True
+            message['title'] = 'Registro de novo convidado'
+            
+        else:
             # TODO: Mensagem de erro
             messages.error(request, "Registro não encontrado.")
             return redirect('user_list')
-
+    print('convidado', convidado, associado)
     if request.user.is_authenticated:
         is_admin = request.user.groups.filter(name="app-admin").exists() \
                   or request.user.groups.filter(name="master").exists() \
@@ -332,9 +364,17 @@ def user_record(request, uuid=None):
 
     if convidado:
         # registros para convidado
-        associado_dict['codigo_associado'] = 'novo'
-        associado_dict['codigo_pagamento'] = 'novo'
-        associado_dict['tipo'] = 'associado'  
+        # extrai o id do último associado de tbAssociados
+        ultimo_associado = tbAssociados.objects.filter(comissao=request.comissao).order_by('-id').first()
+        if ultimo_associado and ultimo_associado.id:
+            # incrementa o código de pagamento
+            codigo_pagamento = str(ultimo_associado.id + 1).zfill(2)
+        else:
+            codigo_pagamento = '01'
+
+        associado_dict['codigo_associado'] = f"{request.comissao:02}{associado.matricula}{codigo_pagamento}"
+        associado_dict['codigo_pagamento'] = codigo_pagamento
+        associado_dict['tipo'] = 'socio'  
         associado_dict['situacao'] = 'ativo'
 
     else:
@@ -342,63 +382,69 @@ def user_record(request, uuid=None):
         associado_dict['codigo_associado'] = associado.codigo_associado or ''
         associado_dict['codigo_pagamento'] = associado.codigo_pagamento or ''
         associado_dict['situacao'] = 'associado.situacao or '''   
-        associado_dict['tipo'] = associado.tipo or ''  
+        associado_dict['tipo'] = associado.tipo.lower if associado.tipo else ''  
 
     if request.method == 'POST':
         if convidado:
             # cria registro em branco para novo associado
             associado = tbAssociados()
 
-        try:
-            # Gera um UUID apenas para novos registros
-            if not uuid or convidado:
-                associado.data = localtime(get_current_timezone()).strftime('%d-%m-%y %H:%M')  # Formata a data
-                associado.codigo_associado = f"{request.comissao:02}{request.POST.get('matricula')}{request.POST.get('codigo_pagamento')}"
-            
+        # try:
+        # Gera um UUID apenas para novos registros
+        if not uuid or convidado:
+            associado.data = convert_date(f'{datetime.now().date():%d/%m/%Y}')
+        
             if not uuid:
                 associado.uuid = str(uuid_generate.uuid4())
+                associado.codigo_associado = f"{request.comissao:02}{request.POST.get('matricula')}{request.POST.get('codigo_pagamento')}"
 
             if convidado:
                 associado.uuid = uuid
 
-            if not request.POST.get('comissao'):    
-                # se não for informada comissão, usa o da sessão
-                associado.comissao = request.comissao
-            else:
-                # modifica a comissão do associado
-                associado.comissao = request.POST.get('comissao')
-            
-            associado.nome_responsavel = request.POST.get('nome_responsavel')
-            associado.aluno = request.POST.get('aluno')
-            associado.nome_de_guerra = request.POST.get('nome_de_guerra')
-            associado.codigo_pagamento = request.POST.get('codigo_pagamento')
-            associado.email = request.POST.get('email')
-            associado.nascimento_responsavel = convert_date(request.POST.get('nascimento_responsavel'))
-            associado.cpf = request.POST.get('cpf')
-            associado.telefone = request.POST.get('telefone')
-            associado.sexo = request.POST.get('sexo')
-            associado.nascimento_aluno = convert_date(request.POST.get('nascimento_aluno'))
-            associado.matricula = request.POST.get('matricula')
-            associado.endereco = request.POST.get('endereco')
-            associado.numero = request.POST.get('numero')
-            associado.complemento = request.POST.get('complemento')
-            associado.bairro = request.POST.get('bairro')
-            associado.cidade = request.POST.get('cidade')
-            associado.cep = request.POST.get('cep')
-            associado.tipo = request.POST.get('tipo')
-            associado.situacao = request.POST.get('situacao')
-            # Salva o registro
-            associado.save()
+        if not request.POST.get('comissao'):    
+            # se não for informada comissão, usa o da sessão
+            associado.comissao = request.comissao
+        else:
+            # modifica a comissão do associado
+            associado.comissao = request.POST.get('comissao')
+        
+        associado.nome_responsavel = request.POST.get('nome_responsavel')
+        associado.aluno = request.POST.get('aluno')
+        associado.nome_de_guerra = request.POST.get('nome_de_guerra')
+        associado.codigo_pagamento = request.POST.get('codigo_pagamento')
+        associado.email = request.POST.get('email')
+        associado.nascimento_responsavel = convert_date(request.POST.get('nascimento_responsavel'))
+        associado.cpf = request.POST.get('cpf')
+        associado.telefone = request.POST.get('telefone')
+        associado.sexo = request.POST.get('sexo')
+        associado.nascimento_aluno = convert_date(request.POST.get('nascimento_aluno'))
+        associado.matricula = request.POST.get('matricula')
+        associado.endereco = request.POST.get('endereco')
+        associado.numero = request.POST.get('numero')
+        associado.complemento = request.POST.get('complemento')
+        associado.bairro = request.POST.get('bairro')
+        associado.cidade = request.POST.get('cidade')
+        associado.cep = request.POST.get('cep')
+        associado.tipo = request.POST.get('tipo')
+        associado.situacao = request.POST.get('situacao')
+        # Salva o registro
+        associado.save()
 
-            messages.success(request, "Registro salvo com sucesso!")
-        except Exception as e:
-            messages.error(request, f"Erro ao salvar registro.\n{str(e)}")
+        messages.success(request, "Registro salvo com sucesso!")
+        # except Exception as e:
+        #     messages.error(request, f"Erro ao salvar registro.\n{str(e)}")
     
+    tipo_list = lstTipoAssociado.objects.all().order_by('tipo')
+    situacao_list = lstSituacao.objects.all().order_by('situacao')
     context = {
         'associado': associado_dict, 
         'allow_edition': allow_edition, 
         'uuid': uuid,
         'menu_options': menu_options,
+        'convidado': convidado,
+        'tipo_list': tipo_list,
+        'situacao_list': situacao_list,
+        'message': message,
     }
 
     return render(request, 'users/user_record.html', context)

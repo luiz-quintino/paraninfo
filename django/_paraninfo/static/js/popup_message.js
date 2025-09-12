@@ -45,8 +45,8 @@ function showPopup(type, message, title, callback) {
         case 'success':
             popupIcon.src = "/static/media/icons/check.png";
             popupTitle.style.color = '#4caf50';
-            popupCancel.style.display = 'inline-block';
-            popupConfirm.style.display = 'inline-block';
+            popupCancel.style.display = 'none';
+            popupConfirm.style.display = 'none';
             popupInput.style.display = 'none';
             title = title || 'Confirmação'; // Definir título padrão se não for fornecido
             break;

@@ -54,9 +54,9 @@
                     <label for="documento">Descrição da transação</label>
                     <select id="documento" name="documento" required>
                         {% for trasacao in transacoes %}
-                        <option value="{{ trasacao.id }}">
-                            {{ trasacao.key }}
-                        </option>
+                            <option value="{{ trasacao.id }}">
+                                {{ trasacao.key }}
+                            </option>
                         {% endfor %}
                     </select>
                 </div>

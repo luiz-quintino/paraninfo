@@ -10,6 +10,14 @@ class lstSituacao(models.Model):
     class Meta:
         db_table = 'lstSituacao'  # Nome da tabela no banco de dados
 
+class lstTipoAssociado(models.Model):
+    id = models.AutoField(primary_key=True)  # Campo ID como chave primária
+    tipo = models.CharField(max_length=45, null=True, blank=False)  # Descrição do tipo de associado
+
+    class Meta:
+        db_table = 'lstTipoAssociado'  # Nome da tabela no banco de dados
+
+
 class tbAssociados(models.Model):
     id = models.AutoField(primary_key=True)
     uuid = models.CharField(max_length=36, unique=True, default=uuid.uuid4)  # Campo UUID
