@@ -47,16 +47,16 @@
             </thead>
             <tbody>
                 {% for associado in associados %}
-                <tr onclick="window.location.href='{% url 'user_record' uuid=associado.uuid %}';" style="cursor: pointer;">
-                    <td>{{ associado.codigo_associado }}</td>
-                    <td>{{ associado.nome_responsavel }}</td>
-                    <td>{{ associado.aluno }}</td>
-                    <td>{{ associado.nome_de_guerra }}</td>
-                </tr>
+                    <tr onclick="window.location.href='{% url 'user_record' uuid=associado.uuid %}';" style="cursor: pointer;">
+                        <td>{{ associado.codigo_associado }}</td>
+                        <td>{{ associado.nome_responsavel }}</td>
+                        <td>{{ associado.aluno }}</td>
+                        <td>{{ associado.nome_de_guerra }}</td>
+                    </tr>
                 {% empty %}
-                <tr>
-                    <td colspan="4">Nenhum associado encontrado.</td>
-                </tr>
+                    <tr>
+                        <td colspan="4">Nenhum associado encontrado.</td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>

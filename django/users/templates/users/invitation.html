@@ -11,7 +11,7 @@
         <h3>{{ message.text}}</h3>
         <!-- Exibir mensagens de sucesso ou erro -->
         <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-            <p>Preencha a Ficha de Cadastro abaixo e submeta os dados para registro.</p>
+            <p>Preencha a Ficha de Inscrição abaixo e submeta os dados para registro.</p>
             <p>Assim que a comissão de formatura verificar os seus dados, você receberá um email com a confirmação de acesso</p>
             <p>Todos os campos em vermelho são obrigatórios</p>
         </div>
@@ -180,6 +180,8 @@
             const cep = document.getElementById('cep').value.trim();
             const file1 = document.getElementById('file1').files.length;
             const file2 = document.getElementById('file2').files.length;
+            const fileType1 = document.getElementById('file1').files[0]?.type;
+            const fileType2 = document.getElementById('file2').files[0]?.type;
             const aceite1 = document.getElementById('aceite1').checked;
             const aceite2 = document.getElementById('aceite2').checked;
             const aceite3 = document.getElementById('aceite3').checked;
@@ -202,6 +204,8 @@
             if (!nascimentoAluno || !dataRegex.test(nascimentoAluno)) errors.push('O campo "Nascimento do Aluno" está vazio ou em formato inválido (ex: DD/MM/AAAA).');
             if (file1 === 0) errors.push('O campo "Documento de identidade do responsável com foto" é obrigatório.');
             if (file2 === 0) errors.push('O campo "Comprovante de endereço no nome do responsável" é obrigatório.');    
+            if (fileType1 === 'undefined' || fileType1 !== 'image/jpeg') errors.push('O arquivo do campo "Documento de identidade do responsável com foto" deve ser uma imagem JPG.');
+            if (fileType2 === 'undefined' || fileType2 !== 'image/jpeg') errors.push('O arquivo do campo "Comprovante de endereço do responsável" deve ser uma imagem JPG.');
             if (!aceite1) errors.push('Você deve aceitar o Regimento Interno da Comissão de Formatura.');
             if (!aceite2) errors.push('Você deve aceitar a Declaração de Práticas de Certificação da Autoridade Certificadora.');
             if (!aceite3) errors.push('Você deve aceitar a autorização para uso dos seus dados conforme LGPD.');

@@ -21,8 +21,8 @@
                 Nenhum convite disponível. Gere um novo convite.
 
             {% else %}
-            <div class='form-container'>
-                    <h3>Convite para geração de Ficha de Inscrição</h3>
+            <div class='form-container'>   
+                <h3>Convite para geração de Ficha de Inscrição</h3>
                     Envie o link abaixo para o usuário que deseja convidar. Ele irá preencher uma Ficha de Inscrição com suas informações pessoais.<p>A Ficha de Inscrição será avaliada para aceitação do usuário.</p>
                     <p>Link de convite</p>
                     <input type="text" id="convite_link" value="{{ convite_link }}" readonly style="width: 100%; padding: 8px; margin-top: 5px;"/>
@@ -32,9 +32,46 @@
                         <button onclick="copyToClipboard()">Copiar Link</button>
                     </div>
                 </div>
-                </div>
+            </div>
             {% endif %}
         </div>
+
+        <div>
+            <!-- Tabela de convidados -->
+            {% if convidados_list %}
+                <h2>Convidados aguardando aprovação</h2>
+                
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nome do Responsável</th>
+                            <th>Aluno</th>
+                            <th>Nome de Guerra</th>
+                            <th>CPF</th>
+                            <th>Email</th>
+                            <th>Telefone</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for convidado in convidados_list %}
+                            <tr onclick="window.location.href='{% url 'user_record' uuid=convidado.uuid %}';">
+                                <td>{{ convidado.nome_responsavel }}</td>
+                                <td>{{ convidado.aluno }}</td>
+                                <td>{{ convidado.nome_de_guerra }}</td>
+                                <td>{{ convidado.cpf }}</td>
+                                <td>{{ convidado.email }}</td>
+                                <td>{{ convidado.telefone }}</td>
+                                <td>{{ convidado.data }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <h3>Nenhum convidado encontrado.</h3>
+            {% endif %}
+        </div>
+
     </div>
 
     <script>

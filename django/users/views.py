@@ -29,7 +29,10 @@ def is_sys_admin(user):
     return is_admin
 
 def invitation_view(request, uuid):
-    message = {'type': 'info', 'text': '', 'title': 'Ficha de Cadastro', 'function': ''}
+    '''
+        View para aceitar convite e preencher ficha de cadastro
+    '''
+    message = {'type': 'info', 'text': '', 'title': 'Ficha de Inscrição', 'function': ''}
     
     # Verifica se o convite existe e é válido
     convite_field = tbComissao.objects.filter(convite_uuid=uuid).first()
@@ -119,7 +122,7 @@ def invitation_view(request, uuid):
             log_id = log_id
         )
 
-        messages.success(request, 'Ficha de Cadastro enviada com sucesso!')
+        messages.success(request, 'Ficha de Inscrição enviada com sucesso!')
         return redirect('login')
     
     else:
@@ -136,11 +139,6 @@ def invitation_view(request, uuid):
 
         return render(request, 'users/invitation.html', context)
                 
-
-        
-
-
-    
 
 @user_passes_test(is_sys_admin)
 def invited_view(request):
@@ -165,6 +163,24 @@ def invited_view(request):
             if not validate_expired:
                 convite_link = request.build_absolute_uri(reverse('invitation', kwargs={'uuid': convite_uuid}))
 
+    # filtra convidados com status 'novo'
+    convidados = tbConvidado.objects.filter(comissao=request.comissao, situacao__situacao='novo').order_by('-id')
+    if convidados:
+        # gera df para exibição
+        convidados_list = []
+        for convidado in convidados:
+            convidados_list.append({
+                'nome_responsavel': convidado.nome_responsavel,
+                'aluno': convidado.aluno,
+                'nome_de_guerra': convidado.nome_de_guerra,
+                'cpf': convidado.cpf,
+                'email': convidado.email,
+                'telefone': convidado.telefone,
+                'data': f'{convidado.data:%d/%m/%Y}',
+                'uuid': convidado.uuid,
+            })
+        
+
     # Cria side menu
     menu_options = [
         MENU_VOLTAR,
@@ -177,6 +193,7 @@ def invited_view(request):
             'message': message,
             'convite_link': convite_link,
             'validade': validade,
+            'convidados_list': convidados_list if convidados else None,
         }
     
     return render(request, 'users/invited.html', context)
@@ -258,15 +275,26 @@ def user_list(request):
 def user_record(request, uuid=None):
     user_groups = request.user.groups.values_list('name', flat=True) if request.user.is_authenticated else []
     menu_options = [MENU_VOLTAR]
+    convidado = False
 
     if uuid:
         # Busca o registro pelo UUID
-        associado = get_object_or_404(tbAssociados, uuid=uuid)  # Busca pelo UUID
-        allow_edition = False  # Inicializa a opção de busca como visível
+        associado = tbAssociados.objects.filter(uuid=uuid).first()  # Busca pelo UUID
+        allow_edition = False  
     else:
         # Cria um registro vazio para adição
         associado = tbAssociados()
 
+    if not associado:
+        # Verifica se tem convite de novo usuário para analisar
+        associado = tbConvidado.objects.filter(uuid=uuid, situacao__situacao='novo').first()
+        allow_edition = False
+        convidado = True
+
+        if not associado:
+            # TODO: Mensagem de erro
+            messages.error(request, "Registro não encontrado.")
+            return redirect('user_list')
 
     if request.user.is_authenticated:
         is_admin = request.user.groups.filter(name="app-admin").exists() \
@@ -280,40 +308,64 @@ def user_record(request, uuid=None):
         # Cria side menu
         if uuid and ('app-admin' in user_groups or 'master' in user_groups or 'sys-admin' in user_groups):
             menu_options.append(menu_url(MENU_USERS_DEFINICAO_ACESSO, url=reverse('user_credential', kwargs={'uuid': associado.uuid})))
+    
+    associado_dict = {}
+    # Garantir que os campos sejam strings vazias se estiverem None
+    associado_dict['nome_responsavel'] = associado.nome_responsavel or ''
+    associado_dict['aluno'] = associado.aluno or ''
+    associado_dict['nome_de_guerra'] = associado.nome_de_guerra or ''
+    associado_dict['email'] = associado.email or ''
+    associado_dict['nascimento_responsavel'] = f'{associado.nascimento_responsavel:%d/%m/%Y}' if associado.nascimento_responsavel else ''
+    associado_dict['cpf'] = associado.cpf or ''
+    associado_dict['telefone'] = associado.telefone or ''
+    associado_dict['sexo'] = associado.sexo or ''
+    associado_dict['nascimento_aluno'] = f'{associado.nascimento_aluno:%d/%m/%Y}' if associado.nascimento_aluno else ''
+    associado_dict['matricula'] = associado.matricula or ''
+    associado_dict['endereco'] = associado.endereco or ''  
+    associado_dict['numero'] = associado.numero or ''  
+    associado_dict['complemento'] = associado.complemento or ''  
+    associado_dict['bairro'] = associado.bairro or ''  
+    associado_dict['cidade'] = associado.cidade or ''  
+    associado_dict['cep'] = associado.cep or ''  
+    associado_dict['uuid'] = uuid or ''  
+    associado_dict['comissao'] = associado.comissao or request.comissao
 
-   # Garantir que os campos sejam strings vazias se estiverem None
-    associado.codigo_associado = associado.codigo_associado or ''
-    associado.nome_responsavel = associado.nome_responsavel or ''
-    associado.aluno = associado.aluno or ''
-    associado.nome_de_guerra = associado.nome_de_guerra or ''
-    associado.codigo_pagamento = associado.codigo_pagamento or ''
-    associado.email = associado.email or ''
-    associado.nascimento_responsavel = f'{associado.nascimento_responsavel:%d/%m/%Y}' if associado.nascimento_responsavel else ''
-    associado.cpf = associado.cpf or ''
-    associado.telefone = associado.telefone or ''
-    associado.sexo = associado.sexo or ''
-    associado.nascimento_aluno = f'{associado.nascimento_aluno:%d/%m/%Y}' if associado.nascimento_aluno else ''
-    associado.matricula = associado.matricula or ''
-    associado.endereco = associado.endereco or ''  
-    associado.numero = associado.numero or ''  
-    associado.complemento = associado.complemento or ''  
-    associado.bairro = associado.bairro or ''  
-    associado.cidade = associado.cidade or ''  
-    associado.cep = associado.cep or ''  
-    associado.tipo = associado.tipo or ''  
-    associado.situacao = associado.situacao or ''     
+    if convidado:
+        # registros para convidado
+        associado_dict['codigo_associado'] = 'novo'
+        associado_dict['codigo_pagamento'] = 'novo'
+        associado_dict['tipo'] = 'associado'  
+        associado_dict['situacao'] = 'ativo'
+
+    else:
+        # registros para usuários atuais
+        associado_dict['codigo_associado'] = associado.codigo_associado or ''
+        associado_dict['codigo_pagamento'] = associado.codigo_pagamento or ''
+        associado_dict['situacao'] = 'associado.situacao or '''   
+        associado_dict['tipo'] = associado.tipo or ''  
 
     if request.method == 'POST':
+        if convidado:
+            # cria registro em branco para novo associado
+            associado = tbAssociados()
+
         try:
             # Gera um UUID apenas para novos registros
-            if not uuid:
-                associado.uuid = str(uuid_generate.uuid4())
+            if not uuid or convidado:
                 associado.data = localtime(get_current_timezone()).strftime('%d-%m-%y %H:%M')  # Formata a data
                 associado.codigo_associado = f"{request.comissao:02}{request.POST.get('matricula')}{request.POST.get('codigo_pagamento')}"
+            
+            if not uuid:
+                associado.uuid = str(uuid_generate.uuid4())
 
-            if not request.POST.get('comissao'):
+            if convidado:
+                associado.uuid = uuid
+
+            if not request.POST.get('comissao'):    
+                # se não for informada comissão, usa o da sessão
                 associado.comissao = request.comissao
             else:
+                # modifica a comissão do associado
                 associado.comissao = request.POST.get('comissao')
             
             associado.nome_responsavel = request.POST.get('nome_responsavel')
@@ -343,7 +395,7 @@ def user_record(request, uuid=None):
             messages.error(request, f"Erro ao salvar registro.\n{str(e)}")
     
     context = {
-        'associado': associado, 
+        'associado': associado_dict, 
         'allow_edition': allow_edition, 
         'uuid': uuid,
         'menu_options': menu_options,
