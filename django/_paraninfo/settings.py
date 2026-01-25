@@ -16,8 +16,23 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 
 DEBUG = True
+PRODUCTION = True
 
-ALLOWED_HOSTS = ['212.85.21.167', 'srv791196.hstgr.cloud', '127.0.0.1', 'localhost']
+if PRODUCTION:   
+    ALLOWED_HOSTS = ['212.85.21.167', 
+                     'paraninfo.com.br',
+                     'www.paraninfo.com.br'
+                     'https://paraninfo.com.br',
+    ]
+else:                # Development
+    ALLOWED_HOSTS = ['212.85.21.167', 
+                     '127.0.0.1', 
+                     'localhost',
+                     'paraninfo.com.br',
+                     'www.paraninfo.com.br'
+                     'https://paraninfo.com.br',
+    ]
+    
 
 
 # Application definition
@@ -77,7 +92,7 @@ WSGI_APPLICATION = "_paraninfo.wsgi.application"
 
 MESSAGE_TAGS = {
     messages.DEBUG: 'debug',
-    messages.INFO: 'info',
+    messages.INFO:  'info',
     messages.SUCCESS: 'success',
     messages.WARNING: 'warning',
     messages.ERROR: 'error',
@@ -176,5 +191,5 @@ MESSAGE_TAGS = {
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Usa o banco de dados para armazenar sessões
 SESSION_COOKIE_NAME = 'sessionid'  # Nome do cookie de sessão
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Sessão expira ao fechar o navegador
-SESSION_COOKIE_AGE = 3600  # Tempo de vida da sessão em segundos (1 h)
+SESSION_COOKIE_AGE = 900 if PRODUCTION else 3600  # Tempo de vida da sessão em segundos (1 h ou 15min)
 SESSION_SAVE_EVERY_REQUEST = True  # Salva a sessão a cada requisição
