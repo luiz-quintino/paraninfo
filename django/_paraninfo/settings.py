@@ -19,7 +19,7 @@ DEVELOPMENT_ENVIRONMENT = config('DEVELOPMENT', default=False, cast=bool)
 # SECURITY WARNING: don't run with debug turned on in production!
 
 DEBUG = True
-PRODUCTION = False  # Enable to load images during tests in production enviroment
+PRODUCTION = True  # Enable to load images during tests in production enviroment
 
 if PRODUCTION:   
     ALLOWED_HOSTS = ['212.85.21.167', 
