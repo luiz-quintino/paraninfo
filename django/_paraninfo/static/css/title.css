@@ -14,7 +14,7 @@ header .app-title {
     color: #000000; /* Cor do título */
 }
 
-header .app-title_dev {
+header .app-title-dev {
     font-size: 50px;
     font-family: 'Brush Script MT', cursive; /* Fonte cursiva */
     margin-top: 5px; /* Sobrepõe o subtítulo ao título */
