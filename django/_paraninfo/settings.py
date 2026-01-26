@@ -13,10 +13,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 
+# Used to paint the title in red to identify the development enviroment
+DEVELOPMENT_ENVIRONMENT = config('DEVELOPMENT', default=False, cast=bool)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 
 DEBUG = True
-PRODUCTION = True
+PRODUCTION = False  # Enable to load images during tests in production enviroment
 
 if PRODUCTION:   
     ALLOWED_HOSTS = ['212.85.21.167', 
@@ -83,6 +86,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.context_processors.development_environment",
             ],
         },
     },

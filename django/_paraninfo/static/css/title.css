@@ -14,6 +14,15 @@ header .app-title {
     color: #000000; /* Cor do título */
 }
 
+header .app-title_dev {
+    font-size: 50px;
+    font-family: 'Brush Script MT', cursive; /* Fonte cursiva */
+    margin-top: 5px; /* Sobrepõe o subtítulo ao título */
+    margin-bottom: 0px; /* Remove completamente o espaçamento inferior */
+    line-height: 0.5; /* Reduz o espaçamento entre as linhas */
+    color: #ff0000; /* Cor do título */
+}
+
 header .app-subtitle {
     font-size: 24px;
     font-family: 'Apple Chancery', cursive; /* Fonte padrão */
