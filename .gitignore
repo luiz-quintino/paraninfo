@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# Server files
+*.sh
+*.service
+django/media/
+
 # Distribution / packaging
 .Python
 build/
