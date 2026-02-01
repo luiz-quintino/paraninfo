@@ -26,10 +26,10 @@
                 <input type="text" name="search" placeholder="Buscar..." value="{{ request.GET.search }}" class="filter-input">
                 
                 <button type="submit" class="filter-button">
-                    <img src="{% static 'icons/search-icon.png' %}" alt="Buscar" class="filter-icon">
+                    <img src="{% static 'search-icon.png' %}" alt="Buscar" class="filter-icon">
                 </button>
                 <a href="{% url 'user_list' %}" class="cancel-button">
-                    <img src="{% static 'icons/cancel-icon.png' %}" alt="Cancelar" class="cancel-icon">
+                    <img src="{% static 'cancel-icon.png' %}" alt="Cancelar" class="cancel-icon">
                 </a>
             </form>
         {% endif %}

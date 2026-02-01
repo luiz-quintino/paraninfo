@@ -155,22 +155,21 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-    BASE_DIR / "_paraninfo/static",
-    BASE_DIR / "users/static",
-    BASE_DIR / "credential/static",
-    BASE_DIR / "paraninfo_admin/static",
-    BASE_DIR / "home/static",
-    BASE_DIR / "transaction/static",
-    BASE_DIR / "balance/static",
-    ]
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Diretório onde os arquivos estáticos serão coletados (em produção)
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
+STATICFILES_DIRS = [
+    STATIC_ROOT / "admin/",
+    STATIC_ROOT / "css/",
+    STATIC_ROOT / "icons/",
+    STATIC_ROOT / "js/",
+    STATIC_ROOT / "logos/",
+    STATIC_ROOT / "media/",
+    STATIC_ROOT / "misc/",
+    ]
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

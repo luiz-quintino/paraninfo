@@ -6,7 +6,7 @@
     <div class="main-menu card">
         <div class="menu-logo-container">
             <a href="{% url 'home' %}">
-                <img src="{% static 'media/logos/paraninfo.svg' %}" alt="Logo">
+                <img src="{% static 'paraninfo.svg' %}" alt="Logo">
             </a>
         </div>
 
@@ -24,7 +24,7 @@
             <!-- Botão Home ao lado do menu sanduíche -->
             <div class="home-button">
                 <a href="{% url 'home' %}">
-                    <img src="{% static 'media/icons/home-icon.png' %}" alt="Home" style="width: 30px; height: 30px;">
+                    <img src="{% static 'home-icon.png' %}" alt="Home" style="width: 30px; height: 30px;">
                 </a>
             </div>
         </div>
@@ -51,7 +51,7 @@
         <!-- Coluna 4: Imagem com Link para Login -->
         {% if user.is_authenticated %}
             <div class="menu-user-container">
-                <img src="{% static 'media/icons/user_on.png' %}" alt="Login" class="menu-user-button" style="width: 30px; height: 30px; cursor: pointer;" onclick="toggleMenu_user()">
+                <img src="{% static 'user_on.png' %}" alt="Login" class="menu-user-button" style="width: 30px; height: 30px; cursor: pointer;" onclick="toggleMenu_user()">
                 {{ request.session.apelido }}
                 {% include 'partials/menu_user.html' %}
             </div>
@@ -59,7 +59,7 @@
         {% else %}
             <div class="menu-user-container">
                 <a href="{% url 'login' %}" class="login">
-                    <img src="{% static 'media/icons/user_off.png' %}" alt="Login" class="menu-user-button" style="width: 30px; height: 30px; cursor: pointer;">
+                    <img src="{% static 'user_off.png' %}" alt="Login" class="menu-user-button" style="width: 30px; height: 30px; cursor: pointer;">
                     Login
                 </a>
             </div>

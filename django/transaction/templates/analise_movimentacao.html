@@ -103,11 +103,11 @@
                             <div class="filter-form">
 
                                 <button type="button" onclick="toggleIgnorarLinha({{ extrato.id }})" class="ignore-button" title="Ignorar o registro">
-                                    <img src="{% static 'media/icons/cancel.png' %}" alt="Ignorar" class="ignore-icon" id="ignore-img-{{ extrato.id }}">
+                                    <img src="{% static 'cancel.png' %}" alt="Ignorar" class="ignore-icon" id="ignore-img-{{ extrato.id }}">
                                 </button>
 
                                 <button type="button" onclick="openDuplicatePopup({{ extrato.id }})" class="duplicate-button" id="duplicate-btn-{{ extrato.id }}" title="Duplicar registro">
-                                    <img src="{% static 'media/icons/fork.png' %}" alt="Duplicar" class="duplicate-icon">
+                                    <img src="{% static 'fork.png' %}" alt="Duplicar" class="duplicate-icon">
                                 </button>
                             </div>
                         </td>
@@ -269,7 +269,7 @@
                 ignoradosField.value = ignorados.join(',');
 
                 // Alterar a imagem para "cancel.png"
-                img.src = "{% static 'media/icons/cancel.png' %}";
+                img.src = "{% static 'cancel.png' %}";
                 img.alt = "Ignorar";
                 img.className = "ignore-icon"; // Garantir que a classe seja "ignore-icon"
 
@@ -295,7 +295,7 @@
                 ignoradosField.value = ignorados.join(',');
 
                 // Alterar a imagem para "undo.png"
-                img.src = "{% static 'media/icons/undo.png' %}";
+                img.src = "{% static 'undo.png' %}";
                 img.alt = "Desfazer";
                 img.className = "ignore-icon"; // Garantir que a classe seja "ignore-icon"
 
