@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Paraninfo{% endblock %}</title>
 
+    <link rel="stylesheet" href="{% static 'css/responsive_frame.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="stylesheet" href="{% static 'css/login.css' %}">
@@ -26,42 +27,52 @@
 
     <script src="{% static 'js/menu_main.js' %}" defer></script>
     <script src="{% static 'js/menu_user.js' %}" defer></script>
-    <script src="{% static 'js/menu_side.js' %}" defer></script>
+    <!-- <script src="{% static 'js/menu_side.js' %}" defer></script> -->
     <script src="{% static 'js/popup_message.js' %}" defer></script>
     <script src="{% static 'js/util.js' %}" defer></script>
 </head>
 
 <body>
-    <div class="container-main">
+    <!-- <div class="container-main"> -->
+    <div class="page">
 
         <!-- Cabeçalho -->
-        <div class="header-main">
+        <!-- <div class="header-main"> -->
+        <div class="head">
             {% include 'partials/header.html' %}
         </div>
     
         <!-- Corpo principal -->
-        <div class="main-body-main">
+        <!-- <div class="main-body-main"> -->
+        {% if user.is_authenticated %}
+            <main class="body">
+        {% else %}
+            <main>
+        {% endif %}
 
-            <!-- Menu lateral -->
             {% if user.is_authenticated %}
-                <div id="sidebar" class="sidebar expanded" >
-                    {% include 'partials/menu_side.html' %}
+                <!-- Menu lateral -->
+                <div class="page-menu" >
+                    <div id="sidebar" class="sidebar expanded" >
+                        {% include 'partials/menu_side.html' %}
+                    </div>
                 </div>
             {% endif %}
 
             <!-- Corpo da página -->
-            <div class="body-main">
-                <main>
-                    {% block content %}
-                    {% endblock %}
-                </main>
+            <!-- <div class="body-main"> -->
+            <div class="page-space card">
+                {% block content %}
+                {% endblock %}
             </div>
-        </div>
-    </div>
+            
+        </main>
     
-    <!-- Rodapé -->
-    <div class="footer-main">
-        {% include 'partials/footer.html' %}
+        <!-- Rodapé -->
+        <!-- <div class="footer-main"> -->
+        <div class="foot">
+            {% include 'partials/footer.html' %}
+        </div>
     </div>
 </body>
 </html>

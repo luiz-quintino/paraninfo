@@ -1,9 +1,7 @@
 /* Estilo do menu do usuário */
-
 .menu-user {
     position: relative;
 }
-
 
 /* Menu user */
 .menu-user-container {
@@ -18,8 +16,9 @@
     display: none; /* Inicialmente oculto */
     opacity: 0; /* Transparente */
     position: absolute;
-    top: 70px; /* Ajuste conforme necessário */
+    /* top: 40px; Ajuste conforme necessário */
     right: 0; /* Alinha o menu à direita */
+    
     background-color: #ffffff; /* Fundo branco */
     border: 1px solid #ddd; /* Borda cinza clara */
     border-radius: 8px; /* Bordas arredondadas */
