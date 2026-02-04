@@ -10,7 +10,7 @@
         {% include 'partials/popup_message.html' with message=message %}
     {% endif %}
 
-    <div >
+    <div class="container">
         <h2>{{ message.title }}</h2>
 
         <!-- form para geração de convite -->
@@ -42,7 +42,7 @@
             {% endif %}
         </div>
 
-        <div>
+        <div  class="container"> 
             <!-- Tabela de convidados -->
             {% if convidados_list %}
                 <h2>Convidados aguardando aprovação</h2>

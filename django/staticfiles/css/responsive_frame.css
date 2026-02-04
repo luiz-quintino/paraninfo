@@ -1,15 +1,15 @@
 /* =========================
        Base e tokens
        ========================= */
-       *, *::before, *::after { box-sizing: border-box; }
-       html, body { height: 100%; }
-       body {
+      
+       
+       /* body {
          margin: 0;
          font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
-         background: #1e4f7a;                 /* moldura externa */
+         background: #1e4f7a;                 
          display: grid;
          place-items: start center;
-       }
+       } */
        :root {
          /* Paleta (cores do croqui) */
          /* --c-head-borda: #2e8b57; */
@@ -25,15 +25,15 @@
 
          /* Paleta */
          --c-head-borda: aquamarine;
-         --c-body-borda: #4f86a7;
+         --c-body-borda: #a7824f;
          --c-foot: #ffe600;
          --c-mainmenu: aquamarine;
          --c-title: aquamarine;
          --c-user: aquamarine;
          --c-pagemenu: #666;
          --c-pagespace: #cfeeda;
-         --c-container: #2f6496;
-         --c-card-border: #14476c;
+         --c-container: #2f9672;
+         --c-card-border: #536c14;
    
          --radius: 10px;
          --gap: clamp(10px, 1.5vw, 16px);
@@ -53,10 +53,10 @@
          border: 2px solid var(--c-card-border);
          border-radius: var(--radius);
          padding: var(--gap);
-         display: grid;
-         grid-template-rows: auto 1fr auto; /* head, body, foot */
-         gap: var(--gap);
-         min-height: calc(100dvh - 2 * clamp(12px, 2vw, 20px));
+         /* display: grid;
+         grid-template-rows: auto 1fr auto; head, body, foot */
+         /* gap: var(--gap); */
+         /* min-height: calc(100dvh - 2 * clamp(12px, 2vw, 20px)); */
        }
    
        /* =========================

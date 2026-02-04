@@ -6,7 +6,7 @@
 {% block content %}
 
         <!-- Conteúdo principal -->
-        <div class="main-content">
+        <div class="container">
         
             <h2>{{ message.title }}</h2>
 
@@ -28,13 +28,13 @@
                         {% csrf_token %}
 
                         <!-- popup list com a lista de bancos -->
-                         <div class="menu-user-container">
-                            <div class="menu-home-container">
+                         <div class="vertical-container">
+                            <div class="horizontal-container">
                                 <label for="banco">Banco:</label>
                                 <input type="text" id="banco" name="banco" disabled value="{{ nome_banco }}">
                             </div>
                             
-                            <div class="menu-home-container">
+                            <div class="horizontal-container">
                                 <span id="file-name" >Selecione o extrato bancário</span>
                                 <label for="file">
                                     <img src="{% static 'open.png' %}" alt="Selecionar arquivo" class="upload-icon">
@@ -50,7 +50,7 @@
             <!-- Tabela com extrato -->
             {% else %}
 
-                <form method="post" action="{% url 'aceitar_extrato' %}" id="formEntrada">
+                <form method="post" action="{% url 'aceitar_extrato' %}" id="formEntrada" >
                     <input type="hidden" name="linhasAceitas" id="linhasAceitas" value="">
                     {% csrf_token %}
                 

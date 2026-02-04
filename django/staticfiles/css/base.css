@@ -1,5 +1,8 @@
 /* Base styles for the Django application */
 /* Reset some default styles */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -31,6 +34,15 @@ h3 {
     align-items: center;
     background-color: aquamarine;
     padding: 10px 20px;
+}
+
+.container {
+    /* max-width: 600px; */
+    margin: 0 auto;
+    padding: 20px;
+    background-color: aquamarine /* #ffffff; */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .action-buttons button, 
@@ -187,11 +199,26 @@ h3 {
 }
 
 .upload-icon {
-    width: 30px; /* Define a largura da imagem */
-    height: 30px; /* Define a altura da imagem */
+    width: 50px; /* Define a largura da imagem */
+    height: 50px; /* Define a altura da imagem */
     
     padding: 10px 10px;
     display: block; 
     cursor: pointer; 
 }
 
+/* Alinhamento horizontal */
+.horizontal-container {
+    display: flex; /* Alinha os itens horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+    gap: 10px; /* Espaçamento entre o menu e o botão Home */
+    /* padding: 0 0 0 106px ; */
+    
+}
+
+.vertical-container {
+    /* display: flex; Alinha os itens horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+    gap: 10px; /* Espaçamento entre o menu e o botão Home */
+    flex-direction: column; /* Empilha os elementos verticalmente */
+}

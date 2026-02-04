@@ -7,9 +7,9 @@
     <title>{% block title %}Paraninfo{% endblock %}</title>
 
     <link rel="stylesheet" href="{% static 'responsive_frame.css' %}">
-    <link rel="stylesheet" href="{% static 'main.css' %}">
     <link rel="stylesheet" href="{% static 'base.css' %}">
-    <link rel="stylesheet" href="{% static 'login.css' %}">
+    <link rel="stylesheet" href="{% static 'main.css' %}">
+    <link rel="stylesheet" href="{% static 'credential_login.css' %}">
     <link rel="stylesheet" href="{% static 'title.css' %}">
     <link rel="stylesheet" href="{% static 'menu_main.css' %}">
     <link rel="stylesheet" href="{% static 'menu_user.css' %}">
@@ -61,9 +61,11 @@
 
             <!-- Corpo da página -->
             <!-- <div class="body-main"> -->
-            <div class="page-space">
-                {% block content %}
-                {% endblock %}
+            <div class="page-space card">
+                <!-- <div class="bases-body"> -->
+                    {% block content %}
+                    {% endblock %}
+                <!-- </div> -->
             </div>
             
         </main>
