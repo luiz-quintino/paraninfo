@@ -41,6 +41,7 @@ form.h2 {
 }
 
 .aceite-termos label {
+    padding: 10px;
     font-weight: normal;
     color: #333;
     text-align: left;  /* Alinha o texto do rótulo à direita */
@@ -131,4 +132,51 @@ input:required:valid, select:required:valid {
 .form-icon {
     width: 160px; /* Largura da imagem */
     height: 160px; /* Altura da imagem */
+}
+
+/* Ajusta o estilo para telas menores */
+@media (max-width: 916px) {
+    .user-form  {
+        font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
+    }
+
+    /* Ajusta a largura da tabela para 100% em telas pequenas */
+    .user-form  thead {
+        display: none; /* Esconde o cabeçalho em telas pequenas */
+    }
+
+    /* Exibe as linhas como blocos para facilitar a leitura em telas pequenas */
+    .user-form tbody tr {
+        display: block; /* Exibe as linhas como blocos */
+        margin-bottom: 10px; /* Espaçamento entre os blocos */
+    }
+
+    /* Ajusta as células para exibir os dados em blocos */
+    .user-form tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        border: none;
+        border-bottom: 1px solid #a8a5a5; /* Borda inferior para separar os itens */
+    }
+
+    /* Adiciona rótulos para os dados em telas pequenas */
+    .user-form tbody td::before{
+        content: attr(data-label); /* Adiciona o rótulo antes do valor */
+        /* font-weight: bold; */
+        text-transform: uppercase;
+        color: #4CAF50;
+    }
+    
+    .form-group {
+        flex-direction: column; /* Organiza os elementos verticalmente */
+        /*align-items: flex-start; /* Alinha os elementos à esquerda */
+        
+    }
+
+    .form-group label {
+        text-align: left; 
+        padding: 10px 0px 0px 0px;
+        width: 300px;
+    }
 }

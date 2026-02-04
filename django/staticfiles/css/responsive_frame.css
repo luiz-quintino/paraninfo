@@ -52,11 +52,11 @@
          background: var(--c-container);
          border: 2px solid var(--c-card-border);
          border-radius: var(--radius);
-         /* padding: var(--gap); */
-         /* display: grid;
-         grid-template-rows: auto 1fr auto; head, body, foot */
-         /* gap: var(--gap); */
-         /* min-height: calc(100dvh - 2 * clamp(12px, 2vw, 20px)); */
+         padding: var(--gap);
+         display: grid;
+         /*grid-template-rows: auto 1fr auto;  head, body, foot 
+         gap: var(--gap);
+         min-height: calc(100dvh - 2 * clamp(12px, 2vw, 20px)); */
        }
    
        /* =========================
