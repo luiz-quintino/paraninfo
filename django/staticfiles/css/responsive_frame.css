@@ -47,8 +47,8 @@
           Container de página
           ========================= */
        .page {
-         /* width: 100%; */
-         /* margin: clamp(6px, 2vw, 20px); */
+         width: 100%;
+         margin: clamp(6px, 2vw, 20px);
          background: var(--c-container);
          border: 2px solid var(--c-card-border);
          border-radius: var(--radius);
