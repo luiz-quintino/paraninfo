@@ -12,7 +12,7 @@ body {
     display: flex; /* Alinha os itens horizontalmente */
     align-items: center; /* Centraliza verticalmente */
     left: 00;
-    width: 200px;
+    width: 100px;
     aspect-ratio: 1/1;
     position: absolute;
     flex: 1;
@@ -27,7 +27,7 @@ body {
 
 @media (min-width: 920px) {
     .menu-logo-container {
-        width: 260px;
+        width: 130px;
     }
 }
 .container-main {
