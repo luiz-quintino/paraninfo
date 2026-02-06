@@ -20,14 +20,15 @@ body {
 }
 
 .menu-logo-container img {
-    width: 100%;
-    height: 100%;
+    width: 80px;
+    /* height: 100%; */
+    aspect-ratio: 1/1;
     object-fit: cover;
 }
 
 @media (min-width: 920px) {
-    .menu-logo-container {
-        width: 130px;
+    .menu-logo-container img {
+        width: 140px;
     }
 }
 .container-main {
