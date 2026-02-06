@@ -1,3 +1,9 @@
+*,
+*::before
+*::after {
+    box-sizing: border-box;
+}
+
 /* Estilo geral */
 body {
     margin: 0;
@@ -7,6 +13,127 @@ body {
     min-height: 70vh; /* Garante que o corpo ocupe pelo menos a altura da janela */
 }
 
+:root {
+    /* Paleta (cores do croqui) */
+    /* --c-head-borda: #2e8b57; */
+    --c-body-borda: #4f86a7;
+    --c-foot: #ffe600;
+    --c-mainmenu: #bfe6ff;
+    --c-title: #f5b99c;
+    --c-user: #d78bd8;
+    --c-pagemenu: #666;
+    --c-pagespace: #cfeeda;
+    --c-container: #2f6496;
+    --c-card-border: #14476c;
+
+    /* Paleta */
+    --c-head-borda: aquamarine;
+    --c-body-borda: #a7824f;
+    --c-foot: #ffe600;
+    --c-mainmenu: aquamarine;
+    --c-title: aquamarine;
+    --c-user: aquamarine;
+    --c-pagemenu: #666;
+    --c-pagespace: #cfeeda;
+    --c-container: #2f9672;
+    --c-card-border: #536c14;
+
+    --radius: 10px;
+    --gap: clamp(10px, 1.5vw, 16px);
+    --pad: clamp(10px, 1.2vw, 14px);
+
+    /* Largura máxima do canvas (pode ajustar) */
+    --maxw: min(2100px, 96vw);
+}
+
+/* =========================
+Container de página
+========================= */
+.page {
+    width: 100%;
+    max-width: 480px;
+    margin: clamp(6px, 2vw, 10px);
+    background: var(--c-container);
+    border: 2px solid var(--c-card-border);
+    border-radius: var(--radius);
+    padding: var(--gap);
+    display: grid;
+    /*grid-template-rows: auto 1fr auto;  head, body, foot 
+    gap: var(--gap);
+    min-height: calc(100dvh - 2 * clamp(12px, 2vw, 20px)); */
+}
+
+/* =========================
+    Cabeçalho (HEAD)
+    ========================= */
+header.head {
+    background: aquamarine;
+    border: 2px solid #1f5a37;
+    border-radius: var(--radius);
+    padding: var(--gap);
+    display: grid;
+    gap: var(--gap);
+    /* Mobile-first: 2 linhas → (main | user) + (title) */
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+        "title title"
+        "main user";
+}
+
+.main-menu { grid-area: main;  background: var(--c-mainmenu); }
+.title     { grid-area: title; background: var(--c-title); }
+.user      { grid-area: user;  background: var(--c-user); }
+
+/* =========================
+    Corpo (BODY)
+   ========================= */
+main.body {
+    background: #2b5573;
+    border: 2px solid #1b3a50;
+    border-radius: var(--radius);
+    padding: var(--gap);
+    display: grid;
+    gap: var(--gap);
+    grid-template-columns: 1fr;
+    grid-template-areas:
+        "pagemenu"
+        "pagespace";
+}
+
+.page-menu  { grid-area: pagemenu; background: var(--c-pagemenu); color: #fff; }
+.page-space { grid-area: pagespace; background: var(--c-pagespace); }
+
+/* =========================
+    Rodapé (FOOT)
+   ========================= */
+footer.foot {
+    background: var(--c-foot);
+    border: 2px solid #c9b400;
+    border-radius: var(--radius);
+    padding: var(--gap);
+    display: grid;
+    place-items: center start;
+    color: #333;
+    font-weight: 600;
+}
+
+/* =========================
+    Cartões e tipografia (demo)
+   ========================= */
+.card {
+    padding: var(--pad);
+    border-radius: calc(var(--radius) - 4px);
+    border: 3px solid rgba(0,0,0,.18);
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* .page-menu  { min-height: clamp(100px, 22vh, 220px); } */
+.page-space { min-height: clamp(180px, 36vh, 420px); }
+.main-menu, .title, .user { min-height: clamp(48px, 8vh, 80px); }
+.foot { min-height: 64px; }
 
 .menu-logo-container {
     display: flex; /* Alinha os itens horizontalmente */
@@ -24,43 +151,60 @@ body {
     /* height: 100%; */
     aspect-ratio: 1/1;
     object-fit: cover;
-}
 
-@media (min-width: 920px) {
-    .menu-logo-container img {
-        width: 140px;
-    }
-}
-.container-main {
+/* .container-main {
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 70vh; /* Garante que o corpo ocupe pelo menos a altura da janela */
-}
+} */
 
 /* Cabeçalho */
-.header-main {
+/* .header-main {
     text-align: center;
-}
+} */
 
 /* Corpo principal */
-.main-body-main {
+/* .main-body-main {
     flex: 1;
-    display: flex; /* Define o layout em colunas */
-}
+    display: flex; 
+} */
 
 /* Corpo da página */
 .body-main {
-    flex: 1; /* Faz o corpo ocupar o restante do espaço */
+    flex: 1; 
     padding: 20px;
-    overflow-y: auto; /* Adiciona rolagem vertical se o conteúdo for muito longo */
+    overflow-y: auto; 
 }
 
 /* Rodapé */
-.footer-main {
+/* .footer-main {
     background-color: #333;
     color: white;
     text-align: center;
     padding: 10px;
+} */
+
+/* =========================
+    TROCA AUTOMÁTICA p/ TELAS MAIORES
+    >>> USANDO VALOR LITERAL NO BREAKPOINT <<<
+   ========================= */
+
+@media (min-width: 920px) {
+    /* HEAD: 3 colunas horizontais → main | title | user */
+    header.head {
+        grid-template-columns: 240px 1fr 190px;
+        grid-template-areas: "main title user";
+        align-items: stretch;
+    }
+    /* BODY: 2 colunas horizontais → page menu | page space */
+    main.body {
+        grid-template-columns: clamp(200px, 26vw, 200px) 1fr;
+        grid-template-areas: "pagemenu pagespace";
+    }
+    
+    .menu-logo-container img {
+        width: 140px;
+    }
 }
 
