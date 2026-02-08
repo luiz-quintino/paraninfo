@@ -37,36 +37,7 @@
     color: #333; /* Cor do texto */
 }
 
-/* Responsividade */
-@media (max-width: 990px) {
-    .table {
-        font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
-    }
 
-    .table thead {
-        display: none; /* Esconde o cabeçalho em telas pequenas */
-    }
-
-    .table tbody tr {
-        display: block; /* Exibe as linhas como blocos */
-        margin-bottom: 10px; /* Espaçamento entre os blocos */
-    }
-
-    .table tbody td {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px;
-        border: none;
-        border-bottom: 1px solid #a8a5a5; /* Borda inferior para separar os itens */
-    }
-
-    .table tbody td::before {
-        content: attr(data-label); /* Adiciona o rótulo antes do valor */
-        font-weight: bold;
-        text-transform: uppercase;
-        color: #4CAF50;
-    }
-}
 
 /* Estilo para o formulário de filtro */
 .filter-form {
@@ -104,20 +75,20 @@
     
 }
 
-/* Estilo para o botão de cancelar pesquisa */
+/* Estilo para o botão de cancelar pesquisa /
 .cancel-button {
     display: inline-block;
     border: none;
-    padding: 4px; /* Ajusta o espaçamento interno */
+    padding: 4px; /* Ajusta o espaçamento interno /
     border-radius: 4px;
     cursor: pointer;
     text-decoration: none;
-    width: 30px; /* Define a largura do botão */
-    height: 30px; /* Define a altura do botão */
+    width: 30px; /* Define a largura do botão /
+    height: 30px; /* Define a altura do botão /
     display: flex;
     align-items: center;
     justify-content: center;
-}
+}*/
 
 .cancel-icon, .filter-icon, .ignore-icon, .duplicate-icon{
     width: 24px; /* Tamanho do ícone dentro do botão */
@@ -153,4 +124,35 @@
     padding: 8px 12px;
     margin: 0 5px;
     color: #999;
+}
+
+/* Responsividade */
+@media (max-width: 919px) {
+    .table {
+        font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
+    }
+
+    .table thead {
+        display: none; /* Esconde o cabeçalho em telas pequenas */
+    }
+
+    .table tbody tr {
+        display: block; /* Exibe as linhas como blocos */
+        margin-bottom: 10px; /* Espaçamento entre os blocos */
+    }
+
+    .table tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        border: none;
+        border-bottom: 1px solid #a8a5a5; /* Borda inferior para separar os itens */
+    }
+
+    .table tbody td::before {
+        content: attr(data-label); /* Adiciona o rótulo antes do valor */
+        /* font-weight: bold; */
+        text-transform: uppercase;
+        color: #4CAF50;
+    }
 }

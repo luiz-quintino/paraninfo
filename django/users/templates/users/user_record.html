@@ -32,7 +32,9 @@
             </form> 
         {% endif %}
 
-        <form method="post" action="{% if uuid %}{% url 'user_record' uuid=associado.uuid %}{% else %}{% url 'user_record' %}{% endif %}" class="user-form readonly-form">
+        <form method="post" action="{% if uuid %}{% url 'user_record' uuid=associado.uuid %}{% else %}{% url 'user_record' %}{% endif %}" 
+                class="user-form readonly-form">
+                
             {% csrf_token %}
 
             <!-- Botões de definição de acesso -->

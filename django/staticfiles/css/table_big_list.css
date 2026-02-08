@@ -87,7 +87,7 @@
 }
 
 /* Ajusta o estilo para telas menores */
-@media (max-width: 916px) {
+@media (max-width: 919px) {
     .table_big_list, .table_big_list_simple {
         font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
     }

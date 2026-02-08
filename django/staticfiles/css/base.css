@@ -3,11 +3,11 @@
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; }
 
-body {
+/* body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-}
+} */
 
 
 /* Estilo para o cabeçalho */
@@ -28,21 +28,33 @@ h3 {
 }
 
 /* Style for the header */
-.header {
+/* .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background-color: aquamarine;
     padding: 10px 20px;
-}
+} */
 
 .container {
     /* max-width: 600px; */
     margin: 0 auto;
     padding: 20px;
-    background-color: aquamarine /* #ffffff; */
+    background-color: rgb(255, 255, 255); /* #ffffff; */
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 100%;   /* Garante que o container não ultrapasse a largura da tela */
+    width: 100%; /* Faz o container ocupar toda a largura disponível */
+}
+
+/* linha horizontal com botões de ação */
+.action-buttons {   
+    display: flex; /* Adiciona flexbox para alinhar os botões horizontalmente */
+    justify-content: center; /* Centraliza os botões horizontalmente */
+    gap: 10px; /* Espaçamento entre os botões */
+    margin-top: 20px; /* Espaçamento superior */
+    /* quebra de linha se texto for maior que o expaço */
+    text-overflow: clip;
 }
 
 .action-buttons button, 
@@ -50,15 +62,18 @@ h3 {
     background-color: #4CAF50; /* Cor de fundo */
     color: white; /* Cor do texto */
     border: none;
-    padding: 5px 0; /* Espaçamento interno ajustado */
+    padding: 10px 0; /* Espaçamento interno ajustado */
     border-radius: 4px; /* Bordas arredondadas */
     cursor: pointer;
     text-decoration: none; /* Remove o sublinhado dos links */
     font-size: 12px; /* Tamanho da fonte */
     font-weight: bold; /* Negrito no texto */
     text-align: center;
-    white-space: nowrap; /* Garante que o texto não quebre em várias linhas */
-    width: 120px; /* Define a largura fixa dos botões */
+    /* white-space: nowrap; /* Garante que o texto não quebre em várias linhas */
+    max-width: 140px; /* Define a largura máxima dos botões */
+    width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
     /* margin-bottom: 5px; Espaçamento inferior */
     transition: background-color 0.3s ease;
     /* centraliza o botão verticalmente */
@@ -70,18 +85,19 @@ h3 {
 .action-buttons .save-button {
     background-color: #09b90f;
     color: #fff;
-    border: none;
-    padding: 10px 10px;
-    border-radius: 4px;
-    cursor: pointer;
+    /* border: none; */
+    /* padding: 10px 10px; */
+    /* border-radius: 4px; */
+    /* cursor: pointer; */
 }
 
 .action-buttons .cancel-button {
     background-color: #f44336;
-    border: none;
-    padding: 10px 10px;
-    border-radius: 4px;
-    cursor: pointer;
+    color: #fff;
+    /* border: none; */
+    /* padding: 10px 10px; */
+    /* border-radius: 4px; */
+    /* cursor: pointer; */
 }
 
 .action-buttons .back-button {
@@ -217,8 +233,7 @@ h3 {
 }
 
 .vertical-container {
-    /* display: flex; Alinha os itens horizontalmente */
+    flex-direction: column; /* Empilha os elementos verticalmente */
     align-items: center; /* Centraliza verticalmente */
     gap: 10px; /* Espaçamento entre o menu e o botão Home */
-    flex-direction: column; /* Empilha os elementos verticalmente */
 }

@@ -6,19 +6,22 @@
     overflow: hidden;
 }
 
-/* Barra de menu lateral */
 .menu-options_side {
-    list-style: none;
-    padding: 10px;
-    margin: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    opacity: 1; /* Garante que o menu não esteja transparente */
-    transition: none; /* Remove transições */
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    padding: 0;
+    margin: 0;
 }
 
-/* Estilo para itens da lista */
 .menu-options_side li {
-    margin: 10px 0;
+    display: inline-block; 
+    margin: 5px; 
+}
+
+
+.sidebar.expanded {
+    width: 100%;
 }
 
 /* Estilo para botões e links */
@@ -43,6 +46,7 @@
     background-color: aquamarine;
     color: #000000;
     border-radius: 4px;
+    
 }
 
 /* Estilo para telas grandes (desktop) */
@@ -58,31 +62,4 @@
     .sidebar.expanded {
         width: 200px;
     }
-}
-
-/* Estilo para telas pequenas (celulares e tablets) */
-@media (max-width: 919px) {
-    .menu-options_side {
-        display: flex; /* Altera para layout horizontal */
-        flex-wrap: wrap; /* Permite quebra de linha, se necessário */
-        justify-content: center; /* Centraliza os itens horizontalmente */
-        padding: 0;
-        margin: 0;
-    }
-
-    .menu-options_side li {
-        display: inline-block; /* Exibe os itens lado a lado */
-        margin: 5px; /* Adiciona espaçamento entre os itens */
-    }
-
-    .menu-options_side button,
-    .menu-options_side a {
-        padding: 8px 12px; /* Ajusta o espaçamento interno */
-        text-align: center; /* Centraliza o texto */
-    }
-
-    
-.sidebar.expanded {
-    width: 100%;
-}
 }

@@ -31,6 +31,7 @@ form.h2 {
     display: flex;
     flex-direction: column;
     gap: 1px;
+    font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
 }
 
 .aceite-termos {
@@ -38,18 +39,19 @@ form.h2 {
     gap: 10px; /* Espaçamento entre o checkbox e o texto */
     margin-top: 10px; /* Espaçamento superior */
     margin-bottom: 20px; /* Espaçamento inferior */
+    flex-wrap: wrap;
 }
 
 .aceite-termos label {
     padding: 10px;
     font-weight: normal;
     color: #333;
-    text-align: left;  /* Alinha o texto do rótulo à direita */
+    text-align: left;  /* Alinha o texto do rótulo à esquerda */
     width: 500px;        /* Define uma largura fixa para os rótulos */
     margin-bottom: 0px;   /* Remove a margem inferior */
 }
 
-.aceite-termos input{
+.aceite-termos input{  /* input[type="checkbox"] */
     padding: 10px;
     font-size: 14px;
     border: 1px solid #ddd;
@@ -57,19 +59,25 @@ form.h2 {
     width: 30px;
 }
 
-.form-group{
-    display: flex;
-    align-items: center; /* Alinha o rótulo e o campo verticalmente */
-    gap: 10px; /* Espaçamento entre o rótulo e o campo */
+.form-group {		    /* formatação para telas pequenas */
+    /* display: flex; */
+    flex-direction: column; /* Empilha os elementos verticalmente */
+    /* align-items: right; /* Alinha o rótulo e o campo verticalmente */
+    /*justify-content: center; /* Centraliza os elementos horizontalmente */
+    gap: 10px;              /* Espaçamento entre o rótulo e o campo */
 }
 
-label {
+.form-group label {
+    display: block; /* Garante que o rótulo ocupe toda a largura disponível */
+    text-align: left; 
+    text-wrap: wrap;
+    align-self: flex-start;
+    padding: 10px;
+    box-sizing: border-box; /* Inclui o padding na largura total */
     font-weight: bold;
-    color: #333;
-    text-align: right;  /* Alinha o texto do rótulo à direita */
-    width: 200px;        /* Define uma largura fixa para os rótulos */
-    max-width: 400px;   /* Limita a largura máxima a 300px */
-    margin-bottom: 0px;   /* Remove a margem inferior */
+    min-width: 200px;       /* Define uma largura fixa para os rótulos */
+    max-width: 400px;       /* Limita a largura máxima a 300px */
+    width: 100%;
 }
 
 input, select, span{
@@ -77,8 +85,9 @@ input, select, span{
     font-size: 14px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    width: 300px;        /* Garante que o campo ocupe todo o espaço disponível */
-    max-width: 700px;   /* Limita a largura máxima a 400px */
+    width: 300px;       /* Limita a largura mínima */
+    max-width: 500px;   /* Limita a largura máxima */
+    width: 100%;        /* Garante que o campo ocupe todo o espaço disponível */
     box-sizing: border-box; /* Inclui o padding na largura total */
 }
 
@@ -134,10 +143,15 @@ input:required:valid, select:required:valid {
     height: 160px; /* Altura da imagem */
 }
 
-/* Ajusta o estilo para telas menores */
-@media (max-width: 916px) {
+/* ***********************************
+
+	Ajusta o estilo para telas maiors 
+	
+	***********************************
+*/
+@media (min-width: 920px) {
     .user-form  {
-        font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
+        font-size: 16px; /* Reduz o tamanho da fonte em telas menores */
     }
 
     /* Ajusta a largura da tabela para 100% em telas pequenas */
@@ -169,14 +183,21 @@ input:required:valid, select:required:valid {
     }
     
     .form-group {
-        flex-direction: column; /* Organiza os elementos verticalmente */
-        /*align-items: flex-start; /* Alinha os elementos à esquerda */
+        display: flex;
+        flex-direction: row; /* Empilha os elementos verticalmente */
+        /*flex-direction: column; /* Organiza os elementos verticalmente */
+        /* justify-content: center; Centraliza os elementos verticalmente */
+        align-items: center; /* Alinha os elementos no centro */
+        justify-content: center; /* Centraliza os elementos horizontalmente */
+        }
         
-    }
-
     .form-group label {
-        text-align: left; 
+        text-align: right; 
         padding: 10px 0px 0px 0px;
         width: 300px;
+    }
+
+    .form-group input, .form-group select, .form-group span {
+        align-items: center; /* Alinha os elementos no centro */
     }
 }

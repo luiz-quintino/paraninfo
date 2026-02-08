@@ -35,7 +35,7 @@ body {
     --c-user: aquamarine;
     --c-pagemenu: #666;
     --c-pagespace: #cfeeda;
-    --c-container: #2f9672;
+    --c-container: #ffffff;
     --c-card-border: #536c14;
 
     --radius: 10px;
@@ -51,7 +51,9 @@ Container de página
 ========================= */
 .page {
     width: 100%;
-    max-width: 480px;
+    /* max-width: 480px; */
+    min-width: 480px;
+    max-width: var(--maxw);
     margin: clamp(6px, 2vw, 10px);
     background: var(--c-container);
     border: 2px solid var(--c-card-border);
@@ -201,6 +203,10 @@ footer.foot {
     main.body {
         grid-template-columns: clamp(200px, 26vw, 200px) 1fr;
         grid-template-areas: "pagemenu pagespace";
+    }
+
+    .page {
+        max-width: var(--maxw);
     }
     
     .menu-logo-container img {
