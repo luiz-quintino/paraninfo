@@ -120,6 +120,17 @@ DATABASES = {
     }
 }
 
+# Envio de e-mails via Hostinger Email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.hostinger.com'
+EMAIL_PORT = config('EMAIL_PORT') # SMTP SSL
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True # Importante: porta 465 = SSL
+EMAIL_HOST_USER = config('EMAIL_ADDRESS') # seu e-mail Hostinger
+EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD') # senha dessa caixa de e-mail
+DEFAULT_FROM_EMAIL = config('EMAIL_SENDER') # remetente padrão
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
