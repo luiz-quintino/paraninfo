@@ -169,6 +169,7 @@ STATIC_URL = '/static/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / "media"
+JS_URL = '/js/'
 
 # Diretório onde os arquivos estáticos serão coletados (em produção)
 STATIC_ROOT = BASE_DIR / "staticfiles"

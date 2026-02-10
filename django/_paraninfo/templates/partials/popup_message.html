@@ -1,3 +1,5 @@
+{% load static %}
+
 <div id="custom-popup" class="popup-overlay" style="display: none;">
     <div class="popup-content">
         <div class="popup-header">
@@ -16,7 +18,13 @@
     </div>
 </div>
 
-<script src="/staticfiles/js/popup_message.js"></script>
+<script 
+    src="{% static 'popup_message.js' %}">
+</script>
+
+<script>
+    const staticUrl = "{% static '' %}";
+</script>
 
 <script>
         showPopup('{{ message.type }}', 

@@ -22,10 +22,10 @@ from config.menus import menu_url,  MENU_USERS_INCLUIR_USUARIO, \
                                     MENU_VOLTAR
 
 from config.constants import MESSAGE_TYPE_INFO, \
-                                MESSAGE_TYPE_ERROR, \
-                                    MESSAGE_TYPE_WARNING, \
-                                        MESSAGE_TYPE_SUCCESS, \
-                                            MESSAGE_TYPE_CONFIRM
+                             MESSAGE_TYPE_ERROR, \
+                             MESSAGE_TYPE_WARNING, \
+                             MESSAGE_TYPE_SUCCESS, \
+                             MESSAGE_TYPE_CONFIRM
 
 
 
@@ -451,13 +451,14 @@ def user_record(request, uuid=None):
 
 @login_required
 def user_credential(request, uuid):
+    message = {}
     associado = get_object_or_404(tbAssociadosCredentials, uuid=uuid)  # Busca pelo UUID
     user = User.objects.filter(username=associado.codigo_associado).first()
     groups = Group.objects.all()
     user_group_id = user.groups.first().id if user and user.groups.exists() else None
     menu_options = [MENU_VOLTAR]
 
-    allow_edition = False  # Inicializa a opção de busca como visível
+    allow_edition = False 
 
     if request.user.is_authenticated:
         is_admin = request.user.groups.filter(name="app-admin").exists() \
@@ -480,26 +481,35 @@ def user_credential(request, uuid):
         # Criar ou atualizar o usuário
         if not user:
             user = User.objects.create(username=username)
+
         user.email = email
         user.first_name = first_name
         user.last_name = last_name
         if password:
             user.set_password(password)
+
         user.save()
 
-        # Atualizar o grupo do usuário
         group = Group.objects.get(id=group_id)
         user.groups.clear()
         user.groups.add(group)
 
-        messages.success(request, "Credenciais atualizadas com sucesso!")
-        return redirect('home')
+        # Atualiza campos
+        groups = Group.objects.all()
+        user_group_id = user.groups.first().id if user and user.groups.exists() else None
 
-    return render(request, 'users/user_credential.html', {
+        message = {'type': MESSAGE_TYPE_SUCCESS, 
+                   'text': 'Credenciais atualizadas com sucesso!',
+                   'title': 'Definição de Acesso',
+                   }
+        
+    context = {
         'user': user,
         'associado': associado,
         'groups': groups,
         'user_group_id': user_group_id,
         'allow_edition': allow_edition,
         'menu_options': menu_options,
-    })
+        'message': message
+    }
+    return render(request, 'users/user_credential.html', context)

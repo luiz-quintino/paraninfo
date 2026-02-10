@@ -11,7 +11,7 @@ function showPopup(type, message, title, callback) {
     // Configurar o ícone e a cor do título com base no tipo
     switch (type) {
         case 'warning':
-            popupIcon.src = "/static/media/icons/alerta.png";
+            popupIcon.src = staticUrl + "alerta.png";
             popupTitle.style.color = '#ff9800';
             popupCancel.style.display = 'none';
             popupConfirm.style.display = 'none';
@@ -19,7 +19,7 @@ function showPopup(type, message, title, callback) {
             title = title || 'Alerta'; // Definir título padrão se não for fornecido
             break;
         case 'info':
-            popupIcon.src = "/static/media/icons/info.png";
+            popupIcon.src = staticUrl + "info.png";
             popupTitle.style.color = '#2196f3';
             popupCancel.style.display = 'none';
             popupConfirm.style.display = 'none';
@@ -27,7 +27,7 @@ function showPopup(type, message, title, callback) {
             title = title || 'Informação'; // Definir título padrão se não for fornecido
             break;
         case 'error':
-            popupIcon.src = "/static/media/icons/error.png";
+            popupIcon.src = staticUrl + "error.png";
             popupTitle.style.color = '#f44336';
             popupCancel.style.display = 'none';
             popupConfirm.style.display = 'none';
@@ -35,7 +35,7 @@ function showPopup(type, message, title, callback) {
             title = title || 'Erro'; // Definir título padrão se não for fornecido
             break;
         case 'confirm':
-            popupIcon.src = "/static/media/icons/question.png";
+            popupIcon.src = staticUrl + "question.png";
             popupTitle.style.color = '#4caf50';
             popupCancel.style.display = 'inline-block';
             popupConfirm.style.display = 'inline-block';
@@ -43,7 +43,7 @@ function showPopup(type, message, title, callback) {
             title = title || 'Confirmação'; // Definir título padrão se não for fornecido
             break;
         case 'success':
-            popupIcon.src = "/static/media/icons/check.png";
+            popupIcon.src = staticUrl + "check.png";
             popupTitle.style.color = '#4caf50';
             popupCancel.style.display = 'none';
             popupConfirm.style.display = 'none';
@@ -51,7 +51,7 @@ function showPopup(type, message, title, callback) {
             title = title || 'Confirmação'; // Definir título padrão se não for fornecido
             break;
         case 'input':
-            popupIcon.src = "/static/media/icons/entrada.png";
+            popupIcon.src = staticUrl + "entrada.png";
             popupTitle.style.color = '#4caf50';
             popupCancel.style.display = 'inline-block';
             popupConfirm.style.display = 'inline-block';

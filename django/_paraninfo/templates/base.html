@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Paraninfo{% endblock %}</title>
 
-    <link rel="stylesheet" href="{% static 'responsive_frame.css' %}">
     <link rel="stylesheet" href="{% static 'base.css' %}">
     <link rel="stylesheet" href="{% static 'main.css' %}">
     <link rel="stylesheet" href="{% static 'credential_login.css' %}">
@@ -33,17 +32,14 @@
 </head>
 
 <body>
-    <!-- <div class="container-main"> -->
     <div class="page">
 
         <!-- Cabeçalho -->
-        <!-- <div class="header-main"> -->
         <div class="head">
             {% include 'partials/header.html' %}
         </div>
     
         <!-- Corpo principal -->
-        <!-- <div class="main-body-main"> -->
         {% if user.is_authenticated %}
             <main class="body">
         {% else %}
@@ -60,18 +56,14 @@
             {% endif %}
 
             <!-- Corpo da página -->
-            <!-- <div class="body-main"> -->
             <div class="page-space card">
-                <!-- <div class="bases-body"> -->
                     {% block content %}
                     {% endblock %}
-                <!-- </div> -->
             </div>
             
         </main>
     
         <!-- Rodapé -->
-        <!-- <div class="footer-main"> -->
         <div class="foot">
             {% include 'partials/footer.html' %}
         </div>
