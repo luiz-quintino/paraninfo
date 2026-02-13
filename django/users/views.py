@@ -454,18 +454,17 @@ def user_credential(request, uuid):
     message = {}
     associado = get_object_or_404(tbAssociadosCredentials, uuid=uuid)  # Busca pelo UUID
     user = User.objects.filter(username=associado.codigo_associado).first()
-    groups = Group.objects.all()
+    groups = Group.objects.all().order_by('id')
     user_group_id = user.groups.first().id if user and user.groups.exists() else None
     menu_options = [MENU_VOLTAR]
 
     allow_edition = False 
 
     if request.user.is_authenticated:
-        is_admin = request.user.groups.filter(name="app-admin").exists() \
-                  or request.user.groups.filter(name="master").exists() \
-                  or request.user.groups.filter(name="sys-admin").exists() 
+        logged_id = list(request.user.groups.values_list("id", flat=True))[0]
+        is_admin = request.session['user_data'] .get('is_admin', False)
         
-        if is_admin:
+        if is_admin and logged_id <= user_group_id:
             # Usuários com acesso admin verão todos os registros
             allow_edition = True  # Oculta a opção de busca
 
@@ -478,30 +477,40 @@ def user_credential(request, uuid):
         password = request.POST.get('password')
         group_id = request.POST.get('group')
 
-        # Criar ou atualizar o usuário
-        if not user:
-            user = User.objects.create(username=username)
+        group_id = int(group_id) if group_id else 0
 
-        user.email = email
-        user.first_name = first_name
-        user.last_name = last_name
-        if password:
-            user.set_password(password)
+        if group_id < logged_id:    # Não permite definição de usuário maior que seu nível de acesso
+            message = {'type': MESSAGE_TYPE_ERROR, 
+                    'text': 'Você não tem permissão para essa alteração.',
+                    'title': 'Definição de Acesso',
+                    }
+            user_group_id = user.groups.first().id if user and user.groups.exists() else None
+        else:
+        
+            # Criar ou atualizar o usuário
+            if not user:
+                user = User.objects.create(username=username)
 
-        user.save()
+            user.email = email
+            user.first_name = first_name
+            user.last_name = last_name
+            if password:
+                user.set_password(password)
 
-        group = Group.objects.get(id=group_id)
-        user.groups.clear()
-        user.groups.add(group)
+            user.save()
 
-        # Atualiza campos
-        groups = Group.objects.all()
-        user_group_id = user.groups.first().id if user and user.groups.exists() else None
+            group = Group.objects.get(id=group_id)
+            user.groups.clear()
+            user.groups.add(group)
 
-        message = {'type': MESSAGE_TYPE_SUCCESS, 
-                   'text': 'Credenciais atualizadas com sucesso!',
-                   'title': 'Definição de Acesso',
-                   }
+            # Atualiza campos
+            groups = Group.objects.all()
+            user_group_id = user.groups.first().id if user and user.groups.exists() else None
+
+            message = {'type': MESSAGE_TYPE_SUCCESS, 
+                    'text': 'Credenciais atualizadas com sucesso!',
+                    'title': 'Definição de Acesso',
+                    }
         
     context = {
         'user': user,

@@ -139,13 +139,13 @@ input:required:valid, select:required:valid {
 
 /* Estilo para a imagem */
 .form-icon {
-    width: 160px; /* Largura da imagem */
-    height: 160px; /* Altura da imagem */
+    width: 90px; /* Largura da imagem */
+    height: 90px; /* Altura da imagem */
 }
 
 /* ***********************************
 
-	Ajusta o estilo para telas maiors 
+	Ajusta o estilo para telas maiores 
 	
 	***********************************
 */
@@ -199,5 +199,10 @@ input:required:valid, select:required:valid {
 
     .form-group input, .form-group select, .form-group span {
         align-items: center; /* Alinha os elementos no centro */
+    }
+
+    .form-icon {
+        width: 160px; /* Largura da imagem */
+        height: 160px; /* Altura da imagem */
     }
 }
