@@ -1,4 +1,8 @@
 #!/bin/bash
+echo ""
+echo "**************************************************************************************"
+echo "*                      Uptade files version 1.0.0 - by Luiz Quintino                 *"
+echo "**************************************************************************************"
 
 # Identifica o ambiente: dev | prod
 CURRENT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -26,7 +30,7 @@ esac
 # Caminho do projeto
 PROJETO_DIR="$CURRENT_DIR"
 DJANGO_DIR="$PROJETO_DIR/django"
-VENV_DIR="$(dirname -- "$CURRENT_DIR")/env
+VENV_DIR="$(dirname -- "$CURRENT_DIR")/env"
 
 # Nome do branch
 #BRANCH="main"
@@ -34,8 +38,6 @@ VENV_DIR="$(dirname -- "$CURRENT_DIR")/env
 # Nome do remoto
 REMOTO="origin"
 
-echo ""
-echo ""
 echo "🔄 🚀  🚀  Atualizando projeto de PRODUÇÃO em: $PROJETO_DIR..."
 
 # Acessa o diretório do projeto
