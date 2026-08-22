@@ -32,11 +32,13 @@
     <div class="title card">
         <!-- Coluna 3: Título da Página -->
         <div class="app-title-container">
-            <div class="app-title">
+            
+            <!-- Title in red for development environment -->
+            <div class="{% if DEVELOPMENT_ENVIRONMENT %}app-title-dev{% else %}app-title{% endif %}">
                 Paraninfo!
             </div>
-
-            <div class="app-subtitle">
+            
+            <div class=""app-subtitle">
                 {% if request.comissao_title %}
                     <p>{{ request.comissao_title }}</p>
                 {% else %}

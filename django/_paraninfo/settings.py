@@ -22,18 +22,16 @@ DEBUG = True
 PRODUCTION = False  # Enable to load images during tests in production enviroment
 
 if PRODUCTION:   
-    ALLOWED_HOSTS = ['212.85.21.167', 
+    ALLOWED_HOSTS = ['187.77.243.54', 
                      'paraninfo.com.br',
                      'www.paraninfo.com.br'
-                     'https://paraninfo.com.br',
     ]
 else:                # Development
-    ALLOWED_HOSTS = ['212.85.21.167', 
+    ALLOWED_HOSTS = ['187.77.243.54', 
                      '127.0.0.1', 
                      'localhost',
                      'paraninfo.com.br',
-                     'www.paraninfo.com.br'
-                     'https://paraninfo.com.br',
+                     'dev.paraninfo.com.br'
     ]
     
 
