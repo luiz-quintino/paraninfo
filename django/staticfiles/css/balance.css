@@ -1,76 +1,40 @@
-/* Estilo geral para o contêiner */
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
+/* Estilo para o contêiner do formulário */
+/* Estilo para o contêiner do formulário */
+.file-upload-container {
+    display: flex;
+    flex-direction: column; /* Empilha os elementos verticalmente */
+    gap: 15px; /* Adiciona espaçamento entre os elementos */
+    width: 100%; /* Ajusta a largura do contêiner */
+    width: 600px; /* Limita a largura máxima */
+    margin: 0 auto; /* Centraliza o contêiner */
+}
+
+body {
+    margin: 0;
     font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Título principal */
-h1 {
-    font-size: 24px;
-    color: #333;
-    text-align: center;
-    margin-bottom: 20px;
+
+/* Esconde o botão padrão do input */
+.hide-input {
+    display: none;
 }
 
-/* Formulário */
-form {
-    margin-bottom: 20px;
-    text-align: center;
+/* Estilo para o rótulo personalizado */
+.custom-file-label {
+    font-size: 14px;
+    border-radius: 4px;
 }
 
-label {
-    font-size: 16px;
-    color: #555;
-    margin-right: 10px;
-}
 
-input[type="file"] {
+/* Estilo para o texto do arquivo selecionado */
+#file-name {
     padding: 5px;
     font-size: 14px;
-}
-
-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    color: #fff;
-    background-color: #007bff;
-    border: none;
+    color: #333;
+    padding: 10px 10px;
+    border: 1px solid darkgray;
     border-radius: 4px;
-    cursor: pointer;
+    width: 500px; /* Limita a largura máxima */
 }
 
-button:hover {
-    background-color: #0056b3;
-}
-
-/* Tabela */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-th, td {
-    padding: 10px;
-    text-align: left;
-    border: 1px solid #ddd;
-}
-
-th {
-    background-color: #007bff;
-    color: #fff;
-}
-
-tr:nth-child(even) {
-    background-color: #f2f2f2;
-}
-
-tr:hover {
-    background-color: #e6f7ff;
-}

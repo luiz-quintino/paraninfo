@@ -24,7 +24,7 @@
 }
 
 .table tbody tr:nth-child(even) {
-    background-color: #f2f2f2; /* Cor alternada para linhas pares */
+    background-color: #d4e9d7; /* Cor alternada para linhas pares */
 }
 
 /* Estilo para destacar a linha ao passar o mouse */
@@ -37,44 +37,7 @@
     color: #333; /* Cor do texto */
 }
 
-/* Responsividade */
-@media (max-width: 919px) {
-    .table {
-        font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
-    }
 
-    .table thead {
-        display: none; /* Esconde o cabeçalho em telas pequenas */
-    }
-
-    .table tbody tr {
-        display: block; /* Exibe as linhas como blocos */
-        margin-bottom: 10px; /* Espaçamento entre os blocos */
-    }
-
-    .table tbody td {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px;
-        border: none;
-        border-bottom: 1px solid #ddd; /* Borda inferior para separar os itens */
-    }
-
-    .table tbody td::before {
-        content: attr(data-label); /* Adiciona o rótulo antes do valor */
-        font-weight: bold;
-        text-transform: uppercase;
-        color: #4CAF50;
-    }
-}
-
-/* Estilo para o cabeçalho */
-h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 24px;
-    color: #4CAF50;
-}
 
 /* Estilo para o formulário de filtro */
 .filter-form {
@@ -93,42 +56,44 @@ h2 {
 }
 
 /* Estilo para o botão de pesquisa */
-.filter-button {
+.filter-button, .ignore-button, .duplicate-button{
     border: none;
     padding: 4px; /* Ajusta o espaçamento interno */
     border-radius: 4px;
-    cursor: pointer;
     margin-right: 10px;
     width: 30px; /* Define a largura do botão */
     height: 30px; /* Define a altura do botão */
     display: flex;
-    align-items: center;
     justify-content: center;
+    background-color: #f9f9f9;
 }
 
-.filter-button img {
+.filter-button img, .ignore-button img, .duplciate-button img{
     width: 24px; /* Tamanho do ícone dentro do botão */
     height: 24px;
+    cursor: pointer; /* Muda o cursor para pointer ao passar o mouse */
+    
 }
 
-/* Estilo para o botão de cancelar pesquisa */
-/*.cancel-button {
+/* Estilo para o botão de cancelar pesquisa /
+.cancel-button {
     display: inline-block;
     border: none;
-    padding: 4px; / Ajusta o espaçamento interno /
+    padding: 4px; /* Ajusta o espaçamento interno /
     border-radius: 4px;
     cursor: pointer;
     text-decoration: none;
-    width: 30px; / Define a largura do botão /
-    height: 30px; / Define a altura do botão /
+    width: 30px; /* Define a largura do botão /
+    height: 30px; /* Define a altura do botão /
     display: flex;
     align-items: center;
     justify-content: center;
 }*/
 
-.cancel-icon {
+.cancel-icon, .filter-icon, .ignore-icon, .duplicate-icon{
     width: 24px; /* Tamanho do ícone dentro do botão */
     height: 24px;
+    border: none; /* Remove borda do botão */
 }
 
 /* Estilo para paginação */
@@ -159,4 +124,35 @@ h2 {
     padding: 8px 12px;
     margin: 0 5px;
     color: #999;
+}
+
+/* Responsividade */
+@media (max-width: 919px) {
+    .table {
+        font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
+    }
+
+    .table thead {
+        display: none; /* Esconde o cabeçalho em telas pequenas */
+    }
+
+    .table tbody tr {
+        display: block; /* Exibe as linhas como blocos */
+        margin-bottom: 10px; /* Espaçamento entre os blocos */
+    }
+
+    .table tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        border: none;
+        border-bottom: 1px solid #a8a5a5; /* Borda inferior para separar os itens */
+    }
+
+    .table tbody td::before {
+        content: attr(data-label); /* Adiciona o rótulo antes do valor */
+        /* font-weight: bold; */
+        text-transform: uppercase;
+        color: #4CAF50;
+    }
 }

@@ -279,7 +279,7 @@ def get_extrato_details(request, extrato_id):
     else:
         associado_nome = ''
 
-    data = {
+    context = {
         'id': extrato.id,
         'data': extrato.data.strftime('%d/%m/%Y') if extrato.data else '',
         'historico': extrato.historico,
@@ -292,4 +292,4 @@ def get_extrato_details(request, extrato_id):
         'fechamento_log': {'data': fechamento.data.strftime('%d/%m/%Y, %H:%M:%S') or '', 'name': fechamento_user.usuario.nome_responsavel} or '',     #extrato.log_fechamento_id or ''
     }
 
-    return JsonResponse(data)
+    return JsonResponse(context)

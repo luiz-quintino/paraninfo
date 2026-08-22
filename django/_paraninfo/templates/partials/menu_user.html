@@ -1,7 +1,6 @@
 
 <ul id="menu-user-options" class="menu-user-options">
     {% if user.is_authenticated %}
-        
             <li>
                 <a href="{% url 'user_record' request.session.user_uuid %}">Registro de usuário</a>
             </li>
@@ -13,6 +12,8 @@
                 </form>
             </li> 
     {% else %}
-        <li><a href="{% url 'login' %}">Login</a></li>
+        <!-- <li>
+            <a href="{% url 'login' %}">Login</a>
+        </li> -->
     {% endif %}
 </ul>

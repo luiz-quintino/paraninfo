@@ -22,10 +22,10 @@ from config.menus import menu_url,  MENU_USERS_INCLUIR_USUARIO, \
                                     MENU_VOLTAR
 
 from config.constants import MESSAGE_TYPE_INFO, \
-                                MESSAGE_TYPE_ERROR, \
-                                    MESSAGE_TYPE_WARNING, \
-                                        MESSAGE_TYPE_SUCCESS, \
-                                            MESSAGE_TYPE_CONFIRM
+                             MESSAGE_TYPE_ERROR, \
+                             MESSAGE_TYPE_WARNING, \
+                             MESSAGE_TYPE_SUCCESS, \
+                             MESSAGE_TYPE_CONFIRM
 
 
 
@@ -451,20 +451,20 @@ def user_record(request, uuid=None):
 
 @login_required
 def user_credential(request, uuid):
+    message = {}
     associado = get_object_or_404(tbAssociadosCredentials, uuid=uuid)  # Busca pelo UUID
     user = User.objects.filter(username=associado.codigo_associado).first()
-    groups = Group.objects.all()
+    groups = Group.objects.all().order_by('id')
     user_group_id = user.groups.first().id if user and user.groups.exists() else None
     menu_options = [MENU_VOLTAR]
 
-    allow_edition = False  # Inicializa a opção de busca como visível
+    allow_edition = False 
 
     if request.user.is_authenticated:
-        is_admin = request.user.groups.filter(name="app-admin").exists() \
-                  or request.user.groups.filter(name="master").exists() \
-                  or request.user.groups.filter(name="sys-admin").exists() 
+        logged_id = list(request.user.groups.values_list("id", flat=True))[0]
+        is_admin = request.session['user_data'] .get('is_admin', False)
         
-        if is_admin:
+        if is_admin and logged_id <= user_group_id:
             # Usuários com acesso admin verão todos os registros
             allow_edition = True  # Oculta a opção de busca
 
@@ -477,29 +477,48 @@ def user_credential(request, uuid):
         password = request.POST.get('password')
         group_id = request.POST.get('group')
 
-        # Criar ou atualizar o usuário
-        if not user:
-            user = User.objects.create(username=username)
-        user.email = email
-        user.first_name = first_name
-        user.last_name = last_name
-        if password:
-            user.set_password(password)
-        user.save()
+        group_id = int(group_id) if group_id else 0
 
-        # Atualizar o grupo do usuário
-        group = Group.objects.get(id=group_id)
-        user.groups.clear()
-        user.groups.add(group)
+        if group_id < logged_id:    # Não permite definição de usuário maior que seu nível de acesso
+            message = {'type': MESSAGE_TYPE_ERROR, 
+                    'text': 'Você não tem permissão para essa alteração.',
+                    'title': 'Definição de Acesso',
+                    }
+            user_group_id = user.groups.first().id if user and user.groups.exists() else None
+        else:
+        
+            # Criar ou atualizar o usuário
+            if not user:
+                user = User.objects.create(username=username)
 
-        messages.success(request, "Credenciais atualizadas com sucesso!")
-        return redirect('home')
+            user.email = email
+            user.first_name = first_name
+            user.last_name = last_name
+            if password:
+                user.set_password(password)
 
-    return render(request, 'users/user_credential.html', {
+            user.save()
+
+            group = Group.objects.get(id=group_id)
+            user.groups.clear()
+            user.groups.add(group)
+
+            # Atualiza campos
+            groups = Group.objects.all()
+            user_group_id = user.groups.first().id if user and user.groups.exists() else None
+
+            message = {'type': MESSAGE_TYPE_SUCCESS, 
+                    'text': 'Credenciais atualizadas com sucesso!',
+                    'title': 'Definição de Acesso',
+                    }
+        
+    context = {
         'user': user,
         'associado': associado,
         'groups': groups,
         'user_group_id': user_group_id,
         'allow_edition': allow_edition,
         'menu_options': menu_options,
-    })
+        'message': message
+    }
+    return render(request, 'users/user_credential.html', context)

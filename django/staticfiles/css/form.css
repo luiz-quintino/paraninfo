@@ -1,0 +1,208 @@
+/* Estilo geral */
+.form-container {
+    width: 90%;
+    margin: 20px auto; /* Centraliza horizontalmente */
+    font-family: 'Arial', sans-serif;
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex; /* Adiciona flexbox */
+    flex-direction: column; /* Organiza os elementos verticalmente */
+    align-items: center; /* Centraliza os elementos horizontalmente */
+}
+
+/* Estilo para o contêiner do título na página */
+.title-form-container {
+    display: flex;
+    align-items: center; /* Centraliza verticalmente a imagem e o texto */
+    gap: 10px; /* Espaçamento entre a imagem e o título */
+}
+
+/* Título */
+form.h2 {
+    text-align: center;
+    color: #4CAF50;
+    margin-bottom: 20px;
+}
+
+/* Formulário */
+.user-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 14px; /* Reduz o tamanho da fonte em telas menores */
+}
+
+.aceite-termos {
+    display: flex;
+    gap: 10px; /* Espaçamento entre o checkbox e o texto */
+    margin-top: 10px; /* Espaçamento superior */
+    margin-bottom: 20px; /* Espaçamento inferior */
+    flex-wrap: wrap;
+}
+
+.aceite-termos label {
+    padding: 10px;
+    font-weight: normal;
+    color: #333;
+    text-align: left;  /* Alinha o texto do rótulo à esquerda */
+    width: 500px;        /* Define uma largura fixa para os rótulos */
+    margin-bottom: 0px;   /* Remove a margem inferior */
+}
+
+.aceite-termos input{  /* input[type="checkbox"] */
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 30px;
+}
+
+.form-group {		    /* formatação para telas pequenas */
+    /* display: flex; */
+    flex-direction: column; /* Empilha os elementos verticalmente */
+    /* align-items: right; /* Alinha o rótulo e o campo verticalmente */
+    /*justify-content: center; /* Centraliza os elementos horizontalmente */
+    gap: 10px;              /* Espaçamento entre o rótulo e o campo */
+}
+
+.form-group label {
+    display: block; /* Garante que o rótulo ocupe toda a largura disponível */
+    text-align: left; 
+    text-wrap: wrap;
+    align-self: flex-start;
+    padding: 10px;
+    box-sizing: border-box; /* Inclui o padding na largura total */
+    font-weight: bold;
+    min-width: 200px;       /* Define uma largura fixa para os rótulos */
+    max-width: 400px;       /* Limita a largura máxima a 300px */
+    width: 100%;
+}
+
+input, select, span{
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 300px;       /* Limita a largura mínima */
+    max-width: 500px;   /* Limita a largura máxima */
+    width: 100%;        /* Garante que o campo ocupe todo o espaço disponível */
+    box-sizing: border-box; /* Inclui o padding na largura total */
+}
+
+/* Estilo para campos obrigatórios */
+input:required, select:required, span:required, .aceite-termos:required {
+    border: 1px solid red; /* Borda vermelha para campos obrigatórios */
+    outline: none; /* Remove o contorno padrão */
+}
+
+/* Estilo para campos obrigatórios quando focados */
+input:required:focus, select:required:focus {
+    border: 1px solid darkred; /* Borda vermelha mais escura ao focar */
+    box-shadow: 0 0 5px rgba(255, 0, 0, 0.5); /* Adiciona um efeito de sombra */
+}
+
+/* Estilo para campos obrigatórios quando inválidos */
+input:required:invalid, select:required:invalid {
+    border: 1px solid red; /* Borda vermelha para campos inválidos */
+    background-color: #ffe6e6; /* Fundo levemente vermelho */
+}
+
+/* Estilo para campos obrigatórios quando válidos */
+input:required:valid, select:required:valid {
+    border: 1px solid green; /* Borda verde para campos válidos */
+}
+
+.form-group input:focus,
+.form-group select:focus, 
+.form-group span:focus{
+    border-color: #4CAF50; /* Cor de destaque ao focar */
+    outline: none;
+}
+
+.form-group select {
+    appearance: none; /* Remove o estilo padrão do navegador */
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%234CAF50' d='M2 0L0 2h4z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px;
+}
+
+/* Estilo para campos readonly */
+.readonly-form input select [readonly] {
+    background-color: #f0f0f0; /* Cor de fundo para campos bloqueados */
+    color: #333; /* Cor do texto */
+    border: 1px solid #ccc; /* Bordas para campos bloqueados */
+    cursor: not-allowed; /* Cursor indicando que o campo não é editável */
+}
+
+/* Estilo para a imagem */
+.form-icon {
+    width: 90px; /* Largura da imagem */
+    height: 90px; /* Altura da imagem */
+}
+
+/* ***********************************
+
+	Ajusta o estilo para telas maiores 
+	
+	***********************************
+*/
+@media (min-width: 920px) {
+    .user-form  {
+        font-size: 16px; /* Reduz o tamanho da fonte em telas menores */
+    }
+
+    /* Ajusta a largura da tabela para 100% em telas pequenas */
+    .user-form  thead {
+        display: none; /* Esconde o cabeçalho em telas pequenas */
+    }
+
+    /* Exibe as linhas como blocos para facilitar a leitura em telas pequenas */
+    .user-form tbody tr {
+        display: block; /* Exibe as linhas como blocos */
+        margin-bottom: 10px; /* Espaçamento entre os blocos */
+    }
+
+    /* Ajusta as células para exibir os dados em blocos */
+    .user-form tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        border: none;
+        border-bottom: 1px solid #a8a5a5; /* Borda inferior para separar os itens */
+    }
+
+    /* Adiciona rótulos para os dados em telas pequenas */
+    .user-form tbody td::before{
+        content: attr(data-label); /* Adiciona o rótulo antes do valor */
+        /* font-weight: bold; */
+        text-transform: uppercase;
+        color: #4CAF50;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: row; /* Empilha os elementos verticalmente */
+        /*flex-direction: column; /* Organiza os elementos verticalmente */
+        /* justify-content: center; Centraliza os elementos verticalmente */
+        align-items: center; /* Alinha os elementos no centro */
+        justify-content: center; /* Centraliza os elementos horizontalmente */
+        }
+        
+    .form-group label {
+        text-align: right; 
+        padding: 10px 0px 0px 0px;
+        width: 300px;
+    }
+
+    .form-group input, .form-group select, .form-group span {
+        align-items: center; /* Alinha os elementos no centro */
+    }
+
+    .form-icon {
+        width: 160px; /* Largura da imagem */
+        height: 160px; /* Altura da imagem */
+    }
+}
