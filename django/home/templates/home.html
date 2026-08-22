@@ -17,7 +17,8 @@
         <p>
             {% with user.first_name|split:" " as name_parts %}
                 {% if name_parts.0|length < 5 %}
-                    Bem-vindo, {{ name_parts.0 }} {{ name_parts.1|default:"" }}!
+                    <!-- Você está logado como: {{ name_parts.0 }} {{ name_parts.1|default:"" }}! -->
+                     <h3>Nessa área traremos um dashboard com informações importantes sobre a associação, o assicado, avisos e notícias.</h3>
                 {% else %}
                     Bem-vindo, {{ name_parts.0 }}!
                 {% endif %}

@@ -13,24 +13,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 
+# Used to paint the title in red to identify the development enviroment
+DEVELOPMENT_ENVIRONMENT = config('DEVELOPMENT', default=False, cast=bool)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 
 DEBUG = True
-PRODUCTION = True
+PRODUCTION = False  # Enable to load images during tests in production enviroment
 
 if PRODUCTION:   
-    ALLOWED_HOSTS = ['212.85.21.167', 
+    ALLOWED_HOSTS = ['187.77.243.54', 
                      'paraninfo.com.br',
                      'www.paraninfo.com.br'
-                     'https://paraninfo.com.br',
     ]
 else:                # Development
-    ALLOWED_HOSTS = ['212.85.21.167', 
+    ALLOWED_HOSTS = ['187.77.243.54', 
                      '127.0.0.1', 
                      'localhost',
                      'paraninfo.com.br',
-                     'www.paraninfo.com.br'
-                     'https://paraninfo.com.br',
+                     'dev.paraninfo.com.br'
     ]
     
 
@@ -83,6 +84,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "context_processors.development_environment",
             ],
         },
     },
@@ -115,6 +117,17 @@ DATABASES = {
         },
     }
 }
+
+# Envio de e-mails via Hostinger Email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.hostinger.com'
+EMAIL_PORT = config('EMAIL_PORT') # SMTP SSL
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True # Importante: porta 465 = SSL
+EMAIL_HOST_USER = config('EMAIL_ADDRESS') # seu e-mail Hostinger
+EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD') # senha dessa caixa de e-mail
+DEFAULT_FROM_EMAIL = config('EMAIL_SENDER') # remetente padrão
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -151,22 +164,22 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-    BASE_DIR / "_paraninfo/static",
-    BASE_DIR / "users/static",
-    BASE_DIR / "credential/static",
-    BASE_DIR / "paraninfo_admin/static",
-    BASE_DIR / "home/static",
-    BASE_DIR / "transaction/static",
-    BASE_DIR / "balance/static",
-    ]
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / "media"
+JS_URL = '/js/'
 
 # Diretório onde os arquivos estáticos serão coletados (em produção)
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
+STATICFILES_DIRS = [
+    STATIC_ROOT / "admin/",
+    STATIC_ROOT / "css/",
+    STATIC_ROOT / "icons/",
+    STATIC_ROOT / "js/",
+    STATIC_ROOT / "logos/",
+    STATIC_ROOT / "media/",
+    STATIC_ROOT / "misc/",
+    ]
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

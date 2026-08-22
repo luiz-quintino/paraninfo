@@ -1,0 +1,65 @@
+/* Menu lateral */
+.sidebar {
+    width: 30px;
+    background-color: #333;
+    transition: width 0.3s ease; /* Animação de expansão/retração */
+    overflow: hidden;
+}
+
+.menu-options_side {
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    padding: 0;
+    margin: 0;
+}
+
+.menu-options_side li {
+    display: inline-block; 
+    margin: 5px; 
+}
+
+
+.sidebar.expanded {
+    width: 100%;
+}
+
+/* Estilo para botões e links */
+.menu-options_side button,
+.menu-options_side a {
+    text-decoration: none;
+    color: #ffffff;
+    background-color: #333;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 10px 15px;
+    display: block;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    text-align: left;
+}
+
+.menu-options_side button:hover,
+.menu-options_side a:hover {
+    background-color: aquamarine;
+    color: #000000;
+    border-radius: 4px;
+    
+}
+
+/* Estilo para telas grandes (desktop) */
+@media (min-width: 920px) {
+    .menu-options_side {
+        display: block; /* Mantém a lista vertical */
+    }
+
+    .menu-options_side li {
+        display: block; /* Cada item ocupa uma linha */
+    }
+
+    .sidebar.expanded {
+        width: 200px;
+    }
+}

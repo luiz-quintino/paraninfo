@@ -3,27 +3,15 @@
 
 {% block title %}Detalhes do Usuário - Paraninfo{% endblock %}
 
-
-
 {% block content %}
+
     {% if message.text %}
         {% include 'partials/popup_message.html' with message=message %}
     {% endif %}
 
-    <div class="form-container">
+    <div class="container">
 
         <h2>{{ message.title }}</h2>
-
-        <!-- Exibir mensagens de sucesso ou erro -->
-        {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        <!-- </div> -->
-        {% endif %}
 
         {% if convidado %}
             <form method="post" action="{% url 'invited' %}" id="formReject">
@@ -32,7 +20,9 @@
             </form> 
         {% endif %}
 
-        <form method="post" action="{% if uuid %}{% url 'user_record' uuid=associado.uuid %}{% else %}{% url 'user_record' %}{% endif %}" class="user-form readonly-form">
+        <form method="post" action="{% if uuid %}{% url 'user_record' uuid=associado.uuid %}{% else %}{% url 'user_record' %}{% endif %}" 
+                class="user-form readonly-form">
+                
             {% csrf_token %}
 
             <!-- Botões de definição de acesso -->
