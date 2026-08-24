@@ -5,6 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
+atualizar_codigo.sh
 
 # Server files
 *.service
