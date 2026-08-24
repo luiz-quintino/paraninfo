@@ -9,6 +9,12 @@ __pycache__/
 # Server files
 *.service
 django/media/
+db/
+
+# Zip
+*.zip
+*.gz
+*.7z
 
 # Distribution / packaging
 .Python

@@ -1,0 +1,60 @@
+/* Estilo para o popup modal */
+.popup-modal {
+    position: fixed; /* Fixa o modal na tela */
+    top: 50%; /* Centraliza verticalmente */
+    left: 50%; /* Centraliza horizontalmente */
+    transform: translate(-50%, -50%); /* Ajusta para o centro */
+    width: 800px; /* Define o tamanho fixo */
+    background-color: #fff; /* Cor de fundo */
+    border: 1px solid #ccc; /* Borda */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra */
+    z-index: 1009; /* Garante que o modal fique sobreposto */
+    padding: 20px; /* Espaçamento interno */
+    border-radius: 8px; /* Bordas arredondadas */
+}
+
+.popup-content {
+    text-align: left; /* Alinha o conteúdo à esquerda */
+}
+
+.popup-content form {
+    display: flex; /* Usa flexbox para organizar os elementos */
+    flex-direction: column; /* Mantém os elementos em uma coluna */
+    gap: 10px; /* Espaçamento entre os campos */
+}
+
+.popup-content form label {
+    display: inline-block; /* Exibe o label na mesma linha */
+    width: 120px; /* Define uma largura fixa para o label */
+    text-align: right; /* Alinha o texto à direita */
+    margin-right: 10px; /* Espaçamento entre o label e o input */
+}
+
+.popup-content form input {
+    display: inline-block; /* Exibe o input na mesma linha */
+    width: calc(100%); /* Ajusta a largura do input */
+    padding: 5px; /* Espaçamento interno */
+    border: 1px solid #ccc; /* Borda do input */
+    border-radius: 4px; /* Bordas arredondadas */
+}
+
+.popup-content button {
+    margin-top: 20px; /* Espaçamento acima do botão */
+    padding: 10px 20px; /* Tamanho do botão */
+    background-color: #f44336; /* Cor do botão */
+    color: white; /* Cor do texto */
+    border: none; /* Remove bordas */
+    border-radius: 4px; /* Bordas arredondadas */
+    cursor: pointer; /* Cursor de clique */
+}
+
+.popup-content button:hover {
+    background-color: #d32f2f; /* Cor ao passar o mouse */
+}
+
+/* Impede scroll e seleção na página enquanto o popup está aberto */
+body.popup-active {
+    overflow: hidden; /* Impede o scroll */
+    user-select: none; /* Impede a seleção de texto */
+    
+}
