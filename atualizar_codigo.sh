@@ -59,19 +59,18 @@ if ! git diff-index --quiet HEAD --; then
     echo ""
     echo "forçando atualização..."
     git fetch origin
-    git clean -fd
-
 fi
 
 # Atualiza o código
 echo ""
 echo "📥  Executando git pull..."
 
-git pull "$REMOTO" "$BRANCH"
+git reset --hard "$REMOTO/$BRANCH"
 
 # Verifica se o pull foi bem-sucedido
 if [ $? -eq 0 ]; then
     echo "✅  Código atualizao!"
+	chmod +x atualizar_codigo.sh
 else
     echo "[3] ❌  Falha ao atualizar o código."
     exit 1
