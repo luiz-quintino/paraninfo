@@ -64,7 +64,7 @@ fi
 echo ""
 echo "📥  Executando git pull..."
 
-git --hard "$REMOTO/$BRANCH"
+git reset --hard "$REMOTO/$BRANCH"
 
 # Verifica se o pull foi bem-sucedido
 if [ $? -eq 0 ]; then
