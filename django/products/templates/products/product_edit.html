@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar produto{% endblock %}
+{% block header_title %}Editar produto{% endblock %}
+
+{% block content %}
+
+    {% if message.text %}
+        {% include 'partials/popup_message.html' with message=message %}
+    {% endif %}
+
+    <div class="container">
+        <div >
+            <h2>{{ message.title }}</h2>
+
+            <div class="user-form">
+                {% if is_data_empty %}
+                    <div class="alert">
+                        Nenhum dado encontrado.
+                    </div>
+                {% endif %}
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Produto</label> <input type="text" name="produto" value="{{ product.produto }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Descrição</label> <input type="text" name="descricao" value="{{ product.descricao }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Valor original</label> <input type="text" name="valor_original" value="{{ product.valor_original }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Acrescimo</label> <input type="text" name="acrescimo" value="{{ product.vr_acrescimo }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Desconto</label> <input type="text" name="desconto" value="{{ product.vr_desconto }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Data de início</label> <input type="date" name="dt_inicio" value="{{ product.dt_inicio|date:'Y-m-d' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Data prevista</label> <input type="date" name="dt_previsao" value="{{ product.dt_previsao|date:'Y-m-d' }}">
+            </div>
+
+            <div class="form-group">
+                <label>Ativo</label><input type="checkbox" name="ativo" {% if product.ativo %}checked{% endif %}> 
+            </div>
+
+            <!-- Botões de ação -->
+            <div class="action-buttons">
+                <button class="save-button" type="submit" name="action" value="save">Salvar</button>
+                <button class="cancel-button" type="reset" name="action" value="cancel">Cancelar edição</button>
+            </div>
+        </form>
+
+    </div>
+{% endblock %}

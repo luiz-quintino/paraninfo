@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "paraninfo_admin",
     "transaction",
     "balance"
+    ,"products"
 ]
 
 MIDDLEWARE = [
@@ -76,6 +77,7 @@ TEMPLATES = [
             BASE_DIR / "home/templates",
             BASE_DIR / "transaction/templates",
             BASE_DIR / "balance/templates",
+            BASE_DIR / "products/templates",
                 ],  # Diretório para templates personalizados
         "APP_DIRS": True,
         "OPTIONS": {

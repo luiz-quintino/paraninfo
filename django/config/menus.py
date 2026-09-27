@@ -1,6 +1,18 @@
-
-
 # Menu principal
+"""
+   Cria as opçõse de menus que serão exibidas na barra de navegação do sistema.
+   Cada menu é representado por um dicionário contendo as seguintes chaves:
+    - name: Nome do menu que será exibido na barra de navegação.
+    - url: URL que será acessada ao clicar no menu.
+    - tip: Dica que será exibida ao passar o mouse sobre o menu.
+    - type: Tipo de menu, que pode ser 'form' ou 'url'. Se for 'form', o menu será exibido como um botão que envia um formulário. 
+            Se for 'url', o menu será exibido como um link que redireciona para uma URL.
+            Se for 'voltar', o menu será exibido como um botão que volta para a página anterior.
+            Se for 'js', o menu será exibido como um botão que executa uma função JavaScript definida na chave 'function'.
+    - function: Função JavaScript que será executada ao clicar no menu, caso o tipo seja 'js'.
+    - color: Cor do menu, que será exibida como fundo do menu. Se não for especificada, a cor padrão será utilizada.
+
+"""
 
 def menu_url(menu: dict, url: str) -> dict:
     menu['url']= url
@@ -20,7 +32,8 @@ MENU_VOLTAR                             = {'name': 'Voltar',
 
 MENU_USERS_INCLUIR_USUARIO              = {'name': 'Incluir usuário',             
                                            'url': '/users/user-record',
-                                           'tip': 'Acesse o formulário para inclusão de um novo usuário'}
+                                           'tip': 'Acesse o formulário para inclusão de um novo usuário',
+                                           'color': "#fab5bc",}
 
 MENU_USERS_GERAR_CONVITE                = {'name': 'Gerar novo convite',               
                                            'url': '/users/invited',
@@ -31,7 +44,8 @@ MENU_USERS_GERAR_CONVITE                = {'name': 'Gerar novo convite',
 
 MENU_USERS_CONVIDADOS                   = {'name': 'Convidados',               
                                            'url': '/users/invited',
-                                           'tip': 'Gerenciar convidados por link de convite e gerencia convites'}
+                                           'tip': 'Gerenciar convidados por link de convite e gerencia convites',
+                                           'color': "#fab5bc",}
 
 MENU_USERS_ACEITAR_CONVIDADOS           = {'name': 'Aceitar convidados',               
                                            'url': '/users/invited',
@@ -40,11 +54,27 @@ MENU_USERS_ACEITAR_CONVIDADOS           = {'name': 'Aceitar convidados',
 
 MENU_USERS_DEFINICAO_ACESSO             = {'name': 'Definição de acesso',         
                                            'url': '#',
-                                           'tip': 'Acesse o formulário para definir o acesso de um usuário'}
+                                           'tip': 'Acesse o formulário para definir o acesso de um usuário',
+                                           'color': "#fab5bc",}
+
+MENU_PRODUTOS                           = {'name': 'Lista de Produtos',         
+                                           'url': '/products',
+                                           'tip': 'Faça gestão do produtos para o usuário',
+                                           'color': "#fab5bc",}
+
+MENU_PRODUTOS_INCLUIR                   = {'name': 'Incluir produto',         
+                                           'url': '#',
+                                           'tip': 'Cria novo produto para aquisição',
+                                           'color': "#fab5bc",}
+
+MENU_PRODUTOS_USER                      = {'name': 'Meus Produtos',         
+                                           'url': '#',
+                                           'tip': 'Faça gestão do produtos para o usuário'}
 
 MENU_CLIENTS_INCLUIR_COMISSAO           = {'name': 'Incluir comissão',            
                                            'url': '/paraninfo-admin/client-details',
-                                           'tip': 'Acesse o formulário para inclusão de uma nova comissão'}
+                                           'tip': 'Acesse o formulário para inclusão de uma nova comissão',
+                                           'color': "#e6a3e1",}
 
 MENU_BALANCE_EXTRATO                    = {'name': 'Menu movimentações',                     
                                            'url': "/transaction",

@@ -9,6 +9,8 @@
             {% if request.is_admin %}
                 <li><a href="{% url 'transaction' %}">Movimentações</a></li>
             {% endif %}
+            <li><a href="{% url 'products:products' %}">Produtos</a></li>
+
             <li><a href="{% url 'balance' %}">Contabilidade</a></li>
             <li><a href="{% url 'login' %}">Mensalidades</a></li>
 

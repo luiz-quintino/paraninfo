@@ -97,6 +97,46 @@ def import_boletos_xls(file_name):
 
     return df, error
 
+#****************************************************************************************************************
+#                  SICOOB - Processamento de extrato bancário
+#****************************************************************************************************************
+# Criar colunas adicionais para as linhas complementares
+new_header = ['tipo', 'nome', 'nota', 'cpf', 'saldo']
+
+def process_sicoob_information_data(info_text: str, extra_line: int) -> tuple:
+    """
+        Processa o texto de informações adicionais do extrato SICOOB e retorna uma tupla com o cabeçalho e o índice da linha extra.
+    """
+    header_ = new_header[extra_line]
+    
+    if info_text in ['Pagamento Pix', 'Recebimento Pix', 'Transferência Pix', 'Transferência Bancária']:
+        header_ = 'tipo'
+        if info_text == 'Pagamento Pix':
+            extra_line += 1
+            pass
+
+    elif 'REM' in info_text:
+        header_ = ''    # ignora informação
+        extra_line -= 1
+
+    elif '**.' in info_text:
+        header_ = 'cpf'
+        extra_line -= 1
+
+    elif 'SALDO DO DIA' in info_text:
+        header_ = ''    # ignora informação
+        extra_line -= 1
+
+    else:
+        cnpjs = extract_cnpj(info_text)
+        if cnpjs:
+            header_ = 'cpf'
+            info_text = str(cnpjs[0])
+            extra_line -= 1
+
+    return header_, extra_line
+            
+
 def process_sicoob_input_xls(file_path):
     dataframe = pd.DataFrame()
     error = ''
@@ -109,16 +149,18 @@ def process_sicoob_input_xls(file_path):
         if 'EXTRATO CONTA CORRENTE' in dataframe.head(0):
             # procura pela linha onde está a palavra 'DATA'
             title_line = dataframe.index[dataframe.iloc[:, 0] == 'DATA'].tolist()
-            
             if title_line:
                 dataframe.drop(title_line, inplace=True)  # Remove a primeira linha do DataFrame
-            
-            dataframe.columns = ['data', 'documento', 'historico', 'credito']
+
+            if len(dataframe.columns) == 4:
+                dataframe.columns = ['data', 'documento', 'historico', 'credito']
+            else: 
+                dataframe.columns = ['data', 'documento', 'historico', 'informacoes', 'credito']
         else: 
-            error = 'O arquivo "{file}" não e um extrato válido'
+            error = '[1] O arquivo "{file}" não e um extrato válido'
 
     except Exception as e:
-        error = 'O arquivo não e um Excel válido: "{file}"'
+        error = '[2] O arquivo não e um Excel válido: "{file}"'
 
     if error:
         return pd.DataFrame(), error
@@ -127,8 +169,6 @@ def process_sicoob_input_xls(file_path):
     # Preenche valores NaN com string vazia
     dataframe = dataframe.fillna('')
 
-    # Criar colunas adicionais para as linhas complementares
-    new_header = ['tipo', 'nome', 'nota', 'cpf', 'saldo']
     count_new_header = len(new_header) - 3  # não inclui 'nota' e 'saldo' na contagem
     for header in new_header:
         dataframe[header] = ''
@@ -154,13 +194,28 @@ def process_sicoob_input_xls(file_path):
             current_data = row['data']
             current_documento = row['documento']
             current_historico = row['historico']
+            debito = 0.0
+            current_valor = 0.0
+
+            if current_historico == 'SALDO DO DIA':
+                # ignore loop
+                continue
 
             # Processar a coluna 'valor' para separar o valor numérico e a transação
             valor_str = row['credito']
-            valor_decimal = Decimal(valor_str[:-1].replace('.', '').replace(',', '.').replace('\xa0', '').replace('-', ''))  # Remove ',' e '.' e converte para float
-            
-            debito = valor_decimal if valor_str[-1] == "D"  else ''  # Último caractere é 'C' ou 'D'
-            current_valor = valor_decimal if valor_str[-1] == "C" else ''  # Último caractere é 'C' ou 'D'
+            if valor_str:
+                if type(valor_str) == str:
+                    try:
+                        valor_decimal = Decimal(valor_str[:-1].replace('.', '').replace(',', '.').replace('\xa0', '').replace('-', ''))  # Remove ',' e '.' e converte para float
+                        debito = valor_decimal if valor_str[-1] == "D"  else ''  # Último caractere é 'C' ou 'D'
+                        current_valor = valor_decimal if valor_str[-1] == "C" else ''  # Último caractere é 'C' ou 'D'
+                    except:
+                        pass
+                else:
+                    valor_decimal = valor_str
+                    debito = abs(valor_decimal) if valor_str < 0 else ''    # Valor negativo
+                    current_valor = valor_decimal if valor_str > 0 else ''  # Valor positivo
+
             processed_data.append({
                 'data': current_data,
                 'documento': current_documento,
@@ -173,36 +228,19 @@ def process_sicoob_input_xls(file_path):
                 'cpf': '',
                 'saldo': '',
             })
-        else:  # Linha adicional
-            
-            # Adicionar as informações complementares às colunas extras
+
+            if 'informacoes' in row:
+                for informacoes in row['informacoes'].split('\n'):  # Divide as informações adicionais em linhas separadas
+                    header_, extra_line = process_sicoob_information_data(informacoes, extra_line)
+                    extra_line += 1
+                    if header_:
+                        # Concatena as informações adicionais à última linha do registro principal
+                        processed_data[-1][header_] = f"{processed_data[-1][header_]} {informacoes}".strip()
+
+        else:  # Linhas adicionais com as informações complementares às colunas extras para extratos muiltiplas linhas de dados (extrato de antes de 2026)
             if row['historico']:
 
-                header_ = new_header[extra_line]
-
-                if row['historico'] in ['Pagamento Pix', 'Recebimento Pix', 'Transferência Pix', 'Transferência Bancária']:
-                    header_ = 'tipo'
-                    if row['historico'] == 'Pagamento Pix':
-                        extra_line += 1
-                        pass
-
-                elif 'REM' in row['historico']:
-                    header_ = ''
-                    extra_line -= 1
-
-                elif '**.' in row['historico']:
-                    header_ = 'cpf'
-                    extra_line -= 1
-
-                elif 'SALDO DO DIA' in row['historico']:
-                    header_ = ''
-                    extra_line -= 1
-                else:
-                    cnpjs = extract_cnpj(row['historico'])
-                    if cnpjs:
-                        header_ = 'cpf'
-                        row['historico'] = cnpjs[0]
-                        extra_line -= 1
+                header_, extra_line = process_sicoob_information_data(row['historico'], extra_line)
 
                 if header_:
                     processed_data[-1][header_] = f"{processed_data[-1][header_]} {row['historico']}"

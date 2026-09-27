@@ -999,7 +999,7 @@ def transaction_view(request):
     # obtem nome do banco de dbComissao
     nome_banco = tbComissao.objects.filter(id=request.comissao).first().banco 
     nome_banco = nome_banco if nome_banco else 'SICOOB'
-    print('-->', nome_banco)
+
     # Cria side menu
     menu_options = [MENU_VOLTAR]
     
@@ -1012,6 +1012,9 @@ def transaction_view(request):
 
         # Extrato SICOOB XLS
         if file_path.endswith('xlsx') or file_path.endswith('xls'):
+            #**************************************************************************************
+            #            Processamento do arquivo Excel do extrato SICOOB
+            #**************************************************************************************
             dataframe, error = process_sicoob_input_xls(file_path)
             if error:
                 message['text'] = error.format(file=file.name)

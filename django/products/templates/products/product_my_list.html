@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Produtos{% endblock %}
+
+{% block header_title %}Produtos{% endblock %}
+
+{% block content %}
+    <div >
+        <h2>{{ message.title }}</h2>
+
+        <div class="user-form">
+            {% if is_data_empty %}
+                <div class="alert">
+                    Nenhum dado encontrado.
+                </div>
+            {% endif %}
+    </div>
+
+    {% if is_admin and pending_count %}
+        <p><a href="{% url 'products:product_approval' %}">Compras pendentes de aprovação ({{ pending_count }})</a></p>
+    {% endif %}
+
+    {% for purchase in purchases %}
+        <section class="product-card">
+            <h2>{{ purchase.produto.produto }}</h2>
+            <p>{{ purchase.produto.descricao }}</p>
+
+            <p>Data da compra: {{ purchase.dt_compra }}</p>
+            {% if purchase.status == 1 %}
+                <p>Data da aprovação: {{ purchase.dt_aprovacao }}</p>
+            {% endif %}
+
+            <p>Valor original: R$ {{ purchase.valor_original|floatformat:2 }}</p>
+            <p>Acréscimos: R$ {{ purchase.valor_acrescimo|floatformat:2 }}</p>
+            <p>Descontos: R$ {{ purchase.valor_desconto|floatformat:2 }}</p>
+            <p>Valor total: R$ {{ purchase.valor_total|floatformat:2 }}</p>
+
+            {% if purchase.status == 0 %}
+                <p class="alert-error">Compra aguardando aprovação</p>
+            {% elif purchase.status == 1 %}
+                <p class="alert-success">Compra aprovada</p>
+            {% elif purchase.status == 2 %}
+                <p class="alert-error">Compra rejeitada</p>
+            {% endif %}
+
+            {% if is_admin %}
+                <p>Aprovador: {{ purchase.aprovador_associado.nome_responsavel }}</p>
+            {% endif %}
+
+        </section>
+    {% empty %}
+        <p>Nenhum produto disponível.</p>
+    {% endfor %}
+
+{% endblock %}

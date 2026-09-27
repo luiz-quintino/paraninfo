@@ -16,7 +16,7 @@ function submitForm(formulario) {
 // Função para validar o formato do número
 function validarNumero(valor) {
     // Expressão regular para validar números no formato 0,00
-    const regex = /^\d{1,3}(\.\d{3})*,\d{2}$/;
+    const regex = /^\d*|\d*,\d{1,2}|\d{1,3}(\.\d{3})*,\d{1,2}$/;
 
     // Verifica se o formato está correto
     return regex.test(valor);

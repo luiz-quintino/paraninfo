@@ -9,6 +9,7 @@ urlpatterns = [
     path('invited/', views.invited_view, name='invited'),  # gestão dos convidados
     path('invitation/<uuid:uuid>/', views.invitation_view, name='invitation'),  # registro de novos convidados
     path('user-credential/<uuid:uuid>/', user_credential, name='user_credential'),
+    path('user-products/<uuid:uuid>/', views.user_products, name='user_products'),
 
 
 ]

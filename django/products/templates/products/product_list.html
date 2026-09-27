@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Produtos{% endblock %}
+
+{% block header_title %}Produtos{% endblock %}
+
+{% block content %}
+    <div >
+        <h2>{{ message.title }}</h2>
+
+        <div class="user-form">
+            {% if is_data_empty %}
+                <div class="alert">
+                    Nenhum dado encontrado.
+                </div>
+            {% endif %}
+    </div>
+
+    {% if is_admin and pending_count %}
+        <p><a href="{% url 'products:product_approval' %}">Compras pendentes de aprovação ({{ pending_count }})</a></p>
+    {% endif %}
+
+    {% for product in products %}
+        <section class="product-card">
+            <h2>{{ product.produto }}</h2>
+            <p>{{ product.descricao }}</p>
+            <p>Valor original do produto: R$ {{ product.valor_original|floatformat:2 }}</p>
+
+            <p>Acréscimos: R$ {{ product.vr_acrescimo|floatformat:2 }}</p>
+            <p>Descontos: R$ {{ product.vr_desconto|floatformat:2 }}</p>
+            <p>Valor total: R$ {{ product.valor_total|floatformat:2 }}</p>
+
+            {% if product.id in purchased_product_ids %}
+                <p class="alert-success">Produto adquirido</p>
+                {% if is_admin %}
+                    <form method="post" class="action-buttons">
+                        {% csrf_token %}
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <button class="cancel-button" type="submit" name="action" value="cancel_purchase">Cancelar compra</button>
+                        <button class="save-button" type="submit" name="action" value="buy_more">Adquirir mais um</button>
+                    </form>
+                {% endif %}
+            {% else %}
+                <form method="post" class="action-buttons">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="buy">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <button class="save-button" type="submit">Adquirir</button>
+                </form>
+            {% endif %}
+
+            {% if is_admin %}
+                <a href="{% url 'products:product_edit' product.id %}">Editar produto</a>
+            {% endif %}
+
+        </section>
+    {% empty %}
+        <p>Nenhum produto disponível.</p>
+    {% endfor %}
+{% endblock %}

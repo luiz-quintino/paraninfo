@@ -1,5 +1,5 @@
 
-
+/*
 document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('toggle-btn');
@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+*/
 
 // Função para chamar carregar uma página
 function openAnalisePage() {

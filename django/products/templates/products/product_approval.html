@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Compras pendentes{% endblock %}
+{% block header_title %}Compras pendentes de aprovação{% endblock %}
+
+{% block content %}
+    
+    {% if message.text %}
+        {% include 'partials/popup_message.html' with message=message %}
+    {% endif %}
+
+    <div class="app-title-container">
+        <h2>{{ message.title }}</h2>
+
+        <div class="user-form">
+            {% if is_data_empty %}
+                <div class="alert">
+                    Nenhum dado encontrado.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Tabela de produtos pendentes -->
+        <form method="post">
+            {% csrf_token %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Produto</th>
+                        <th>Associado</th>
+                        <th>Valor Original</th>
+                        <th>Desconto</th>
+                        <th>Acréscimo</th>
+                        <th>Tipo pg</th>
+                        <th>Opções</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for purchase in purchases %}
+                        <tr>
+                            <td>{{ purchase.id }}</td>
+                            <td>{{ purchase.produto.produto }}</td>
+                            <td>{{ purchase.associado.nome_responsavel }}</td>
+                            <td>R$ {{ purchase.valor_original|floatformat:2 }}</td>
+                            <td><input type="number" name="valor_desconto" value="{{ purchase.valor_desconto|default:0 }}" step="10" min="0"></td>
+                            <td><input type="number" name="valor_acrescimo" value="{{ purchase.valor_acrescimo|default:0 }}" step="10" min="0"></td>
+                            <td>{{ purchase.tipo_pagamento }}</td>
+                            <td>
+                                <button type="submit" name="action" value="approve, {{ purchase.id }}">Aprovar</button>
+                                <button type="submit" name="action" value="reject, {{ purchase.id }}">Rejeitar</button>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7">Não há compras pendentes de aprovação.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+{% endblock %}

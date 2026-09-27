@@ -15,6 +15,7 @@ urlpatterns = [
     path('paraninfo-admin/', include('paraninfo_admin.urls')),  # Inclui as URLs do app users
     path('transaction/', include('transaction.urls')),  # Inclui as URLs do app users
     path('balance/', include('balance.urls')),  # Inclui as URLs do app users
+    path('products/', include('products.urls')),
 
 ]
 

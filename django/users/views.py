@@ -19,7 +19,9 @@ from config.menus import menu_url,  MENU_USERS_INCLUIR_USUARIO, \
                                     MENU_USERS_CONVIDADOS, \
                                     MENU_USERS_GERAR_CONVITE, \
                                     MENU_USERS_ACEITAR_CONVIDADOS, \
-                                    MENU_VOLTAR
+                                    MENU_VOLTAR, \
+                                    MENU_PRODUTOS_USER, \
+                                    MENU_PRODUTOS \
 
 from config.constants import MESSAGE_TYPE_INFO, \
                              MESSAGE_TYPE_ERROR, \
@@ -300,6 +302,32 @@ def user_list(request):
 
     return render(request, 'users/user_list.html', context)  # Renderiza o template com o contexto})
 
+
+@login_required()
+def user_products(request, uuid):
+    message = {'type': 'info', 'text': '', 'title': 'Produtos do Usuário', 'function': ''}
+    user_groups = request.user.groups.values_list('name', flat=True) if request.user.is_authenticated else []
+    menu_options = [MENU_VOLTAR]
+
+    # Busca o registro pelo UUID
+    associado = tbAssociados.objects.filter(uuid=uuid).first()  # Busca pelo UUID
+
+    if not associado:
+        messages.error(request, "Registro não encontrado.")
+        return redirect('user_list')
+
+    # Cria side menu
+    if uuid and ('app-admin' in user_groups or 'master' in user_groups or 'sys-admin' in user_groups):
+        menu_options.append(menu_url(MENU_USERS_DEFINICAO_ACESSO, url=reverse('user_credential', kwargs={'uuid': associado.uuid})))
+
+    context = {
+        'associado': associado,
+        'menu_options': menu_options,
+        'message': message,
+    }
+
+    return render(request, 'users/user_products.html', context)
+
 @login_required()
 def user_record(request, uuid=None):
     message = {'type': 'info', 'text': '', 'title': 'Registro de usuário', 'function': ''}
@@ -340,6 +368,9 @@ def user_record(request, uuid=None):
         # Cria side menu
         if uuid and ('app-admin' in user_groups or 'master' in user_groups or 'sys-admin' in user_groups):
             menu_options.append(menu_url(MENU_USERS_DEFINICAO_ACESSO, url=reverse('user_credential', kwargs={'uuid': associado.uuid})))
+            menu_options.append(menu_url(MENU_PRODUTOS, url=reverse('products:product_list', kwargs={'UUID': associado.uuid})))
+
+        menu_options.append(menu_url(MENU_PRODUTOS_USER, url=reverse('products:product_my_list', kwargs={'UUID': associado.uuid})))
     
     associado_dict = {}
     # Garantir que os campos sejam strings vazias se estiverem None
