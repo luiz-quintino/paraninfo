@@ -63,7 +63,7 @@ MENU_PRODUTOS                           = {'name': 'Lista de Produtos',
                                            'color': "#fab5bc",}
 
 MENU_PRODUTOS_INCLUIR                   = {'name': 'Incluir produto',         
-                                           'url': '#',
+                                           'url': '/products/product-new/',
                                            'tip': 'Cria novo produto para aquisição',
                                            'color': "#fab5bc",}
 
@@ -80,6 +80,10 @@ MENU_BALANCE_EXTRATO                    = {'name': 'Menu movimentações',
                                            'url': "/transaction",
                                            'tip': 'Acesse o menu de extratos para visualizar, importar e analisar movimentações financeiras',
                                            'color': '#b5e2fa',}
+
+MENU_BALANCE_MY                         = {'name': 'Meus pagamentos',                     
+                                           'url': "#",
+                                           'tip': 'Veja o histórico de pagamentos e movimentações financeiras do usuário logado'}
 
 MENU_BALANCE_BOLETO                     = {'name': 'Gerenciar boletos',
                                            'url': "boleto",                     
@@ -120,7 +124,7 @@ MENU_BALANCE_ENTRADA_MANUAL             = {'name': 'Entrada manual de movimenta�
                                            'url': "/transaction/entrada-manual",
                                            'tip': 'Acesse o formulário para entrada manual de movimentações financeiras'}
 
-MENU_BALANCE_ANALISAR_MOVIMENTACAO      = {'name': 'Classificar movimentação',       
+MENU_BALANCE_CLASSIFICAR_MOVIMENTACAO      = {'name': 'Classificar movimentação',       
                                            'url': "analise-movimentacao", 
                                            'type': 'js', 
                                            'function': 'openAnalisePage()',
@@ -144,6 +148,13 @@ MENU_BALANCE_ACEITAR_ENTRADAS_EXTRATO   = {'name': 'Aceitar entradas de extrato'
                                            'color': 'yellow',
                                            'function': 'submitImportacaoForm()',
                                            'tip': 'Aceitar as entradas de extrato bancário importadas para análise',}
+
+MENU_BALANCE_REJEITAR_MOVIMENTACAO   = {'name': 'Rejeitar todas as entradas de extrato', 
+                                           'url': "importacao",           
+                                           'type': 'js', 
+                                           'color': 'yellow',
+                                           'function': 'submitForm("formRejeitar")',
+                                           'tip': 'Rejeitar todas as entradas de extrato bancário importadas',}
 
 MENU_BALANCE_SALVAR_MOVIMENTACOES       = {'name': 'Salvar classificação',         
                                            'url': "analise-movimentacao", 
@@ -177,16 +188,16 @@ MENU_CONTABILIDADE_VER_EXTRATO          = {'name': 'Extrato de movimentações',
                                            'tip': 'Acesse o extrato para visualizar as movimentações financeiras'}
 
 MENU_CONTABILIDADE_FECHAR_BALANCO       = {'name': 'Fechar balanço mensal',
-                                           'url': "fechar-balanco", 
+                                           'url': "/balance/fechar-balanco", 
                                            'tip': 'Fechar o balanço contábil para o período selecionado',
                                            'color': 'yellow'}
 
 MENU_CONTABILIDADE_RESUMO_OPERACOES     = {'name': 'Resumo de operações',
-                                            'url': "resumo-operacoes",
+                                            'url': "/balance/balance-overview/",
                                             'tip': 'Acesse o resumo de operações para visualizar as movimentações financeiras resumidas'}
 
 MENU_CONTABILIDADE_LIVRO_CAIXA          = {'name': 'Livro caixa',
-                                           'url': "livro-caixa",
+                                           'url': "/balance/livro-caixa",
                                            'tip': 'Acesse o livro caixa para visualizar as movimentações financeiras registradas'}
 
 MENU_CONTABILIDADE_MENSALIDADDES        = {'name': 'Mensalidades',

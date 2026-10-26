@@ -6,16 +6,18 @@
 {% block header_title %}Produtos{% endblock %}
 
 {% block content %}
-    <div >
-        <h2>{{ message.title }}</h2>
+<link rel="stylesheet" href="{% static 'products.css' %}">
+<script src="{% static 'products.js' %}?v=4" defer></script>
+<div class="products-page">
+    <h2>{{ message.title }}</h2>
 
-        <div class="user-form">
-            {% if is_data_empty %}
-                <div class="alert">
-                    Nenhum dado encontrado.
-                </div>
-            {% endif %}
-    </div>
+    {% if messages %}
+        <div class="product-new-messages" aria-live="polite">
+            {% for message in messages %}
+                <p class="product-new-message {{ message.tags }}">{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     {% if is_admin and pending_count %}
         <p><a href="{% url 'products:product_approval' %}">Compras pendentes de aprovação ({{ pending_count }})</a></p>
@@ -24,38 +26,91 @@
     {% for product in products %}
         <section class="product-card">
             <h2>{{ product.produto }}</h2>
-            <p>{{ product.descricao }}</p>
-            <p>Valor original do produto: R$ {{ product.valor_original|floatformat:2 }}</p>
+            
+            <button class="product-image-trigger" type="button" aria-label="Ampliar imagem de {{ product.produto }}">
+                <img class="product-image" src="{{ product.image_url }}" alt="Imagem de {{ product.produto }}" loading="lazy">
+            </button>
 
-            <p>Acréscimos: R$ {{ product.vr_acrescimo|floatformat:2 }}</p>
-            <p>Descontos: R$ {{ product.vr_desconto|floatformat:2 }}</p>
-            <p>Valor total: R$ {{ product.valor_total|floatformat:2 }}</p>
+            <p>{{ product.descricao }}</p>
+
+            <p class="product-small-text">Valor original do produto: R$ {{ product.valor_original|floatformat:2 }}</p>
+
+            <p class="product-small-text">Acréscimos: R$ {{ product.vr_acrescimo|floatformat:2 }}</p>
+            <p class="product-small-text">Descontos: R$ {{ product.vr_desconto|floatformat:2 }}</p>
+            <p class="product-total">Valor total: R$ {{ product.valor_total|floatformat:2 }}</p>
 
             {% if product.id in purchased_product_ids %}
                 <p class="alert-success">Produto adquirido</p>
-                {% if is_admin %}
-                    <form method="post" class="action-buttons">
-                        {% csrf_token %}
-                        <input type="hidden" name="product_id" value="{{ product.id }}">
-                        <button class="cancel-button" type="submit" name="action" value="cancel_purchase">Cancelar compra</button>
-                        <button class="save-button" type="submit" name="action" value="buy_more">Adquirir mais um</button>
-                    </form>
-                {% endif %}
-            {% else %}
-                <form method="post" class="action-buttons">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="buy">
-                    <input type="hidden" name="product_id" value="{{ product.id }}">
-                    <button class="save-button" type="submit">Adquirir</button>
-                </form>
             {% endif %}
 
-            {% if is_admin %}
-                <a href="{% url 'products:product_edit' product.id %}">Editar produto</a>
+            {% if product.ativo == 2 %}
+                <p class="alert-error">Produto oculto</p>
+            {% endif %}
+
+            {% if is_admin or product.id not in purchased_product_ids %}
+            <div class="action-buttons product-card-actions">
+
+                {% if product.id in purchased_product_ids %}
+                    {% if is_admin %}
+                        <button class="save-button open-product-plan" type="button" data-product-id="{{ product.id }}" data-action="buy_more">Adquirir mais um</button>
+                    {% endif %}
+                {% else %}
+                    <button class="save-button open-product-plan" type="button" data-product-id="{{ product.id }}" data-action="buy">Adquirir</button>
+                {% endif %}
+
+                {% if is_admin %}
+                    <a class="save-button" href="{% url 'products:product_edit' product.id %}">Editar produto</a>
+                {% endif %}
+                </div>
             {% endif %}
 
         </section>
     {% empty %}
         <p>Nenhum produto disponível.</p>
     {% endfor %}
+    {{ payment_options_by_product|json_script:'product-payment-options' }}
+</div>
+
+<div class="product-image-modal-backdrop" id="product-image-modal" hidden>
+    <section class="product-image-modal" role="dialog" aria-modal="true" aria-label="Imagem ampliada do produto">
+        <button type="button" class="product-image-modal-close" aria-label="Fechar imagem">X</button>
+        <img id="product-image-modal-content" src="" alt="">
+    </section>
+</div>
+
+<div class="product-modal-backdrop" id="product-plan-modal" hidden>
+    <section class="product-modal" role="dialog" aria-modal="true" aria-labelledby="product-plan-title">
+        <button type="button" class="product-modal-close" data-close-product-modal aria-label="Fechar">&times;</button>
+        <h2 id="product-plan-title">Selecionar plano de pagamento</h2>
+        <form method="post" id="purchase-plan-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" id="purchase-action" value="buy">
+            <input type="hidden" name="product_id" id="purchase-product-id">
+            <div class="form-group">
+                <label for="purchase-quantity">Quantidade</label>
+                <select id="purchase-quantity" name="quantidade" required>
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="purchase-payment-option">Opção de pagamento</label>
+                <select id="purchase-payment-option" name="payment_option_id" required>
+                    <option value="">Selecione uma opção</option>
+                </select>
+            </div>
+            <div id="purchase-plan-preview" class="purchase-plan-preview" aria-live="polite">
+                <p>Selecione uma opção para consultar as parcelas, datas e valores.</p>
+            </div>
+            <p id="purchase-plan-error" class="alert-error" role="alert" hidden></p>
+            <div class="action-buttons">
+                <button type="button" class="cancel-button" data-close-product-modal>Cancelar</button>
+                <button type="submit" class="save-button" id="confirm-product-purchase" disabled>Confirmar aquisição</button>
+            </div>
+        </form>
+    </section>
+</div>
 {% endblock %}

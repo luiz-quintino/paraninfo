@@ -12,12 +12,11 @@ class lstPagina(models.Model):
 class tbSessao(models.Model):
     id = models.AutoField(primary_key=True)  # Campo ID como chave primária
     data = models.DateTimeField(auto_now_add=True)  # Campo de data com valor padrão como a data atual
-    # usuario_id = models.IntegerField()  # Relacionamento com o modelo User
     auth_group_id = models.CharField(max_length=45)  # Campo varchar com limite de 45 caracteres
     usuario_ip = models.CharField(max_length=45, null=True, blank=True)  # Campo para armazenar o IP do usuário
     localizacao = models.CharField(max_length=45, null=True, blank=True)  # Campo para armazenar a localização do usuário
 
-    # Relacionamento com tbTransacao
+    # Relacionamentos
     usuario = models.ForeignKey(
         tbAssociados,
         on_delete=models.SET_NULL,

@@ -11,19 +11,21 @@
             {% endif %}
             <li><a href="{% url 'products:products' %}">Produtos</a></li>
 
-            <li><a href="{% url 'balance' %}">Contabilidade</a></li>
-            <li><a href="{% url 'login' %}">Mensalidades</a></li>
+            <li><a href="{% url 'balance:balance' %}">Contabilidade</a></li>
+
+            <!-- <li><a href="{% url 'login' %}">Mensalidades</a></li> -->
 
             <hr> <!-- Linha divisória -->
-            <li><a href="{% url 'login' %}">Documentos</a></li>
+            <!-- <li><a href="{% url 'login' %}">Documentos</a></li> -->
+
             {% if request.is_admin %}
-                <li><a href="{% url 'login' %}">News</a></li>
+                <!-- <li><a href="{% url 'login' %}">News</a></li> -->
                 <hr> <!-- Linha divisória -->
             {% endif %}
 
             
             {% if request.is_admin %}
-                <li><a href="{% url 'login' %}">Configurações</a></li> 
+                <!-- <li><a href="{% url 'login' %}">Configurações</a></li>  -->
             {% endif %}
             {% if request.is_sys_admin %}
                 <li><a href="{% url 'client_list' %}">Clientes</a></li>

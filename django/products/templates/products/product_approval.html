@@ -10,7 +10,15 @@
     {% endif %}
 
     <div class="app-title-container">
-        <h2>{{ message.title }}</h2>
+    <h2>{{ message.title }}</h2>
+
+    {% if messages %}
+        <div class="product-new-messages" aria-live="polite">
+            {% for message in messages %}
+                <p class="product-new-message {{ message.tags }}">{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
 
         <div class="user-form">
             {% if is_data_empty %}
@@ -29,10 +37,10 @@
                         <th>ID</th>
                         <th>Produto</th>
                         <th>Associado</th>
+                        <th>Quantidade</th>
                         <th>Valor Original</th>
                         <th>Desconto</th>
                         <th>Acréscimo</th>
-                        <th>Tipo pg</th>
                         <th>Opções</th>
                     </tr>
                 </thead>
@@ -42,10 +50,10 @@
                             <td>{{ purchase.id }}</td>
                             <td>{{ purchase.produto.produto }}</td>
                             <td>{{ purchase.associado.nome_responsavel }}</td>
+                            <td>{{ purchase.quantidade }}</td>
                             <td>R$ {{ purchase.valor_original|floatformat:2 }}</td>
                             <td><input type="number" name="valor_desconto" value="{{ purchase.valor_desconto|default:0 }}" step="10" min="0"></td>
                             <td><input type="number" name="valor_acrescimo" value="{{ purchase.valor_acrescimo|default:0 }}" step="10" min="0"></td>
-                            <td>{{ purchase.tipo_pagamento }}</td>
                             <td>
                                 <button type="submit" name="action" value="approve, {{ purchase.id }}">Aprovar</button>
                                 <button type="submit" name="action" value="reject, {{ purchase.id }}">Rejeitar</button>

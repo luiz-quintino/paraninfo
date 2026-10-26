@@ -168,19 +168,25 @@ STATIC_URL = '/static/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / "media"
+# A análise de movimentações envia vários campos por linha; mantém um limite finito
+# acima do padrão do Django para permitir lotes maiores sem aceitar POST ilimitado.
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 JS_URL = '/js/'
 
-# Diretório onde os arquivos estáticos serão coletados (em produção)
+# Diretório de saída gerado por collectstatic; não deve conter arquivos-fonte.
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [
-    STATIC_ROOT / "admin/",
-    STATIC_ROOT / "css/",
-    STATIC_ROOT / "icons/",
-    STATIC_ROOT / "js/",
-    STATIC_ROOT / "logos/",
-    STATIC_ROOT / "media/",
-    STATIC_ROOT / "misc/",
+    BASE_DIR / "static_src/css/",
+    BASE_DIR / "static_src/icons/",
+    BASE_DIR / "static_src/js/",
+    BASE_DIR / "static_src/logos/",
+    BASE_DIR / "static_src/media/",
+    BASE_DIR / "static_src/misc/",
     ]
+
+
+RESOURCES_ROOT = BASE_DIR / "resources"
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

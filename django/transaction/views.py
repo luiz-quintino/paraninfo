@@ -1,17 +1,18 @@
 from django.shortcuts import render, redirect
 from django.core.files.storage import FileSystemStorage
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import user_passes_test, login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import OuterRef, Subquery
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 from datetime import datetime
 from decimal import Decimal
 import pandas as pd
 import json
 import os
 import re
-from .models import tbExtratoConfig, tbExtrato, tbTransacao, tbBoleto, tbResumoComissao, tbComissao, lstBoletoStatus
+from .models import lsttransacao, tbExtratoConfig, tbExtrato, tbBoleto, tbComissao, lstBoletoStatus
 from users.models import tbAssociados
 from config.constants import MESSAGE_TYPE_INFO, \
                                 MESSAGE_TYPE_ERROR, \
@@ -19,14 +20,14 @@ from config.constants import MESSAGE_TYPE_INFO, \
                                         MESSAGE_TYPE_SUCCESS, \
                                             MESSAGE_TYPE_CONFIRM
 
-from utils import  convert_date, save_log, get_user_by_responsible_name
+from utils import  convert_date, save_log, get_user_by_responsible_name, is_app_admin, is_admin, user_role
 
 from .services.imports import process_sicoob_input_txt, process_sicoob_input_xls, import_boletos_xls, identify_transaction
                     
 from config.menus import    MENU_VOLTAR, \
                             MENU_BALANCE_IMPORTAR_EXTRATO, \
                             MENU_BALANCE_ENTRADA_MANUAL, \
-                            MENU_BALANCE_ANALISAR_MOVIMENTACAO, \
+                            MENU_BALANCE_CLASSIFICAR_MOVIMENTACAO, \
                             MENU_BALANCE_ACEITAR_ENTRADAS_EXTRATO, \
                             MENU_BALANCE_ACEITAR_EXTRATO, \
                             MENU_BALANCE_EXTRATO, \
@@ -38,16 +39,11 @@ from config.menus import    MENU_VOLTAR, \
                             MENU_BALANCE_BOLETO_MANUAL, \
                             MENU_BALANCE_BOLETO_IMPORTAR, \
                             MENU_BALANCE_BOLETO_SALVAR, \
-                            MENU_BALANCE_FECHAR_ANALISE_CONFIRMAR
+                            MENU_BALANCE_FECHAR_ANALISE_CONFIRMAR, \
+                            MENU_BALANCE_REJEITAR_MOVIMENTACAO
 
-# Função para verificar se o usuário pertence ao grupo 'admin'
-def is_sys_admin(user):
-    is_admin = user.groups.filter(name='sys-admin').exists() or \
-                user.groups.filter(name='app-admin').exists() or \
-                user.groups.filter(name='master').exists()
-    return is_admin
 
-@user_passes_test(is_sys_admin)
+@login_required()
 def boleto_manual_view(request):
     """
         Adiciona boleto manualmente
@@ -129,7 +125,7 @@ def boleto_manual_view(request):
 
     return render(request, 'boleto_manual.html', context)
     
-@user_passes_test(is_sys_admin)
+@login_required()
 def boleto_view(request):
     """
         Cria e faz gestão de boletos de mensalidades
@@ -571,37 +567,64 @@ def boleto_view(request):
 
     return render(request, 'boleto.html', context)
 
-@user_passes_test(is_sys_admin)
+@login_required()
 def analise_movimentacao_view(request):
     """
         Analisa as movimentações financeiras do extrato bancário
     """
 
-    message = {'type': 'info', 'text': '', 'title': 'Analisar e classificar movimentação', 'function': ''}
-    status = None
+    message = {'type': 'info', 'text': '', 'title': 'Analisar e classificar movimentação (Tesoureiro)', 'function': ''}
+    target_status = None
 
     # Cria side menu
     menu_options = [
         MENU_VOLTAR,
         MENU_BALANCE_EXTRATO,
-        MENU_BALANCE_ANALISAR_MOVIMENTACAO,
-        MENU_BALANCE_SALVAR_MOVIMENTACOES,
-        MENU_BALANCE_REVISAR_ANALISE
+        # MENU_BALANCE_ANALISAR_MOVIMENTACAO,
+        # MENU_BALANCE_REVISAR_ANALISE
         ]
+
+    count_extratos_null = tbExtrato.objects.filter(
+                        comissao_id=request.comissao if request.comissao else 1,  # Valor padrão para comissao_id   
+                        status__isnull=True,  
+                    ).count()
+
+    count_extratos_accepted = tbExtrato.objects.filter(
+                            comissao_id=request.comissao if request.comissao else 1,  # Valor padrão para comissao_id   
+                            status=1,  # Aceitos
+                        ).count()
+
+    count_extratos_reviewed = tbExtrato.objects.filter(
+                            comissao_id=request.comissao if request.comissao else 1,  # Valor padrão para comissao_id   
+                            status=2,  # Revisados
+                        ).count()
+    
+    if not request.POST.get('review', '') and ((user_role(request) in ['presidente', 'vice-presidente', 'conselho fiscal']) or is_app_admin(request)):
+        menu_options.extend([
+        MENU_BALANCE_REVISAR_ANALISE,   # Revisar movimentação
+    ])
+
+    if count_extratos_null > 0 and not request.POST.get('review', '') and ((user_role(request) in ['presidente', 'vice-presidente', 'tesoureiro']) or is_app_admin(request)):
+        menu_options.extend([
+        MENU_BALANCE_REJEITAR_MOVIMENTACAO, # Rejeitar todas as entradas de extrato
+        MENU_BALANCE_SALVAR_MOVIMENTACOES,  #Salvar classificação
+    ])
+
 
     # metodo post
     if request.method == 'POST':
 
         if request.POST.get('review', ''):
             # Revisar movimentação
-            status = 1  
-            message['title'] = 'Revisar e incorporar movimentação'
+            target_status = 1  
+            message['title'] = 'Revisar e incorporar movimentação (Fiscal)'
 
-            menu_options.append(MENU_BALANCE_FECHAR_ANALISE)
+            if count_extratos_accepted > 0:
+                menu_options.append(MENU_BALANCE_FECHAR_ANALISE)    # Incorporar movimentação à contabilidade
 
         elif request.POST.get('close', ''):
             # Fechar análise: confirmação
-            status = 1 
+            target_status = 1 
             message['title'] = 'Fechar análise'
 
             menu_options.append(MENU_BALANCE_FECHAR_ANALISE)
@@ -633,13 +656,33 @@ def analise_movimentacao_view(request):
 
         elif request.POST.get('confirm_close', ''): 
             # Fechar análise
-            status = 2
+            target_status = 2
             message['title'] = 'Concluir análise e incorporar movimentações'
             # cria log
             log_id = save_log(request,
                 description='tbExtrato',
                 evento_log_id=11  # log: Fechamento de movimentação
             )
+
+        elif request.POST.get('reject', ''):
+            message['text'] = f'Tem certeza que deseja rejeitar todas as {count_extratos_null} entrads de extrato?\n\
+                Essa operação não poderá ser revertida'
+            message['type'] = MESSAGE_TYPE_CONFIRM
+            message['function'] = 'submitForm("formConfirmarRejeicao")'  # Função JS para confirmar fechamento
+
+        elif request.POST.get('confirm_reject', ''):
+            # cria log
+            log_id = save_log(request,
+                description='tbExtrato',
+                evento_log_id=10  # log: Análise de movimentação
+            )
+            estratos = tbExtrato.objects.filter(
+                comissao_id=request.comissao if request.comissao else 1,  # Valor padrão para comissao_id   
+                                    status__isnull=True,  
+                                ).update(status=0, log_fechamento_id=log_id)
+
+            message['text'] = 'Entradas de extrato rejeitadas com sucesso'
+            message['type'] = MESSAGE_TYPE_SUCCESS                            
 
         else:
             # Fazer associações
@@ -717,18 +760,18 @@ def analise_movimentacao_view(request):
                 
                 # Atualizar associado_id apenas para transações com "mensalidade" no texto
                 if transacao_id:
-                    transacao = tbTransacao.objects.get(id=transacao_id)
+                    transacao = lsttransacao.objects.get(id=transacao_id)
                 else:
                     continue  # Pula transações não definida
                 
-                if transacao.value == '***':
+                if transacao.key_name == 'Transação não conhecida':
                     continue  # Pula transações não conhecidas
                 
                 if extrato.transacao_id != transacao_id:
                     extrato.transacao_id = transacao_id
                     updated = True  # Marca como atualizado
 
-                if "mensalidade" in transacao.key.lower():
+                if "recebimento" in transacao.key_name.lower():
                     associado_id = request.POST.get(f'associado_codigo_{extrato_id}')
                     if associado_id and associado_id.isdigit():
                         associado_id = int(associado_id)  # Converte para inteiro se for um ID válido
@@ -777,14 +820,14 @@ def analise_movimentacao_view(request):
                 text_message = 'Nenhum registro de extrato foi atualizado.'
             message['text'] = text_message
     
-    if status == None:
-        # lê tabela tbExtrato onde comissao == comissao atual e log_associacao_id == null para analisar movimentação
+    if target_status == None:
+        # lê tabela tbExtrato onde status == Null: novos registros não associados
         extratos = tbExtrato.objects.filter(
             comissao_id=request.comissao if request.comissao else 1,  # Valor padrão para comissao_id   
             status__isnull=True,
         ).order_by('id')
 
-    elif status == 2:   # Fechar análise
+    elif target_status == 2:   # lê tabela tbExtrato onde status == 1 -> 2 se classificados senão 0 se não classificados
         num_updated = tbExtrato.objects.filter(
             comissao_id=request.comissao if request.comissao else 1,  # Valor padrão para comissao_id
             status = 1
@@ -800,17 +843,16 @@ def analise_movimentacao_view(request):
             text_updated += f'\nForam apagados {num_deleted} registros de movimentação que não foram associados.'
         
         message['text'] = text_updated
-        status = 1
+        target_status = 1
         
-    if status == 1:
-        # lê tabela tbExtrato onde comissao == comissao atual e log_associacao_id != null para revisar movimentação
+    if target_status == 1: # lê tabela tbExtrato onde status == 1, para apresentação
         extratos = tbExtrato.objects.filter(
             comissao_id=request.comissao if request.comissao else 1,  # Valor padrão para comissao_id   
-            status=1  # Status 1: registros associados
+            status=1  
         ).order_by('id')
     
-    # Lê tabela tbTransacao para preencher os tipos de transação
-    transacoes = tbTransacao.objects.all().order_by('key')
+    # Lê tabela lsttransacao para preencher os tipos de transação
+    transacoes = lsttransacao.objects.all().order_by('key_name')
 
     # Cria um dicionário para mapear transacao_id para color_value
     transacao_colors = {transacao.id: transacao.color_name for transacao in transacoes}
@@ -843,6 +885,7 @@ def analise_movimentacao_view(request):
     # Lê tabela tbAssociado para preencher os códigos de pagamento (filtrando por comissão atual)
     associados = tbAssociados.objects.filter(
         comissao=request.comissao,  # Filtrar por comissão atual
+        situacao='ativo',
     ).order_by('id')
     
     
@@ -860,7 +903,7 @@ def analise_movimentacao_view(request):
     }
     return render(request, 'analise_movimentacao.html', context)
 
-@user_passes_test(is_sys_admin)
+@login_required()
 def get_extrato_details(request, extrato_id):
     """
         Retorna os detalhes de um extrato específico em formato JSON.
@@ -890,7 +933,7 @@ def get_extrato_details(request, extrato_id):
     return JsonResponse(data)
 
 
-@user_passes_test(is_sys_admin)
+@login_required()
 def edit_extrato_view(request):
     if request.method == 'POST':
         extrato_id = request.POST.get('extrato_id')
@@ -904,6 +947,12 @@ def edit_extrato_view(request):
             extrato.valor_debito = request.POST.get('debit')
             extrato.anotacao = request.POST.get('note')
             extrato.save()
+
+            log_id = save_log(request,
+                                description='tbExtrato',
+                                evento_log_id=17  # log: Edita extrato
+                            )
+
             return redirect('transaction')
 
         return render(request, 'edit_extrato.html', {'extrato': extrato})
@@ -911,12 +960,12 @@ def edit_extrato_view(request):
         return redirect('transaction')  # Redireciona para balance se não for POST
 
 
-@user_passes_test(is_sys_admin)
+@login_required()
 def entrada_manual_view(request):
     """
         Cria uma entrada manual de movimentação financeira para compor o livro caixa adicionalmente ao extrato bancário
     """
-    transacoes = tbTransacao.objects.all().order_by('key')
+    transacoes = lsttransacao.objects.all().order_by('key_name')
     data_atual = datetime.now().strftime('%d/%m/%Y')  # Formata a data atual como dd/mm/yyyy
     error = ''
     message = ''
@@ -985,24 +1034,26 @@ def entrada_manual_view(request):
     return render(request, 'entrada_manual.html', context)
 
 
-@user_passes_test(is_sys_admin)
+@login_required()
 def transaction_view(request):
     """
         Lê um extrato bancário e o prepara para importação
     """
+    message = {'type': 'info', 'text': '', 'title': 'Importação de extrato', 'function': ''}
+    # Cria side menu
+    menu_options = [MENU_VOLTAR]
+
     dataframe = None
     context = {}
     error = ''
     is_dataframe_empty = True
     file=''
-    message = {'type': 'info', 'text': '', 'title': 'Importação de extrato', 'function': ''}
+    show_import = True if (user_role(request) in ['presidente', 'vice-presidente', 'tesoureiro']) or is_app_admin(request)  else False
+    
     # obtem nome do banco de dbComissao
     nome_banco = tbComissao.objects.filter(id=request.comissao).first().banco 
     nome_banco = nome_banco if nome_banco else 'SICOOB'
 
-    # Cria side menu
-    menu_options = [MENU_VOLTAR]
-    
     # POST request para upload de arquivo Excel
     if request.method == 'POST' and 'file' in request.FILES:
         file = request.FILES['file']            # Nome original do arquivo
@@ -1048,32 +1099,41 @@ def transaction_view(request):
             ])
 
     else:
-        menu_options.extend([
-            MENU_BALANCE_IMPORTAR_EXTRATO,
-            MENU_BALANCE_ENTRADA_MANUAL,
-            MENU_BALANCE_ANALISAR_MOVIMENTACAO,  
-            MENU_BALANCE_BOLETO,
-        ])
-    
+        if (user_role(request) in ['presidente', 'vice-presidente', 'tesoureiro']) or is_app_admin(request):
+            menu_options.extend([
+                MENU_BALANCE_IMPORTAR_EXTRATO,
+                MENU_BALANCE_ENTRADA_MANUAL,
+                # MENU_BALANCE_BOLETO,
+            ])
+            show_import = True
+
+        if (user_role(request) in ['presidente', 'vice-presidente', 'tesoureiro', 'conselho fiscal']) or is_app_admin(request):
+            menu_options.extend([
+                MENU_BALANCE_CLASSIFICAR_MOVIMENTACAO,
+            ])
+
+    dataframe_rows = dataframe.to_dict(orient='records') if dataframe is not None else []
     context = {
                 'is_dataframe_empty': is_dataframe_empty,
                 'menu_options': menu_options,
                 'message': message,
                 'file_name': file,
                 'dataframe': dataframe,
+                'dataframe_rows': dataframe_rows,
                 'nome_banco': nome_banco,
+                'show_import': show_import,
             }
     return render(request, 'transaction.html', context)
 
 
-@user_passes_test(is_sys_admin)
+@login_required()
 def extrato_config(request):
     # Consulta os dados da view 'config_extrato'
     extrato_configs = tbExtratoConfig.objects.select_related('popup_config').all()
     return render(request, 'extrato_config.html', {'extrato_configs': extrato_configs})
 
 
-@user_passes_test(is_sys_admin)
+@login_required()
 def importacao_view(request):
     """
         Importa um extrato bancário procesando linhas duplicadas e convertendo os dados para um banco de dados
@@ -1138,7 +1198,7 @@ def importacao_view(request):
             nota=linha.get('nota', None),
             cpf=linha.get('cpf', None),
             saldo=linha.get('saldo', None) if linha.get('saldo', None) != '' else None,
-            log_registro_id=log_id
+            log_registro_id=log_id,
         ))
         
         duplicadas = None
@@ -1197,7 +1257,7 @@ def importacao_view(request):
     return render(request, 'importacao.html', context)
     
 
-@user_passes_test(is_sys_admin)
+@login_required()
 def aceitar_extrato(request):
     """
         Prepara o extrato para inserir os dados em um banco de dados
@@ -1216,9 +1276,13 @@ def aceitar_extrato(request):
 
         for _, row in dataframe.iterrows():
             data = convert_date(row['data'])
-
+            if not data:
+                print()
+            if len(row['documento']) > 45:
+                print(row)
             # Verificar se a linha já existe no banco de dados
             existe = tbExtrato.objects.filter(
+                ~Q(status=0),
                 comissao_id=request.comissao if request.comissao else 1,  # Valor padrão para comissao_id
                 data=data,
                 documento=row['documento'],

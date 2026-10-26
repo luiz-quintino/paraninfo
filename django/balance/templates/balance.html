@@ -23,7 +23,7 @@
         </div>
 
         <!-- Filtro de dados -->
-        <form method="get" action="{% url 'balance' %}" class="filter-form" id='period_form'>
+        <form method="get" action="{% url 'balance:balance' %}" class="filter-form" id='period_form'>
 
             <label>Período: </label>
             <select name="periodo_index" onchange="toggleFilterPeriod(this)" class="filter-select" id="select_control">
@@ -53,13 +53,13 @@
                 {% for extrato in extrato_list %}
                     <tr style="color: {{ extrato.cor }}; cursor: pointer;" data-id="{{ extrato.id }}" id="row-{{ extrato.id }}" class="openPopup" onclick="openPopupBalanceDetails({{ extrato.id }})">
                         
-                        <td> {{ extrato.indice }} </td>
-                        <td> {{ extrato.data }} </td>
-                        <td> {{ extrato.historico }}</td> 
-                        <td> {{ extrato.credito }} </td>
-                        <td> {{ extrato.debito }} </td>
-                        <td> {{ extrato.transacao_key }} </td>
-                        <td> {{ extrato.associado_id }} </td>
+                        <td data-label="Índice"> {{ extrato.indice }} </td>
+                        <td data-label="Data"> {{ extrato.data }} </td>
+                        <td data-label="Histórico"> {{ extrato.historico }}</td> 
+                        <td data-label="Crédito"> {{ extrato.credito }} </td>
+                        <td data-label="Débito"> {{ extrato.debito }} </td>
+                        <td data-label="Tipo de Transação"> {{ extrato.transacao_key }} </td>
+                        <td data-label="Código do Associado"> {{ extrato.associado_id }} </td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -80,7 +80,7 @@
                 document.getElementById('period_form').submit();
             } else {
                 // Se não, limpa o filtro
-                // window.location.href = "{% url 'balance' %}";
+                // window.location.href = "{% url 'balance:balance' %}";
             }
         }
 

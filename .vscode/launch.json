@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Django: Paraninfo",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/django/manage.py",
+      "args": [
+        "runserver",
+        "127.0.0.1:8001",
+        "--noreload"
+      ],
+      "django": true,
+      "justMyCode": true,
+      "cwd": "${workspaceFolder}/django"
+    }
+  ]
+}

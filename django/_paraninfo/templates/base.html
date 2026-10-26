@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="{% static 'title.css' %}">
     <link rel="stylesheet" href="{% static 'menu_main.css' %}">
     <link rel="stylesheet" href="{% static 'menu_user.css' %}">
-    <link rel="stylesheet" href="{% static 'menu_side.css' %}">
+    <link rel="stylesheet" href="{% static 'menu_side.css' %}?v=2">
     <link rel="stylesheet" href="{% static 'table.css' %}">
     <link rel="stylesheet" href="{% static 'table_big_list.css' %}">
     <link rel="stylesheet" href="{% static 'form.css' %}">
@@ -27,7 +27,7 @@
 
     <script src="{% static 'menu_main.js' %}" defer></script>
     <script src="{% static 'menu_user.js' %}" defer></script>
-    <script src="{% static 'menu_side.js' %}" defer></script>
+    <script src="{% static 'menu_side.js' %}?v=2" defer></script>
     <script src="{% static 'popup_message.js' %}" defer></script>
     <script src="{% static 'util.js' %}" defer></script>
 </head>
@@ -41,13 +41,13 @@
         </div>
     
         <!-- Corpo principal -->
-        {% if user.is_authenticated %}
+        {% if request.user.is_authenticated %}
             <main class="body">
         {% else %}
             <main>
         {% endif %}
 
-            {% if user.is_authenticated %}
+            {% if request.user.is_authenticated %}
                 <!-- Menu lateral -->
                 <div class="page-menu" >
                     <div id="sidebar" class="sidebar expanded" >

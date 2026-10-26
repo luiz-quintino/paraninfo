@@ -3,11 +3,53 @@ import regex as re
 from datetime import datetime
 from home.models import lstPagina, tbLog
 from users.models import tbAssociados
+from django.contrib.auth.models import User, Group
 
-            
+
+# Função para verificar se o usuário pertence ao grupo 'admin'
+def is_app_admin(request) -> bool:
+    uuid = request.session['user_data']['user_uuid']
+    
+    user = User.objects.filter(last_name=uuid).first()
+
+    is_admin = user.groups.filter(name='sys-admin').exists() or \
+            user.groups.filter(name='app-admin').exists()
+
+    if is_admin:
+        user_ = tbAssociados.objects.filter(uuid=uuid).first()
+        if user_.situacao.lower() == 'ativo':
+            return True
+    
+    return False
+
+def is_admin(request) -> bool:
+    uuid = request.session['user_data']['user_uuid']
+
+    user = User.objects.filter(last_name=uuid).first()
+
+    is_admin = user.groups.filter(name='sys-admin').exists() or \
+            user.groups.filter(name='app-admin').exists() or \
+            user.groups.filter(name='master').exists() or \
+            user.groups.filter(name='staff').exists()
+
+    if is_admin:
+        user_ = tbAssociados.objects.filter(uuid=uuid).first()
+        if user_.situacao.lower() == 'ativo':
+            return True
+    
+    return False
+
+def user_role(request) -> str:
+    uuid = request.session['user_data']['user_uuid']
+    if is_admin(request):
+        user_ = tbAssociados.objects.filter(uuid=uuid).first()
+        return user_.tipo.lower()
+
+    return ''
+
 def convert_date(date_str) -> str:
     date = ""
-    if date_str:
+    if date_str and type(date_str) == str:
         try:
             date = datetime.strptime(date_str, '%d/%m/%Y').date()
         except ValueError:

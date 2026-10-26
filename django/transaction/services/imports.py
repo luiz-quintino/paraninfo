@@ -1,5 +1,5 @@
 from utils import get_user_by_codigo_pagamento
-from transaction.models import tbExtratoConfig, tbTransacao
+from transaction.models import lsttransacao, tbExtratoConfig, tbTransacao
 import pandas as pd
 from decimal import Decimal
 
@@ -35,11 +35,15 @@ def identify_transaction(comissao: str, description: str, value: Decimal) -> dic
 
                 if user:
                     transaction['user'] = user.id
-
                     return transaction
                 
                 else:
                     transaction['configuracao'] = config.configuracao
+
+            else:
+                transaction['configuracao'] = 'Arrecadação de Eventos'
+                transaction['id'] = 4
+                return transaction
                 
         elif config.condicao == 'hide':
             transaction['configuracao'] = 'hide'
@@ -48,7 +52,7 @@ def identify_transaction(comissao: str, description: str, value: Decimal) -> dic
             return transaction
     
     # se não encontrar a transação, procura pela transacao.value = '***' (não conhecida)
-    transacao_db = tbTransacao.objects.filter(value='***').only('id').first()
+    transacao_db = lsttransacao.objects.filter(key_name='Transação não conhecida').only('id').first()
     transaction['id'] = transacao_db.id if transacao_db else None
 
     return transaction
@@ -107,13 +111,14 @@ def process_sicoob_information_data(info_text: str, extra_line: int) -> tuple:
     """
         Processa o texto de informações adicionais do extrato SICOOB e retorna uma tupla com o cabeçalho e o índice da linha extra.
     """
-    header_ = new_header[extra_line]
-    
-    if info_text in ['Pagamento Pix', 'Recebimento Pix', 'Transferência Pix', 'Transferência Bancária']:
+    header_ = 'nota'
+    if 'REM' not in info_text and (extra_line == 0 or info_text in ['Pagamento Pix', 'Recebimento Pix', 'Transferência Pix', 'Transferência Bancária']):
         header_ = 'tipo'
-        if info_text == 'Pagamento Pix':
+        if info_text in ['Pagamento Pix']:
             extra_line += 1
-            pass
+
+    elif 'REM' not in info_text and (extra_line == 1 and not '**.' in info_text):    
+        header_ = 'nome'
 
     elif 'REM' in info_text:
         header_ = ''    # ignora informação
@@ -121,7 +126,7 @@ def process_sicoob_information_data(info_text: str, extra_line: int) -> tuple:
 
     elif '**.' in info_text:
         header_ = 'cpf'
-        extra_line -= 1
+        # extra_line -= 2
 
     elif 'SALDO DO DIA' in info_text:
         header_ = ''    # ignora informação
@@ -132,7 +137,7 @@ def process_sicoob_information_data(info_text: str, extra_line: int) -> tuple:
         if cnpjs:
             header_ = 'cpf'
             info_text = str(cnpjs[0])
-            extra_line -= 1
+            # extra_line -= 2
 
     return header_, extra_line
             
@@ -142,7 +147,7 @@ def process_sicoob_input_xls(file_path):
     error = ''
 
     try:
-        print(file_path)
+        # print(file_path)
         dataframe = pd.read_excel(file_path)
 
             # Processar o DataFrame para reorganizar as linhas adicionais
@@ -191,7 +196,9 @@ def process_sicoob_input_xls(file_path):
     for index, row in dataframe.iterrows():
         if row['data']:  # Linha principal
             extra_line = 0
-            current_data = row['data']
+            data_= row['data'] if type(row['data']) == str else '**/**/****'
+            data_= data_[:10]
+            current_data = data_
             current_documento = row['documento']
             current_historico = row['historico']
             debito = 0.0
@@ -230,6 +237,7 @@ def process_sicoob_input_xls(file_path):
             })
 
             if 'informacoes' in row:
+                info_text = {'header': '', 'cpf': '', 'nota': '', 'nome': ''}
                 for informacoes in row['informacoes'].split('\n'):  # Divide as informações adicionais em linhas separadas
                     header_, extra_line = process_sicoob_information_data(informacoes, extra_line)
                     extra_line += 1
@@ -326,6 +334,7 @@ def process_sicoob_input_txt(file_name):
                 documento = linha[10:tab_historico].strip()  # Extrai o documento (pode ser vazio)  
                 historico = linha[tab_historico:tab_valor:].strip()
                 valor = linha[tab_valor:].strip()
+
                 # Determinar se é crédito ou débito
                 if valor.endswith("C"):
                     credito = float(valor[:-1].replace(".", "").replace(",", "."))

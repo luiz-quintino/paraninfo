@@ -1,66 +1,161 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load l10n %}
 
 {% block title %}Editar produto{% endblock %}
 {% block header_title %}Editar produto{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="{% static 'product_new.css' %}">
+<script src="{% static 'product_new.js' %}" defer></script>
 
-    {% if message.text %}
-        {% include 'partials/popup_message.html' with message=message %}
+<section class="product-new-page">
+    <h2>{{ message.title }}</h2>
+
+    {% if messages %}
+        <div class="product-new-messages" aria-live="polite">
+            {% for message in messages %}
+                <p class="product-new-message {{ message.tags }}">{{ message }}</p>
+            {% endfor %}
+        </div>
     {% endif %}
 
-    <div class="container">
-        <div >
-            <h2>{{ message.title }}</h2>
-
-            <div class="user-form">
-                {% if is_data_empty %}
-                    <div class="alert">
-                        Nenhum dado encontrado.
-                    </div>
+    <form method="post" enctype="multipart/form-data" id="product-new-form">
+        {% csrf_token %}
+        <div class="product-new-fields">
+            <div class="form-group">
+                <label for="product-name">Produto</label>
+                <input id="product-name" type="text" name="produto" maxlength="255" value="{{ form_data.produto|default:product.produto }}" required>
+            </div>
+            <div class="form-group">
+                <label for="product-description">Descrição</label>
+                <input id="product-description" type="text" name="descricao" maxlength="255" value="{{ form_data.descricao|default:product.descricao }}" required>
+            </div>
+            <div class="form-group">
+                <label for="product-value">Valor original (R$)</label>
+                <input id="product-value" type="number" name="valor_original" min="0" step="0.01" value="{{ form_data.valor_original|default:product.valor_original|unlocalize }}" required>
+            </div>
+            <div class="form-group">
+                <label for="product-increase">Acréscimo (R$)</label>
+                <input id="product-increase" type="number" name="acrescimo" min="0" step="0.01" value="{{ form_data.acrescimo|default:product.vr_acrescimo|unlocalize }}">
+            </div>
+            <div class="form-group">
+                <label for="product-discount">Desconto (R$)</label>
+                <input id="product-discount" type="number" name="desconto" min="0" step="0.01" value="{{ form_data.desconto|default:product.vr_desconto|unlocalize }}">
+            </div>
+            <div class="product-total-preview">
+                <span>Valor total para os planos</span>
+                <strong id="product-total">R$ 0,00</strong>
+            </div>
+            <div class="form-group">
+                <label for="product-start-date">Data de início</label>
+                <input id="product-start-date" type="date" name="dt_inicio" value="{{ form_data.dt_inicio|default:product.dt_inicio|date:'Y-m-d' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="product-forecast-date">Data prevista (opcional)</label>
+                <input id="product-forecast-date" type="date" name="dt_previsao" value="{{ form_data.dt_previsao|default:product.dt_previsao|date:'Y-m-d' }}">
+            </div>
+            <div class="form-group">
+                <label for="product-due-day">Dia do vencimento</label>
+                <input id="product-due-day" type="number" name="dia_vencimento" min="1" max="31" step="1" value="{{ form_data.dia_vencimento|default:product.dia_vencimento|default:'7' }}" required>
+            </div>
+            <div class="form-group product-image-field">
+                <label for="product-image">Imagem do produto (opcional)</label>
+                <input id="product-image" type="file" name="imagem" accept="image/jpeg,image/png,image/gif,image/webp">
+                {% if product_image %}
+                    <img id="product-image-preview" src="{{ product_image }}" alt="Imagem atual do produto" data-existing-image="true">
+                {% else %}
+                    <img id="product-image-preview" alt="Pré-visualização da nova imagem" hidden>
                 {% endif %}
+                <small>Selecione um arquivo somente se quiser substituir a imagem atual.</small>
+            </div>
+            <label class="product-active-field" for="product-active">
+                Situação do Produto:
+                <select id="product-active" name="ativo">
+                    <option value=0 {% if product.ativo == 0 %}selected{% endif %}>Novo</option>
+                    <option value=1 {% if product.ativo == 1 %}selected{% endif %}>Ativo</option>
+                    <option value=2 {% if product.ativo == 2 %}selected{% endif %}>Oculto</option>
+                    <option value=3 {% if product.ativo == 3 %}selected{% endif %}>Cancelado</option>
+                </select>
+            </label>
+            <label class="product-active-field" for="product-active">
+                Ajustar atradadas:
+                <select id="product-adjuts" name="adjust">
+                    <option value=0 {% if product.ajustar_atrasadas == 0 %}selected{% endif %}>Distribuir em parcelas futuras [🗓️🪙🪙🪙]</option>
+                    <option value=1 {% if product.ajustar_atrasadas == 1 %}selected{% endif %}>Acumular parcelas vencidas     [🗓️💰🪙]</option>
+                    <option value=2 {% if product.ajustar_atrasadas == 2 %}selected{% endif %}>Manter com datas vencidas      [🪙🪙🗓️🪙]</option>
+                </select>
+            </label>
         </div>
 
-        <form method="post">
-            {% csrf_token %}
-            <div class="form-group">
-                <label>Produto</label> <input type="text" name="produto" value="{{ product.produto }}" required>
+        <section class="payment-plan-section" aria-labelledby="payment-plans-title">
+            <div class="payment-plan-heading">
+                <div>
+                    <h3 id="payment-plans-title">Planos de pagamento</h3>
+                    <p id="due-day-hint">Edite as opções disponíveis e as parcelas de cada plano.</p>
+                </div>
+                <button class="save-button" type="button" id="open-payment-popup">Adicionar plano</button>
             </div>
+            <div id="payment-plan-empty" class="payment-plan-empty">Nenhum plano adicionado.</div>
+            <div id="payment-plan-list" class="payment-plan-list" aria-live="polite"></div>
+            <input type="hidden" name="payment_plans" id="payment-plans-json" value="{{ form_data.payment_plans|default:initial_plans_json }}">
+        </section>
 
-            <div class="form-group">
-                <label>Descrição</label> <input type="text" name="descricao" value="{{ product.descricao }}" required>
-            </div>
+        <div class="action-buttons product-new-actions">
+            <button class="save-button" type="submit" name="action" value="save">Salvar alterações</button>
+            <button class="cancel-button" type="submit" name="action" value="cancel" formnovalidate>Cancelar</button>
+        </div>
+    </form>
+</section>
 
-            <div class="form-group">
-                <label>Valor original</label> <input type="text" name="valor_original" value="{{ product.valor_original }}" required>
-            </div>
+<div class="payment-popup-backdrop" id="payment-popup" hidden>
+    <section class="payment-popup" role="dialog" aria-modal="true" aria-labelledby="payment-popup-title">
+        <button type="button" class="payment-popup-close" id="close-payment-popup" aria-label="Fechar">&times;</button>
+        <h3 id="payment-popup-title">Adicionar plano de pagamento</h3>
+        <div class="form-group">
+            <label for="payment-type">Tipo de pagamento</label>
+            <select id="payment-type" required>
+                <option value="">Selecione</option>
+                {% for option in payment_options %}
+                    <option value="{{ option.id }}" data-kind="{{ option.kind }}" {% if not option.kind %}disabled{% endif %}>{{ option.tipo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" id="installment-count-field" hidden>
+            <label for="installment-count">Número de parcelas</label>
+            <input id="installment-count" type="number" min="1" max="120" step="1" value="2">
+            <small>Para “entrada + parcelas”, o sistema inclui também uma parcela de entrada.</small>
+        </div>
+        <p class="payment-popup-error" id="payment-popup-error" role="alert" hidden></p>
+        <div class="action-buttons">
+            <button type="button" class="cancel-button" id="cancel-payment-popup">Cancelar</button>
+            <button type="button" class="save-button" id="add-payment-plan">Adicionar</button>
+        </div>
+    </section>
+</div>
 
-            <div class="form-group">
-                <label>Acrescimo</label> <input type="text" name="acrescimo" value="{{ product.vr_acrescimo }}" required>
-            </div>
-            
-            <div class="form-group">
-                <label>Desconto</label> <input type="text" name="desconto" value="{{ product.vr_desconto }}" required>
-            </div>
-
-            <div class="form-group">
-                <label>Data de início</label> <input type="date" name="dt_inicio" value="{{ product.dt_inicio|date:'Y-m-d' }}" required>
-            </div>
-
-            <div class="form-group">
-                <label>Data prevista</label> <input type="date" name="dt_previsao" value="{{ product.dt_previsao|date:'Y-m-d' }}">
-            </div>
-
-            <div class="form-group">
-                <label>Ativo</label><input type="checkbox" name="ativo" {% if product.ativo %}checked{% endif %}> 
-            </div>
-
-            <!-- Botões de ação -->
-            <div class="action-buttons">
-                <button class="save-button" type="submit" name="action" value="save">Salvar</button>
-                <button class="cancel-button" type="reset" name="action" value="cancel">Cancelar edição</button>
-            </div>
-        </form>
-
-    </div>
+<div class="payment-popup-backdrop" id="installment-popup" hidden>
+    <section class="payment-popup installment-popup" role="dialog" aria-modal="true" aria-labelledby="installment-popup-title">
+        <button type="button" class="payment-popup-close" id="close-installment-popup" aria-label="Fechar">&times;</button>
+        <h3 id="installment-popup-title">Parcelas do plano</h3>
+        <p>Edite o valor e a data de vencimento de cada parcela.</p>
+        <div class="installment-total-summary" aria-live="polite">
+            Total atual das parcelas: <strong id="installment-total">R$ 0,00</strong>
+        </div>
+        <div class="installment-popup-toolbar">
+            <button type="button" class="save-button" id="add-installment">Adicionar parcela</button>
+        </div>
+        <div class="installment-table-scroll">
+            <table class="installment-table">
+                <thead><tr><th>Parcela</th><th>Valor (R$)</th><th>Vencimento</th><th>Opções</th></tr></thead>
+                <tbody id="installment-rows"></tbody>
+            </table>
+        </div>
+        <p class="payment-popup-error" id="installment-popup-error" role="alert" hidden></p>
+        <div class="action-buttons">
+            <button type="button" class="cancel-button" id="cancel-installment-edits">Cancelar</button>
+            <button type="button" class="save-button" id="save-installment-edits">Salvar parcelas</button>
+        </div>
+    </section>
+</div>
 {% endblock %}
