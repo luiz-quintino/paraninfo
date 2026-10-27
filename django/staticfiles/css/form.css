@@ -93,7 +93,7 @@ input, select, span{
 
 /* Estilo para campos obrigatórios */
 input:required, select:required, span:required, .aceite-termos:required {
-    border: 1px solid rgb(0, 4, 255); /* Borda vermelha para campos obrigatórios */
+    border: 1px solid red; /* Borda vermelha para campos obrigatórios */
     outline: none; /* Remove o contorno padrão */
 }
 

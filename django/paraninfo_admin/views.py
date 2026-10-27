@@ -5,7 +5,6 @@ from paraninfo_admin.models import tbComissao
 import uuid as uuid_generate # Certifique-se de que o módulo uuid está importado corretamente
 from django.urls import reverse
 from config.menus import menu_url, MENU_VOLTAR, MENU_CLIENTS_INCLUIR_COMISSAO
-from utils import save_log
 
 uuid = ''
 
@@ -48,11 +47,6 @@ def client_details(request, uuid=None):
             comissao.presidente = request.POST.get('presidente')
             comissao.cep = request.POST.get('cep')
             comissao.save()
-
-            log_id = save_log(request,
-                            description='tbComissao',
-                            evento_log_id=20  # log: Cria ou edita comissão
-                        )
 
             messages.success(request, "Registro salvo com sucesso!")
 

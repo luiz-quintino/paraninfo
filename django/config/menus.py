@@ -1,18 +1,6 @@
-# Menu principal
-"""
-   Cria as opçõse de menus que serão exibidas na barra de navegação do sistema.
-   Cada menu é representado por um dicionário contendo as seguintes chaves:
-    - name: Nome do menu que será exibido na barra de navegação.
-    - url: URL que será acessada ao clicar no menu.
-    - tip: Dica que será exibida ao passar o mouse sobre o menu.
-    - type: Tipo de menu, que pode ser 'form' ou 'url'. Se for 'form', o menu será exibido como um botão que envia um formulário. 
-            Se for 'url', o menu será exibido como um link que redireciona para uma URL.
-            Se for 'voltar', o menu será exibido como um botão que volta para a página anterior.
-            Se for 'js', o menu será exibido como um botão que executa uma função JavaScript definida na chave 'function'.
-    - function: Função JavaScript que será executada ao clicar no menu, caso o tipo seja 'js'.
-    - color: Cor do menu, que será exibida como fundo do menu. Se não for especificada, a cor padrão será utilizada.
 
-"""
+
+# Menu principal
 
 def menu_url(menu: dict, url: str) -> dict:
     menu['url']= url
@@ -32,8 +20,7 @@ MENU_VOLTAR                             = {'name': 'Voltar',
 
 MENU_USERS_INCLUIR_USUARIO              = {'name': 'Incluir usuário',             
                                            'url': '/users/user-record',
-                                           'tip': 'Acesse o formulário para inclusão de um novo usuário',
-                                           'color': "#fab5bc",}
+                                           'tip': 'Acesse o formulário para inclusão de um novo usuário'}
 
 MENU_USERS_GERAR_CONVITE                = {'name': 'Gerar novo convite',               
                                            'url': '/users/invited',
@@ -44,8 +31,7 @@ MENU_USERS_GERAR_CONVITE                = {'name': 'Gerar novo convite',
 
 MENU_USERS_CONVIDADOS                   = {'name': 'Convidados',               
                                            'url': '/users/invited',
-                                           'tip': 'Gerenciar convidados por link de convite e gerencia convites',
-                                           'color': "#fab5bc",}
+                                           'tip': 'Gerenciar convidados por link de convite e gerencia convites'}
 
 MENU_USERS_ACEITAR_CONVIDADOS           = {'name': 'Aceitar convidados',               
                                            'url': '/users/invited',
@@ -54,36 +40,16 @@ MENU_USERS_ACEITAR_CONVIDADOS           = {'name': 'Aceitar convidados',
 
 MENU_USERS_DEFINICAO_ACESSO             = {'name': 'Definição de acesso',         
                                            'url': '#',
-                                           'tip': 'Acesse o formulário para definir o acesso de um usuário',
-                                           'color': "#fab5bc",}
-
-MENU_PRODUTOS                           = {'name': 'Lista de Produtos',         
-                                           'url': '/products',
-                                           'tip': 'Faça gestão do produtos para o usuário',
-                                           'color': "#fab5bc",}
-
-MENU_PRODUTOS_INCLUIR                   = {'name': 'Incluir produto',         
-                                           'url': '/products/product-new/',
-                                           'tip': 'Cria novo produto para aquisição',
-                                           'color': "#fab5bc",}
-
-MENU_PRODUTOS_USER                      = {'name': 'Meus Produtos',         
-                                           'url': '#',
-                                           'tip': 'Faça gestão do produtos para o usuário'}
+                                           'tip': 'Acesse o formulário para definir o acesso de um usuário'}
 
 MENU_CLIENTS_INCLUIR_COMISSAO           = {'name': 'Incluir comissão',            
                                            'url': '/paraninfo-admin/client-details',
-                                           'tip': 'Acesse o formulário para inclusão de uma nova comissão',
-                                           'color': "#e6a3e1",}
+                                           'tip': 'Acesse o formulário para inclusão de uma nova comissão'}
 
 MENU_BALANCE_EXTRATO                    = {'name': 'Menu movimentações',                     
                                            'url': "/transaction",
                                            'tip': 'Acesse o menu de extratos para visualizar, importar e analisar movimentações financeiras',
                                            'color': '#b5e2fa',}
-
-MENU_BALANCE_MY                         = {'name': 'Meus pagamentos',                     
-                                           'url': "#",
-                                           'tip': 'Veja o histórico de pagamentos e movimentações financeiras do usuário logado'}
 
 MENU_BALANCE_BOLETO                     = {'name': 'Gerenciar boletos',
                                            'url': "boleto",                     
@@ -124,7 +90,7 @@ MENU_BALANCE_ENTRADA_MANUAL             = {'name': 'Entrada manual de movimenta�
                                            'url': "/transaction/entrada-manual",
                                            'tip': 'Acesse o formulário para entrada manual de movimentações financeiras'}
 
-MENU_BALANCE_CLASSIFICAR_MOVIMENTACAO      = {'name': 'Classificar movimentação',       
+MENU_BALANCE_ANALISAR_MOVIMENTACAO      = {'name': 'Classificar movimentação',       
                                            'url': "analise-movimentacao", 
                                            'type': 'js', 
                                            'function': 'openAnalisePage()',
@@ -148,13 +114,6 @@ MENU_BALANCE_ACEITAR_ENTRADAS_EXTRATO   = {'name': 'Aceitar entradas de extrato'
                                            'color': 'yellow',
                                            'function': 'submitImportacaoForm()',
                                            'tip': 'Aceitar as entradas de extrato bancário importadas para análise',}
-
-MENU_BALANCE_REJEITAR_MOVIMENTACAO   = {'name': 'Rejeitar todas as entradas de extrato', 
-                                           'url': "importacao",           
-                                           'type': 'js', 
-                                           'color': 'yellow',
-                                           'function': 'submitForm("formRejeitar")',
-                                           'tip': 'Rejeitar todas as entradas de extrato bancário importadas',}
 
 MENU_BALANCE_SALVAR_MOVIMENTACOES       = {'name': 'Salvar classificação',         
                                            'url': "analise-movimentacao", 
@@ -188,16 +147,16 @@ MENU_CONTABILIDADE_VER_EXTRATO          = {'name': 'Extrato de movimentações',
                                            'tip': 'Acesse o extrato para visualizar as movimentações financeiras'}
 
 MENU_CONTABILIDADE_FECHAR_BALANCO       = {'name': 'Fechar balanço mensal',
-                                           'url': "/balance/fechar-balanco", 
+                                           'url': "fechar-balanco", 
                                            'tip': 'Fechar o balanço contábil para o período selecionado',
                                            'color': 'yellow'}
 
 MENU_CONTABILIDADE_RESUMO_OPERACOES     = {'name': 'Resumo de operações',
-                                            'url': "/balance/balance-overview/",
+                                            'url': "resumo-operacoes",
                                             'tip': 'Acesse o resumo de operações para visualizar as movimentações financeiras resumidas'}
 
 MENU_CONTABILIDADE_LIVRO_CAIXA          = {'name': 'Livro caixa',
-                                           'url': "/balance/livro-caixa",
+                                           'url': "livro-caixa",
                                            'tip': 'Acesse o livro caixa para visualizar as movimentações financeiras registradas'}
 
 MENU_CONTABILIDADE_MENSALIDADDES        = {'name': 'Mensalidades',

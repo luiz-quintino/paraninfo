@@ -5,7 +5,6 @@ const menuButton = document.querySelector('.menu-button');
 // Variável para rastrear se o mouse está sobre o menu ou o botão
 let isMouseOverMenuOrButton = false;
 let menuTimeout = 900;
-let ampulheta = 0;
 
 // Alterna o menu ao clicar no botão
 menuButton.addEventListener('click', () => {
@@ -78,15 +77,8 @@ function confirmCloseMenu() {
 function showLoadingOverlay() {
     // Exibe a ampulheta
     document.getElementById('loading-overlay').style.display = 'block';
-    ampulheta = 1;
-    setTimeout(() => {
-        hideLoadingOverlay(); // Esconde a apulheta após o timeout
-    }, 50000); // Tempo para esconder a ampulheta
 }
 
 function hideLoadingOverlay() {
-    if (ampulheta){
-            document.getElementById('loading-overlay').style.display = 'none';
-            ampulheta = 0;
-        }
+    document.getElementById('loading-overlay').style.display = 'none';
 }

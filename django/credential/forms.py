@@ -3,7 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(
-        label="Email",
+        label="Usuário",
         widget=forms.TextInput(attrs={
             'class': 'login-form',
             'placeholder': 'Digite o seu código de usuário',

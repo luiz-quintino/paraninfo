@@ -20,21 +20,15 @@
             {% endif %}
         </div>
         
-        <form method="post" action="{% url 'balance:fechar_balanco' %}" id="formCloseBalance">
+        <form method="post" action="{% url 'fechar_balanco' %}" id="formCloseBalance">
             {% csrf_token %}
             <input type="hidden" id="close" name="close" value="close"> 
         </form>
         
-        <form method="post" action="{% url 'balance:fechar_balanco' %}" id="formConfirmCloseBalance">
+        <form method="post" action="{% url 'fechar_balanco' %}" id="formConfirmCloseBalance">
             {% csrf_token %}
             <input type="hidden" id="confirm" name="confirm" value="confirm"> 
         </form>
-        
-        <form method="post" action="{% url 'balance:fechar_balanco' %}" id="formSuccess">
-            {% csrf_token %}
-            <input type="hidden" id="confirm" name="success" value="confirm"> 
-        </form>
-
 
 
 

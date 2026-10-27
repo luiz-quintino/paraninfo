@@ -28,19 +28,9 @@
             <input type="hidden" id="review" name="review" value="revisao"> 
         </form>
 
-        <form method="post" action="{% url 'analise_movimentacao' %}" id="formRejeitar">
-            {% csrf_token %}
-            <input type="hidden" id="reject" name="reject" value="reject"> 
-        </form>
-
         <form method="post" action="{% url 'analise_movimentacao' %}" id="formFechamento">
             {% csrf_token %}
             <input type="hidden" id="close" name="close" value="fechamento"> 
-        </form>
-
-        <form method="post" action="{% url 'analise_movimentacao' %}" id="formConfirmarRejeicao">
-            {% csrf_token %}
-            <input type="hidden" id="confirm_reject" name="confirm_reject" value="confirm_reject"> 
         </form>
 
         <form method="post" action="{% url 'analise_movimentacao' %}" id="formConfirmarFechamento">
@@ -73,39 +63,30 @@
                     {% for extrato in extratos_list %}
                     <tr style="color: {{ extrato.cor }};" data-id="{{ extrato.id }}" id="row-{{ extrato.id }}">
                         
-                        <!-- Indice  -->
-                        <td data-label="Índice"> {{ extrato.indice }} </td>
-
-                        <!-- Data -->
-                        <td data-label="Data"> {{ extrato.data }} </td>
-
-                        <!-- Histórico -->
-                        <td data-label="Histórico" style="cursor: pointer;" class="openPopup" onclick="openPopup({{ extrato.id }})">{{ extrato.historico }}</td> 
+                        <td> {{ extrato.indice }} </td>
+                        <td> {{ extrato.data }} </td>
+                        <td style="cursor: pointer;" class="openPopup" onclick="openPopup({{ extrato.id }})">{{ extrato.historico }}</td> 
                         
-                        <!-- Crédito -->
-                        <td data-label="Crédito">
+                        <td>
                             <input style="color: {{ extrato.cor }};" type="text" name="credito_{{ extrato.id }}" value="{{ extrato.credito }}" readonly>
                         </td>
 
-                        <!-- Débito -->
-                        <td data-label="Débito">
+                        <td>
                             <input style="color: {{ extrato.cor }};" type="text" name="debito_{{ extrato.id }}" value="{{ extrato.debito }}" readonly>
                         </td>
 
-                        <!-- Tipo de Transação -->
-                        <td data-label="Tipo de Transação">
+                        <td>
                             <select style="color: {{ extrato.cor }};" name="transacao_tipo_{{ extrato.id }}" class="transacao-select" onchange="toggleAssociadoField({{ extrato.id }}, this)">
                                 <option value="">Selecione</option>
                                 {% for transacao in transacoes %}
-                                <option value="{{ transacao.id }}" {% if extrato.transacao_id == transacao.id %}selected{% endif %} id_key="{{ transacao.key_name }}">
-                                    {{ transacao.key_name }}
+                                <option value="{{ transacao.id }}" {% if extrato.transacao_id == transacao.id %}selected{% endif %} id_key="{{ transacao.key }}">
+                                    {{ transacao.key }}
                                 </option>
                                 {% endfor %}
                             </select>
                         </td>
 
-                        <!-- Código do Associado -->
-                        <td data-label="Código do Associado">
+                        <td>
                             <select style="{% if extrato.associado_id > 0 %}display: block;{% else %}display: none;{% endif %}"  style="color: {{ extrato.cor }};" name="associado_codigo_{{ extrato.id }}" id="associado-field-{{ extrato.id }}" class="associado-select" onchange="toggleAssociadoId({{ extrato.id }})" >
                                 <option value="">Selecione</option>
                                 {% for associado in associados %}
@@ -115,9 +96,7 @@
                                 {% endfor %}
                             </select>
                         </td>
-
-                        <!-- Comandos -->
-                        <td data-label="Comandos">
+                        <td>
                             <input type="hidden" name="extrato_id" value="{{ extrato.id }}">
                             
                             <!-- botões de ação pra linha: ignorar, duplicar  -->
@@ -181,7 +160,7 @@
             if (selectedValue === null || selectedValue === '') {
                 associadoField.style.display = "none"; // Oculta o campo se não houver valor selecionado
             } else {
-                if (selectedValue.toLowerCase().includes("recebimento")) {
+                if (selectedValue.toLowerCase().includes("mensalidade")) {
                     associadoField.style.display = "block";
                 } else {
                     associadoField.style.display = "none";

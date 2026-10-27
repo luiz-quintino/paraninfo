@@ -34,11 +34,6 @@
             </form>
         {% endif %}
 
-        {% if count_new_users > 0 %}
-        <div>
-            Existem {{ count_new_users }} novos associados não ativos.
-        </div>
-        {% endif %}
 
         <!-- Tabela -->
         <table class="table">
@@ -48,19 +43,15 @@
                     <th>Nome do Responsável</th>
                     <th>Aluno</th>
                     <th>Nome de Guerra</th>
-                    <th>Situação</th>
-
                 </tr>
             </thead>
             <tbody>
                 {% for associado in associados %}
                     <tr onclick="window.location.href='{% url 'user_record' uuid=associado.uuid %}';" style="cursor: pointer;">
-                        <td data-label="Código do Associado">{{ associado.codigo_associado }}</td>
-                        <td data-label="Nome do Responsável">{{ associado.nome_responsavel }}</td>
-                        <td data-label="Aluno">{{ associado.aluno }}</td>
-                        <td data-label="Nome de Guerra">{{ associado.nome_de_guerra }}</td>
-                        <td data-label="Situação">{{ associado.situacao }}</td>
-
+                        <td>{{ associado.codigo_associado }}</td>
+                        <td>{{ associado.nome_responsavel }}</td>
+                        <td>{{ associado.aluno }}</td>
+                        <td>{{ associado.nome_de_guerra }}</td>
                     </tr>
                 {% empty %}
                     <tr>

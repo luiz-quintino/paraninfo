@@ -41,16 +41,13 @@ class tbAssociados(models.Model):
     cidade = models.CharField(max_length=50, null=True, blank=True)
     cep = models.CharField(max_length=10, null=True, blank=True)
     tipo = models.CharField(max_length=19, null=True, blank=True)
-    situacao = models.CharField(max_length=10, null=True, blank=True)
+    situacao = models.CharField(max_length=7, null=True, blank=True)
     codigo_pagamento = models.CharField(max_length=5, null=True, blank=True)
     codigo_associado = models.CharField(max_length=6, null=True, blank=True)
     certificado = models.CharField(max_length=10, null=True, blank=True)
     kit = models.CharField(max_length=10, null=True, blank=True)
     inscricao = models.CharField(max_length=8, null=True, blank=True)
-    foto_identidade = models.CharField(max_length=100, null=True, blank=True)
-    foto_endereco = models.CharField(max_length=100, null=True, blank=True)
     comissao = models.IntegerField(null=False, blank=False)  # Referência a outra tabela (comissão)
-
 
     def __str__(self):
         return self.nome_responsavel or "Sem Nome"
@@ -109,7 +106,7 @@ class tbAssociadosCredentialsManager(models.Manager):
     def get_queryset(self):
         # Retorna apenas os campos especificados
         return super().get_queryset().only(
-            'nome_responsavel', 'aluno', 'codigo_associado', 'email', 'uuid'
+            'nome_responsavel', 'aluno', 'codigo_associado', 'email'
         )
 
 class tbAssociadosCredentials(tbAssociados):

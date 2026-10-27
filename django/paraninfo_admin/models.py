@@ -36,13 +36,6 @@ class tbComissao(models.Model):
     codigo_banco = models.CharField(max_length=45, null=True, blank=True)  # Campo código do banco
     convite_uuid = models.CharField(max_length=36, null=True, blank=True)  # Campo convite UUID
     convite_log_id = models.IntegerField(null=True, blank=True)  # Campo convite log ID
-    chave_pix = models.CharField(max_length=45, null=True, blank=True)
-    nome_curto = models.CharField(max_length=45, null=True, blank=True)
-    cidade = models.CharField(max_length=45, null=True, blank=True)
-    inscricao = models.CharField(max_length=45, null=True, blank=True)
-    mes = models.IntegerField()
-    ano = models.IntegerField()
-    sequence = models.IntegerField()
 
     # Relacionamento com tbTipo_identificacao
     tipo_identificacao = models.ForeignKey(

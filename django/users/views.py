@@ -1,17 +1,10 @@
-from datetime import date, datetime
-from django.conf import settings
-from pathlib import Path
 from django.core.paginator import Paginator
-from django.http import FileResponse, Http404
 from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.views import LoginView
-from django.core.mail import send_mail
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
 import uuid as uuid_generate # Certifique-se de que o módulo uuid está importado corretamente
 from django.utils.timezone import localtime, get_current_timezone, timezone, now
 from datetime import timedelta, datetime
@@ -19,20 +12,14 @@ from django.urls import reverse
 from users.models import tbAssociados, tbAssociadosListView, tbAssociadosCredentials, tbConvidado, lstTipoAssociado, lstSituacao
 from home.models import tbLog
 from paraninfo_admin.models import tbComissao
-from utils import convert_date, save_log, is_admin, is_app_admin, user_role
+from utils import convert_date, save_log
 from django.core.files.storage import FileSystemStorage
-from django.core.files.storage import default_storage
-from django.db import IntegrityError, transaction as db_transaction
-from django.db.models import Q
 from config.menus import menu_url,  MENU_USERS_INCLUIR_USUARIO, \
                                     MENU_USERS_DEFINICAO_ACESSO, \
                                     MENU_USERS_CONVIDADOS, \
                                     MENU_USERS_GERAR_CONVITE, \
                                     MENU_USERS_ACEITAR_CONVIDADOS, \
-                                    MENU_VOLTAR, \
-                                    MENU_PRODUTOS_USER, \
-                                    MENU_PRODUTOS, \
-                                    MENU_BALANCE_MY \
+                                    MENU_VOLTAR
 
 from config.constants import MESSAGE_TYPE_INFO, \
                              MESSAGE_TYPE_ERROR, \
@@ -41,496 +28,127 @@ from config.constants import MESSAGE_TYPE_INFO, \
                              MESSAGE_TYPE_CONFIRM
 
 
-# # Função para verificar se o usuário pertence ao grupo 'admin'
-# def is_app_admin(request) -> bool:
-#     uuid = request.session['user_data']['user_uuid']
-    
-#     user = User.objects.filter(last_name=uuid).first()
 
-#     is_admin = user.groups.filter(name='sys-admin').exists() or \
-#             user.groups.filter(name='app-admin').exists()
-
-#     if is_admin:
-#         user_ = tbAssociados.objects.filter(uuid=uuid).first()
-#         if user_.situacao.lower() == 'ativo':
-#             return True
-    
-#     return False
-
-# def is_admin(request) -> bool:
-#     uuid = request.session['user_data']['user_uuid']
-
-#     user = User.objects.filter(last_name=uuid).first()
-
-#     is_admin = user.groups.filter(name='sys-admin').exists() or \
-#             user.groups.filter(name='app-admin').exists() or \
-#             user.groups.filter(name='master').exists() or \
-#             user.groups.filter(name='staff').exists()
-
-#     if is_admin:
-#         user_ = tbAssociados.objects.filter(uuid=uuid).first()
-#         if user_.situacao.lower() == 'ativo':
-#             return True
-    
-#     return False
-
-# def user_role(request) -> str:
-#     uuid = request.session['user_data']['user_uuid']
-#     if is_admin(request):
-#         user_ = tbAssociados.objects.filter(uuid=uuid).first()
-#         return user_.tipo.lower()
-
-#     return ''
-
-
-def _digits_only(value: str) -> str:
-    return ''.join(character for character in value if character.isdigit())
-
-
-def _email_already_in_use(email: str, exclude_uuid=None) -> bool:
-    """Checa email em cadastros e contas de login, ignorando o próprio registro."""
-    email = email.strip().lower()
-    if not email:
-        return False
-
-    associates = tbAssociados.objects.filter(email__iexact=email)
-    guests = tbConvidado.objects.filter(email__iexact=email)
-    if exclude_uuid:
-        associates = associates.exclude(uuid=exclude_uuid)
-        guests = guests.exclude(uuid=exclude_uuid)
-
-    auth_users = User.objects.filter(
-        Q(username__iexact=email) | Q(email__iexact=email)
-    )
-    if exclude_uuid:
-        auth_users = auth_users.exclude(last_name=str(exclude_uuid))
-
-    return associates.exists() or guests.exists() or auth_users.exists()
-
-
-def _normalize_invitation_date(value: str) -> str:
-    """Aceita a data com ou sem barras e retorna dd/mm/aaaa quando válida."""
-    digits = _digits_only(value)
-    if len(digits) == 8:
-        value = f'{digits[:2]}/{digits[2:4]}/{digits[4:]}'
-    try:
-        return datetime.strptime(value.strip(), '%d/%m/%Y').strftime('%d/%m/%Y')
-    except ValueError:
-        return ''
-
-
-def _normalize_invitation_cpf(value: str) -> str:
-    digits = _digits_only(value)
-    if len(digits) == 11:
-        return f'{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}'
-    return value.strip()
-
-
-def _normalize_invitation_phone(value: str) -> str:
-    digits = _digits_only(value)
-    if len(digits) == 11:
-        return f'({digits[:2]}) {digits[2:7]}-{digits[7:]}'
-    if len(digits) == 10:
-        return f'({digits[:2]}) {digits[2:6]}-{digits[6:]}'
-    return value.strip()
-
-
-def _normalize_invitation_cep(value: str) -> str:
-    digits = _digits_only(value)
-    if len(digits) == 8:
-        return f'{digits[:5]}-{digits[5:]}'
-    return value.strip()
-
-
-def _invitation_date_for_form(value):
-    if not value:
-        return ''
-    if hasattr(value, 'strftime'):
-        return value.strftime('%d/%m/%Y')
-    value = str(value).strip()
-    for date_format in ('%d/%m/%Y', '%Y-%m-%d', '%Y%m%d'):
-        try:
-            return datetime.strptime(value, date_format).strftime('%d/%m/%Y')
-        except ValueError:
-            continue
-    return value
-
-
-def _render_invitation(request, *, route_uuid, invitation_uuid=None, record=None,
-                       form_uuid=None, form_data=None, message=None, expired=False):
-    initial_data = {}
-    if record:
-        initial_data = {
-            field: getattr(record, field, '') or ''
-            for field in (
-                'nome_responsavel', 'nascimento_responsavel', 'email', 'cpf',
-                'telefone', 'aluno', 'nome_de_guerra', 'nascimento_aluno',
-                'sexo', 'matricula', 'endereco', 'numero', 'complemento',
-                'bairro', 'cidade', 'cep',
-            )
-        }
-        initial_data['nascimento_responsavel'] = _invitation_date_for_form(
-            initial_data['nascimento_responsavel']
-        )
-        initial_data['nascimento_aluno'] = _invitation_date_for_form(
-            initial_data['nascimento_aluno']
-        )
-    if form_data:
-        initial_data.update(form_data)
-
-    if message is None:
-        message = {
-            'type': 'info',
-            'text': 'Preencha a Ficha de Inscrição abaixo e submeta os dados para registro.',
-            'title': 'Ficha de Inscrição',
-            'function': '',
-        }
-
-    context = {
-        'uuid': form_uuid or (str(record.uuid) if record else ''),
-        'route_uuid': route_uuid,
-        'invitation_uuid': invitation_uuid,
-        'message': message,
-        'associado': initial_data,
-        'editing': record is not None,
-        'expired': expired,
-        'file1_name': record.foto_identidade if record else '',
-        'file2_name': record.foto_endereco if record else '',
-    }
-    return render(request, 'users/invitation.html', context)
-
+# Função para verificar se o usuário pertence ao grupo 'admin'
+def is_sys_admin(user):
+    is_admin = user.groups.filter(name='sys-admin').exists() or \
+                user.groups.filter(name='app-admin').exists() or \
+                user.groups.filter(name='master').exists()
+    return is_admin
 
 def invitation_view(request, uuid):
-    """Cria um cadastro via convite ou permite editar o cadastro pendente pelo UUID."""
-    record = tbConvidado.objects.filter(uuid=uuid).first()
-    editing = record is not None
-    convite_field = None
-
-    if editing:
-        if record.situacao_id != 1:
-            return _render_invitation(
-                request,
-                route_uuid=uuid,
-                record=record,
-                message={
-                    'type': 'error', 'title': 'Convite expirado',
-                    'text': 'Este convite expirou ou não permite mais alterações.',
-                },
-                expired=True,
-            )
-        invitation_uuid = str(record.uuid)
+    '''
+        View para aceitar convite e preencher ficha de cadastro
+    '''
+    message = {'type': 'info', 'text': '', 'title': 'Ficha de Inscrição', 'function': ''}
+    
+    # Verifica se o convite existe e é válido
+    convite_field = tbComissao.objects.filter(convite_uuid=uuid).first()
+    
+    if not convite_field:
+        # Convite não encontrado
+        messages.error(request, "Convite inválido! Solicite um novo convite.")
+        return redirect('login')
+    
     else:
-        convite_field = tbComissao.objects.filter(convite_uuid=uuid).first()
-        convite_log_field = (
-            tbLog.objects.filter(id=convite_field.convite_log_id).first()
-            if convite_field else None
+        # Convite encontrado
+        convite_log_id = convite_field.convite_log_id
+        convite_log_field = tbLog.objects.filter(id=convite_log_id).first()
+        
+        if convite_log_field:
+            # verifica a validade do convite
+            convite_data = convite_log_field.data
+            validate_expired = convite_data + timedelta(days=2) < localtime(now())
+            
+            if validate_expired:
+                # convite expirado
+                messages.error(request, "Convite expirado! Solicite um novo convite.")
+                return redirect('login')
+        else:
+            # convite inválido
+            messages.error(request, "Convite inválido! Solicite um novo convite.")
+            return redirect('login')
+
+    # Registra solicitação do convidado
+    if request.method == 'POST':
+        # recupera uuid da sessão
+        new_uuid = request.session.get('new_uuid')
+        session_uuid = request.POST.get('uuid')
+
+        if not new_uuid or session_uuid != new_uuid:
+            # sessão inválida ou expirada
+            messages.error(request, "Sessão expirada!")
+            return redirect('login')
+        
+        # verifica se o cpf do convidado já existe em tbConvidados com status 'Ativo'
+        existing_convidado = tbConvidado.objects.filter(cpf=request.POST.get('cpf'), situacao__situacao='novo').first()
+        if not existing_convidado:
+            messages.error(request, "Usuário já cadastrado! Entre em contato com a comissão.")
+            return redirect('login')
+
+        file_rg = request.FILES.get('file1')
+        file_endereco = request.FILES.get('file2')
+        nome_de_guerra = request.POST.get('nome_de_guerra').strip().title()
+
+        fs = FileSystemStorage()
+        if file_rg:
+            filename1 = fs.save(f'{new_uuid}_rg.jpg', file_rg)   # salva o arquivo
+        else:
+            filename1 = ''      # sem arquivo
+
+        if file_endereco:
+            filename2 = fs.save(f'{new_uuid}_endereco.jpg', file_endereco)
+        else:
+            filename2 = ''
+        
+        log_id = save_log(request, 'Ficha de Cadastro', 13) # 13=Registro de convite
+
+        # salva os dados do formulário
+        tbConvidado.objects.create(
+            data=convert_date(f'{datetime.now().date():%d/%m/%Y}'),
+            uuid = new_uuid,
+            comissao=convite_field.id,
+            email=request.POST.get('email').strip().lower(),
+            nome_responsavel=request.POST.get('nome_responsavel').strip().title(),
+            nascimento_responsavel=convert_date(request.POST.get('nascimento_responsavel')),
+            cpf=request.POST.get('cpf'),
+            telefone=request.POST.get('telefone'),
+            aluno=request.POST.get('aluno').strip().title(),
+            nome_de_guerra=nome_de_guerra,
+            sexo=request.POST.get('sexo'),
+            nascimento_aluno=convert_date(request.POST.get('nascimento_aluno')),
+            matricula=request.POST.get('matricula'),
+            endereco=request.POST.get('endereco').title(),
+            numero=request.POST.get('numero'),
+            complemento=request.POST.get('complemento'),
+            bairro=request.POST.get('bairro').strip().title(),
+            cidade=request.POST.get('cidade').strip().title(),
+            cep=request.POST.get('cep'),
+            foto_identidade=filename1,
+            foto_endereco=filename2,
+            situacao_id=1,  # Define o status como 'novo'
+            log_id = log_id
         )
-        if not convite_field or not convite_log_field:
-            return _render_invitation(
-                request, route_uuid=uuid,
-                message={
-                    'type': 'error', 'title': 'Convite inválido',
-                    'text': 'Convite inválido! Solicite um novo convite.',
-                },
-                expired=True,
-            )
-        if convite_log_field.data + timedelta(days=2) < localtime(now()):
-            return _render_invitation(
-                request, route_uuid=uuid,
-                message={
-                    'type': 'error', 'title': 'Convite expirado',
-                    'text': 'Convite expirado! Solicite um novo convite.',
-                },
-                expired=True,
-            )
-        invitation_uuid = uuid
 
-    if request.method == 'GET':
-        if editing:
-            return _render_invitation(
-                request, route_uuid=uuid, record=record,
-                invitation_uuid=invitation_uuid,
-            )
-
-        form_uuid = str(uuid_generate.uuid4())
-        request.session['new_uuid'] = form_uuid
-        return _render_invitation(
-            request, route_uuid=uuid, invitation_uuid=invitation_uuid,
-            form_uuid=form_uuid,
-            message={
-                'type': 'info', 'title': 'Ficha de Inscrição',
-                'text': f'Você recebeu um convite para participar da {convite_field.nome_comissao}.',
-            },
-        )
-
-    # O link de edição é um token próprio: o UUID precisa corresponder ao registro.
-    if editing:
-        if str(request.POST.get('uuid', '')) != str(record.uuid) or record.situacao_id != 1:
-            return _render_invitation(
-                request, route_uuid=uuid, record=record,
-                message={
-                    'type': 'error', 'title': 'Convite expirado',
-                    'text': 'Este convite expirou ou não permite mais alterações.',
-                },
-                expired=True,
-            )
-        record_uuid = str(record.uuid)
+        messages.success(request, 'Ficha de Inscrição enviada com sucesso!')
+        return redirect('login')
+    
     else:
-        record_uuid = request.session.get('new_uuid')
-        if not record_uuid or request.POST.get('uuid') != record_uuid:
-            return _render_invitation(
-                request, route_uuid=uuid, invitation_uuid=invitation_uuid,
-                message={
-                    'type': 'error', 'title': 'Sessão expirada',
-                    'text': 'Sessão expirada. Abra novamente o link do convite.',
-                },
-                expired=True,
-            )
+        # convite válido, gera uuid de sessão
+        new_uuid = str(uuid_generate.uuid4())
 
-    cpf = _normalize_invitation_cpf(request.POST.get('cpf', ''))
-    nascimento_responsavel = _normalize_invitation_date(
-        request.POST.get('nascimento_responsavel', '')
-    )
-    nascimento_aluno = _normalize_invitation_date(
-        request.POST.get('nascimento_aluno', '')
-    )
-    telefone = _normalize_invitation_phone(request.POST.get('telefone', ''))
-    cep = _normalize_invitation_cep(request.POST.get('cep', ''))
-    file_rg = request.FILES.get('file1')
-    file_endereco = request.FILES.get('file2')
+        # armazena o novo uuid na sessão
+        request.session['new_uuid'] = new_uuid
 
-    form_data = {
-        field: request.POST.get(field, '').strip()
-        for field in (
-            'nome_responsavel', 'email', 'aluno', 'nome_de_guerra', 'sexo',
-            'matricula', 'endereco', 'numero', 'complemento', 'bairro', 'cidade',
-        )
-    }
-    form_data.update({
-        'cpf': cpf,
-        'telefone': telefone,
-        'cep': cep,
-        'nascimento_responsavel': nascimento_responsavel,
-        'nascimento_aluno': nascimento_aluno,
-    })
+        message['text'] = f"Você recebeu um convite para particiar da {convite_field.nome_comissao}"
+        context = {
+            'uuid': new_uuid,
+            'message': message}
 
-    errors = []
-    required_fields = (
-        'nome_responsavel', 'email', 'aluno', 'nome_de_guerra', 'sexo',
-        'matricula', 'endereco', 'numero', 'bairro', 'cidade',
-    )
-    if any(not form_data[field] for field in required_fields):
-        errors.append('Preencha todos os campos obrigatórios.')
-    try:
-        validate_email(form_data['email'])
-    except ValidationError:
-        errors.append('Informe um endereço de email válido.')
-    if _email_already_in_use(form_data['email'], exclude_uuid=record_uuid):
-        errors.append(
-            'Este email já está cadastrado e é utilizado para login. '
-            'Informe outro endereço de email.'
-        )
-    if not nascimento_responsavel or not nascimento_aluno:
-        errors.append('Informe datas válidas no formato dd/mm/aaaa.')
-    if len(_digits_only(cpf)) != 11:
-        errors.append('Informe um CPF com 11 números.')
-    if len(_digits_only(telefone)) not in (10, 11):
-        errors.append('Informe um telefone com DDD e 8 ou 9 números.')
-    if len(_digits_only(cep)) != 8:
-        errors.append('Informe um CEP com 8 números.')
-    if tbConvidado.objects.filter(
-        cpf=cpf,
-        situacao_id=1,
-    ).exclude(uuid=record_uuid).exists():
-        errors.append('Já existe uma ficha pendente para este CPF.')
-    if not editing and (not file_rg or not file_endereco):
-        errors.append('Anexe o documento de identidade e o comprovante de residência.')
-    for uploaded_file in (file_rg, file_endereco):
-        if uploaded_file and not uploaded_file.name.lower().endswith('.jpg'):
-            errors.append('Os documentos anexados devem estar no formato JPG.')
-
-    if errors:
-        return _render_invitation(
-            request, route_uuid=uuid, invitation_uuid=invitation_uuid,
-            record=record if editing else None,
-            form_uuid=record_uuid,
-            form_data=form_data,
-            message={
-                'type': 'error', 'title': 'Verifique os dados',
-                'text': ' '.join(errors),
-            },
-        )
-
-    fs = FileSystemStorage()
-    if not editing:
-        record = tbConvidado(uuid=record_uuid)
-    record.data = convert_date(f'{datetime.now().date():%d/%m/%Y}')
-    record.comissao = record.comissao if editing else convite_field.id
-    record.email = form_data['email'].lower()
-    record.nome_responsavel = form_data['nome_responsavel'].title()
-    record.nascimento_responsavel = convert_date(nascimento_responsavel)
-    record.cpf = cpf
-    record.telefone = telefone
-    record.aluno = form_data['aluno'].title()
-    record.nome_de_guerra = form_data['nome_de_guerra'].title()
-    record.sexo = form_data['sexo']
-    record.nascimento_aluno = convert_date(nascimento_aluno)
-    record.matricula = form_data['matricula']
-    record.endereco = form_data['endereco'].title()
-    record.numero = form_data['numero']
-    record.complemento = form_data['complemento']
-    record.bairro = form_data['bairro'].title()
-    record.cidade = form_data['cidade'].title()
-    record.cep = cep
-    record.situacao_id = 1
-    if file_rg:
-        record.foto_identidade = fs.save(f'{record_uuid}_rg.jpg', file_rg)
-    if file_endereco:
-        record.foto_endereco = fs.save(f'{record_uuid}_endereco.jpg', file_endereco)
-    record.log_id = save_log(request, 'Ficha de Cadastro', 13)
-    record.save()
-
-    edit_url = request.build_absolute_uri(
-        reverse('invitation', kwargs={'uuid': record.uuid})
-    )
-    success_message = (
-        'Sua ficha de inscrição foi enviada com sucesso. '
-        'Para modificar e reenviar os dados enquanto estiverem pendentes, use o link enviado para '
-        f'{record.email}.'
-    )
-    email_error = False
-    try:
-        send_mail(
-            subject='Ficha de inscrição enviada com sucesso',
-            message=(
-                f'{success_message}\n\n'
-                f'Link para edição: {edit_url}'
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[record.email],
-            fail_silently=False,
-        )
-    except Exception:
-        email_error = True
-
-    if email_error:
-        success_message += (
-            ' Não foi possível enviar o email de confirmação. '
-            'Verifique o endereço cadastrado ou contate a comissão.'
-        )
-
-    return _render_invitation(
-        request,
-        route_uuid=record.uuid,
-        invitation_uuid=str(record.uuid),
-        record=record,
-        message={
-            'type': 'success' if not email_error else 'warning',
-            'title': 'Ficha enviada',
-            'text': success_message,
-        },
-    )
-
-
-def pdf_viewer(request, uuid, document_key):
-    """Serve um PDF autorizado para o convite, sem expor o caminho local."""
-    invited_record = tbConvidado.objects.filter(uuid=uuid).first()
-    if invited_record:
-        if invited_record.situacao_id != 1:
-            raise Http404('Convite expirado.')
-        comissao = get_object_or_404(tbComissao, id=invited_record.comissao)
-    else:
-        comissao = get_object_or_404(tbComissao, convite_uuid=uuid)
-        convite_log = get_object_or_404(tbLog, id=comissao.convite_log_id)
-        if convite_log.data + timedelta(days=2) < localtime(now()):
-            raise Http404('Convite expirado.')
-
-    # A URL recebe uma chave lógica, nunca um caminho ou nome de arquivo livre.
-    # Para disponibilizar outro documento, inclua-o nesta lista permitida.
-    documents = {
-        'statute': (
-            Path(str(comissao.id)) / 'ESTATUTO COMISSAO DE FORMATURA.pdf',
-            'Regimento Interno.pdf',
-        ),
-        'certificate': (
-            Path('Declaracao de Praticas de Certificacao da Autoridade Certificadora.pdf'),
-            'Declaracao de Praticas de Certificacao.pdf',
-        ),
-    }
-    document = documents.get(document_key)
-    if document is None:
-        raise Http404('Documento não encontrado.')
-
-    relative_path, display_name = document
-    resources_root = Path(settings.RESOURCES_ROOT).resolve()
-    document_path = (resources_root / relative_path).resolve()
-
-    try:
-        document_path.relative_to(resources_root)
-    except ValueError:
-        raise Http404('Documento não encontrado.')
-
-    if document_path.suffix.lower() != '.pdf' or not document_path.is_file():
-        raise Http404('Documento não encontrado.')
-
-    return FileResponse(
-        document_path.open('rb'),
-        content_type='application/pdf',
-        filename=display_name,
-    )
-
-
-def user_document_view(request, uuid, document_key):
-    """Exibe um anexo JPG de convidado/associado após validar o acesso."""
-    associated = tbAssociados.objects.filter(uuid=uuid).first()
-    guest = None if associated else tbConvidado.objects.filter(uuid=uuid).first()
-    record = associated or guest
-    if not record:
-        raise Http404('Documento não encontrado.')
-
-    is_owner = bool(
-        request.user.is_authenticated
-        and associated
-        and str(associated.uuid) == str(request.user.last_name)
-    )
-    pending_guest_link = bool(guest and guest.situacao_id == 1)
-    can_review_guest = (
-        request.user.is_authenticated
-        and ((is_admin(request) and user_role(request) in ['presidente', 'vice-presidente', 'secretario'])
-             or is_app_admin(request))
-    )
-    if not is_owner and not can_review_guest and not pending_guest_link:
-        raise Http404('Documento não encontrado.')
-    if guest and guest.situacao_id != 1 and not can_review_guest:
-        raise Http404('Documento não encontrado.')
-    if request.user.is_authenticated:
-        if record.comissao != request.comissao and not (
-            getattr(request, 'is_sys_admin', False) or getattr(request, 'is_master', False)
-        ):
-            raise Http404('Documento não encontrado.')
-
-    document_field = {
-        'identity': 'foto_identidade',
-        'address': 'foto_endereco',
-    }.get(document_key)
-    if not document_field:
-        raise Http404('Documento não encontrado.')
-
-    filename = getattr(record, document_field, '')
-    if not filename or Path(filename).name != filename or Path(filename).suffix.lower() != '.jpg':
-        raise Http404('Documento não encontrado.')
-    if not default_storage.exists(filename):
-        raise Http404('Documento não encontrado.')
-
-    return FileResponse(
-        default_storage.open(filename, 'rb'),
-        content_type='image/jpeg',
-        filename=Path(filename).name,
-        as_attachment=False,
-    )
+        return render(request, 'users/invitation.html', context)
                 
 
-@login_required()
+@user_passes_test(is_sys_admin)
 def invited_view(request):
     '''
         View para gestão de convidados novos e geração de convites
@@ -551,22 +169,11 @@ def invited_view(request):
         
         elif request.POST.get('refused', ''):
             # Convidado foi recusado
-            can_review_guest = (
-                (is_admin(request) and user_role(request) in ['presidente', 'vice-presidente', 'secretario'])
-                or is_app_admin(request)
-            )
-            if not can_review_guest:
-                messages.error(request, 'Você não tem permissão para rejeitar convidados.')
-                return redirect('invited')
             convidado_uuid = request.POST.get('refused', '')
-            convidado_field = tbConvidado.objects.filter(
-                uuid=convidado_uuid,
-                comissao=request.comissao,
-                situacao_id=1,
-            ).first()
+            convidado_field = tbConvidado.objects.filter(uuid=convidado_uuid, comissao=request.comissao).first()
             if convidado_field:
-                convidado_field.situacao_id = 3  # rejeitado/cancelado
-                convidado_field.save(update_fields=['situacao'])
+                convidado_field.situacao_id = 3 # cancelado
+                convidado_field.save()
                 message['text'] = f'Convidado {convidado_field.nome_responsavel} recusado com sucesso!'
                 message['type'] = MESSAGE_TYPE_SUCCESS
             else:
@@ -625,10 +232,15 @@ def user_list_view(request):
     user_records = []  # Inicializa a lista de registros
     show_search = False  # Inicializa a opção de busca como visível
 
-    if is_admin(request):
-        # Usuários com acesso admin verão todos os registros
-        user_records = User.objects.all()  # Certifique-se de importar o modelo User
-        show_search = True  # Oculta a opção de busca
+    if request.user.is_authenticated:
+        is_admin = request.user.groups.filter(name="app-admin").exists() \
+                  or request.user.groups.filter(name="master").exists() \
+                  or request.user.groups.filter(name="sys-admin").exists() 
+            
+        if is_admin:
+            # Usuários com acesso admin verão todos os registros
+            user_records = User.objects.all()  # Certifique-se de importar o modelo User
+            show_search = True  # Oculta a opção de busca
 
     return render(request, 'user-list.html', {'user_records': user_records, 'show_search': show_search})
 
@@ -637,11 +249,8 @@ def user_list(request):
     user_groups = request.user.groups.values_list('name', flat=True) if request.user.is_authenticated else []
     menu_options = [MENU_VOLTAR]
 
-    count_new_users = tbAssociados.objects.filter(situacao='novo').count
-
     search_query = request.GET.get('search', '')  # Obtém o texto do filtro
     associados = tbAssociadosListView.objects.only(
-        'uuid',
         'codigo_associado', 
         'nome_responsavel', 
         'aluno', 
@@ -650,25 +259,33 @@ def user_list(request):
 
     show_search = False  # Oculta a opção de busca
 
-    if not is_admin(request):
-        # Usuário com acesso "user" verá apenas o próprio registro
-        associados = associados.filter(codigo_associado=request.user.username)
-    else:
-        # Usuários com acesso admin verão todos os registros com a mesma comissão
-        associados = associados.filter(comissao=request.comissao).order_by('id') 
+    if request.user.is_authenticated:
+        is_admin = request.user.groups.filter(name="app-admin").exists() \
+                  | request.user.groups.filter(name="master").exists() \
+                  | request.user.groups.filter(name="sys-admin").exists()
 
-        if search_query:
-            # Filtrar os registros com base no texto de busca
-            associados = \
-                associados.filter(nome_responsavel__icontains=search_query) \
-                | associados.filter(aluno__icontains=search_query) \
-                | associados.filter(nome_de_guerra__icontains=search_query)
-        show_search = True  # Exibe a opção de busca
+        if not is_admin:
+            # Usuário com acesso "user" verá apenas o próprio registro
+            associados = associados.filter(codigo_associado=request.user.username)
+        else:
+            # Usuários com acesso admin verão todos os registros com a mesma comissão
+            associados = associados.filter(comissao=request.comissao).order_by('id') 
 
-        # Cria side menu apenas para os perfis selecionados
-        if user_role(request) in ['presidente', 'vice-presidente', 'secretario'] or is_app_admin(request):
+            if search_query:
+                # Filtrar os registros com base no texto de busca
+                associados = \
+                    associados.filter(nome_responsavel__icontains=search_query) \
+                  | associados.filter(aluno__icontains=search_query) \
+                  | associados.filter(nome_de_guerra__icontains=search_query)
+            show_search = True  # Exibe a opção de busca
+
+        # Cria side menu
+        if 'app-admin' in user_groups or 'master' in user_groups or 'sys-admin' in user_groups:
             menu_options.append(MENU_USERS_INCLUIR_USUARIO) 
             menu_options.append(MENU_USERS_CONVIDADOS)
+
+    else:
+        associados = tbAssociadosListView.objects.none()  # Retorna uma lista vazia para usuários não autenticados
 
     # Paginação: 10 registros por página
     paginator = Paginator(associados, 10)
@@ -679,49 +296,62 @@ def user_list(request):
         'associados': associados_page,
         'show_search': show_search,
         'menu_options': menu_options,
-        'count_new_users': count_new_users
     }
 
     return render(request, 'users/user_list.html', context)  # Renderiza o template com o contexto})
 
-
 @login_required()
-def user_products(request, uuid):
-    message = {'type': 'info', 'text': '', 'title': 'Produtos do Usuário', 'function': ''}
+def user_record(request, uuid=None):
+    message = {'type': 'info', 'text': '', 'title': 'Registro de usuário', 'function': ''}
     user_groups = request.user.groups.values_list('name', flat=True) if request.user.is_authenticated else []
     menu_options = [MENU_VOLTAR]
+    convidado = False
+    allow_edition = False  
 
-    # Busca o registro pelo UUID
-    associado = tbAssociados.objects.filter(uuid=uuid).first()  # Busca pelo UUID
+    if uuid:
+        # Busca o registro pelo UUID
+        associado = tbAssociados.objects.filter(uuid=uuid).first()  # Busca pelo UUID
+    else:
+        # Cria um registro vazio para adição
+        message['title'] = 'Registro de novo usuário'
+        associado = tbAssociados()
 
     if not associado:
-        messages.error(request, "Registro não encontrado.")
-        return redirect('user_list')
-
-    # Cria side menu
-    if uuid and ('app-admin' in user_groups or 'master' in user_groups or 'sys-admin' in user_groups):
-        menu_options.append(menu_url(MENU_USERS_DEFINICAO_ACESSO, url=reverse('user_credential', kwargs={'uuid': associado.uuid})))
-
-    context = {
-        'associado': associado,
-        'menu_options': menu_options,
-        'message': message,
-    }
-
-    return render(request, 'users/user_products.html', context)
-
-def store_user_fields(associado, convidado, request, uuid):
-    # Garantir que os campos sejam strings vazias se estiverem None
+        # Verifica se tem convite de novo usuário para analisar
+        associado = tbConvidado.objects.filter(uuid=uuid, situacao__situacao='novo').first()
+        if associado:
+            convidado = True
+            message['title'] = 'Registro de novo convidado'
+            
+        else:
+            # TODO: Mensagem de erro
+            messages.error(request, "Registro não encontrado.")
+            return redirect('user_list')
+    print('convidado', convidado, associado)
+    if request.user.is_authenticated:
+        is_admin = request.user.groups.filter(name="app-admin").exists() \
+                  or request.user.groups.filter(name="master").exists() \
+                  or request.user.groups.filter(name="sys-admin").exists() 
+        
+        if is_admin:
+            # Usuários com acesso admin verão todos os registros
+            allow_edition = True  # Oculta a opção de busca
+        
+        # Cria side menu
+        if uuid and ('app-admin' in user_groups or 'master' in user_groups or 'sys-admin' in user_groups):
+            menu_options.append(menu_url(MENU_USERS_DEFINICAO_ACESSO, url=reverse('user_credential', kwargs={'uuid': associado.uuid})))
+    
     associado_dict = {}
+    # Garantir que os campos sejam strings vazias se estiverem None
     associado_dict['nome_responsavel'] = associado.nome_responsavel or ''
     associado_dict['aluno'] = associado.aluno or ''
     associado_dict['nome_de_guerra'] = associado.nome_de_guerra or ''
     associado_dict['email'] = associado.email or ''
-    associado_dict['nascimento_responsavel'] = _invitation_date_for_form(associado.nascimento_responsavel)
+    associado_dict['nascimento_responsavel'] = f'{associado.nascimento_responsavel:%d/%m/%Y}' if associado.nascimento_responsavel else ''
     associado_dict['cpf'] = associado.cpf or ''
     associado_dict['telefone'] = associado.telefone or ''
     associado_dict['sexo'] = associado.sexo or ''
-    associado_dict['nascimento_aluno'] = _invitation_date_for_form(associado.nascimento_aluno)
+    associado_dict['nascimento_aluno'] = f'{associado.nascimento_aluno:%d/%m/%Y}' if associado.nascimento_aluno else ''
     associado_dict['matricula'] = associado.matricula or ''
     associado_dict['endereco'] = associado.endereco or ''  
     associado_dict['numero'] = associado.numero or ''  
@@ -751,185 +381,13 @@ def store_user_fields(associado, convidado, request, uuid):
         # registros para usuários atuais
         associado_dict['codigo_associado'] = associado.codigo_associado or ''
         associado_dict['codigo_pagamento'] = associado.codigo_pagamento or ''
-        associado_dict['situacao'] = associado.situacao or ''
-        associado_dict['tipo'] = associado.tipo.lower if associado.tipo else '' 
-
-    return associado_dict
-        
-
-@login_required()
-def user_record(request, uuid=None):
-    message = {'type': 'info', 'text': '', 'title': 'Registro de usuário', 'function': ''}
-    user_groups = request.user.groups.values_list('name', flat=True) if request.user.is_authenticated else []
-    menu_options = [MENU_VOLTAR]
-    convidado = False
-    allow_edition = False  
-
-    if uuid:
-        # Busca o registro pelo UUID
-        associado = tbAssociados.objects.filter(uuid=uuid).first()  # Busca pelo UUID
-    else:
-        # Cria um registro vazio para adição
-        message['title'] = 'Registro de novo usuário'
-        associado = tbAssociados()
-
-    if not associado:
-        # Verifica se tem convite de novo usuário para analisar
-        associado = tbConvidado.objects.filter(uuid=uuid, situacao_id=1).first()
-        if associado:
-            convidado = True
-            message['title'] = 'Registro de novo convidado'
-            # link_for_user_edition = f'/user/invitation/{uuid}'
-            
-        else:
-            # TODO: Mensagem de erro
-            messages.error(request, "Registro não encontrado.")
-            return redirect('user_list')
-
-    guest_record = associado if convidado else None
-    if convidado:
-        # A ficha pendente não deve expor navegação para produtos/contabilidade.
-        menu_options = []
-        
-    if (is_admin(request) and user_role(request) in ['presidente', 'vice-presidente', 'secretario']) or is_app_admin(request):
-        # Usuários com acesso admin verão todos os registros
-        allow_edition = True  # Oculta a opção de busca
-        
-    # Cria side menu
-    if not convidado:
-        if uuid and (user_role(request) in ['presidente', 'vice-presidente'] or is_app_admin(request)):
-            menu_options.append(menu_url(MENU_USERS_DEFINICAO_ACESSO, url=reverse('user_credential', kwargs={'uuid': associado.uuid})))
-            
-        if uuid and (user_role(request) in ['presidente', 'vice-presidente', 'secretario'] or is_app_admin(request)):           
-            menu_options.append(menu_url(MENU_PRODUTOS, url=reverse('products:product_list', kwargs={'UUID': associado.uuid})))
-
-        if request.session['user_uuid'] == uuid or  (user_role(request) in ['presidente', 'vice-presidente', 'secretario'] or is_app_admin(request)):
-            menu_options.append(menu_url(MENU_PRODUTOS_USER, url=reverse('products:product_my_list', kwargs={'UUID': associado.uuid})))
-            menu_options.append(menu_url(MENU_BALANCE_MY, url=reverse('balance:balance_my', kwargs={'usuario': associado.uuid})))
-    
-    associado_dict = store_user_fields(associado, convidado, request, uuid)
-
-    def render_email_error(error_text, submitted_email):
-        message.update({
-            'type': MESSAGE_TYPE_ERROR,
-            'text': error_text,
-            'title': 'Email não disponível',
-        })
-        associado_dict['email'] = submitted_email
-        return render(request, 'users/user_record.html', {
-            'associado': associado_dict,
-            'allow_edition': allow_edition,
-            'uuid': uuid,
-            'menu_options': menu_options,
-            'convidado': convidado,
-            'tipo_list': lstTipoAssociado.objects.all().order_by('tipo'),
-            'situacao_list': lstSituacao.objects.all().order_by('situacao'),
-            'message': message,
-            'identity_document_available': bool(getattr(associado, 'foto_identidade', '')),
-            'address_document_available': bool(getattr(associado, 'foto_endereco', '')),
-        })
+        associado_dict['situacao'] = 'associado.situacao or '''   
+        associado_dict['tipo'] = associado.tipo.lower if associado.tipo else ''  
 
     if request.method == 'POST':
         if convidado:
-            can_review_guest = (
-                (is_admin(request) and user_role(request) in ['presidente', 'vice-presidente', 'secretario'])
-                or is_app_admin(request)
-            )
-            if not can_review_guest:
-                messages.error(request, 'Você não tem permissão para aprovar este convidado.')
-                return redirect('user_record', uuid=uuid)
-
-            if tbAssociados.objects.filter(uuid=guest_record.uuid).exists():
-                messages.error(request, 'Já existe um registro de associado para este convidado.')
-                return redirect('user_record', uuid=uuid)
-
-            ultimo_associado = tbAssociados.objects.filter(
-                comissao=guest_record.comissao
-            ).order_by('-id').first()
-            codigo_pagamento = str((ultimo_associado.id if ultimo_associado else 0) + 1).zfill(2)
-
-            def guest_value(field):
-                value = request.POST.get(field) if field in request.POST else getattr(guest_record, field)
-                return str(value or '').strip()
-
-            guest_email = guest_value('email').lower()
-            try:
-                validate_email(guest_email)
-            except ValidationError:
-                return render_email_error(
-                    'Informe um endereço de email válido antes de aprovar o convidado.',
-                    guest_email,
-                )
-            if _email_already_in_use(guest_email, exclude_uuid=guest_record.uuid):
-                return render_email_error(
-                    'Este email já está cadastrado e é utilizado para login. '
-                    'Altere o email da ficha antes de aprovar o convidado.',
-                    guest_email,
-                )
-
-            nascimento_responsavel = convert_date(
-                _invitation_date_for_form(guest_value('nascimento_responsavel'))
-            )
-            nascimento_aluno = convert_date(
-                _invitation_date_for_form(guest_value('nascimento_aluno'))
-            )
-
-            associado = tbAssociados(
-                uuid=guest_record.uuid,
-                data=convert_date(localtime(now()).strftime('%d/%m/%Y')),
-                email=guest_email,
-                nome_responsavel=guest_value('nome_responsavel').title(),
-                nascimento_responsavel=nascimento_responsavel or guest_record.nascimento_responsavel,
-                cpf=guest_value('cpf'),
-                telefone=guest_value('telefone'),
-                aluno=guest_value('aluno').title(),
-                nome_de_guerra=guest_value('nome_de_guerra').title(),
-                sexo=guest_value('sexo'),
-                nascimento_aluno=nascimento_aluno or guest_record.nascimento_aluno,
-                matricula=guest_value('matricula'),
-                endereco=guest_value('endereco').title(),
-                numero=guest_value('numero'),
-                complemento=guest_value('complemento'),
-                bairro=guest_value('bairro').title(),
-                cidade=guest_value('cidade').title(),
-                cep=guest_value('cep'),
-                tipo='Socio',
-                situacao='novo',
-                codigo_pagamento=codigo_pagamento,
-                codigo_associado=f'{guest_record.comissao:02}{guest_record.matricula}{codigo_pagamento}',
-                foto_identidade=guest_record.foto_identidade,
-                foto_endereco=guest_record.foto_endereco,
-                comissao=guest_record.comissao,
-            )
-
-            try:
-                with db_transaction.atomic():
-                    associado.save()
-                    guest_record.situacao_id = 2
-                    guest_record.save(update_fields=['situacao'])
-            except IntegrityError:
-                messages.error(request, 'Não foi possível aprovar o convidado. Nenhuma alteração foi concluída.')
-                return redirect('user_record', uuid=uuid)
-
-            messages.success(request, 'Convidado aprovado e associado criado com situação "novo".')
-            return redirect('user_record', uuid=associado.uuid)
-
-        submitted_email = request.POST.get('email', '').strip().lower()
-        email_error = ''
-        try:
-            validate_email(submitted_email)
-        except ValidationError:
-            email_error = 'Informe um endereço de email válido.'
-        if not email_error and _email_already_in_use(
-            submitted_email,
-            exclude_uuid=associado.uuid if uuid else None,
-        ):
-            email_error = (
-                'Este email já está cadastrado e é utilizado para login. '
-                'Informe outro endereço de email.'
-            )
-        if email_error:
-            return render_email_error(email_error, submitted_email)
+            # cria registro em branco para novo associado
+            associado = tbAssociados()
 
         # try:
         # Gera um UUID apenas para novos registros
@@ -972,14 +430,10 @@ def user_record(request, uuid=None):
         # Salva o registro
         associado.save()
 
-        message = {'type': MESSAGE_TYPE_SUCCESS, 
-                    'text': 'Registro salvo com sucesso!',
-                    'title': 'Atualização de registro',
-                    }
-        
-        # Atualiza registros
-        associado_dict = store_user_fields(associado, convidado, request, uuid)
-        
+        messages.success(request, "Registro salvo com sucesso!")
+        # except Exception as e:
+        #     messages.error(request, f"Erro ao salvar registro.\n{str(e)}")
+    
     tipo_list = lstTipoAssociado.objects.all().order_by('tipo')
     situacao_list = lstSituacao.objects.all().order_by('situacao')
     context = {
@@ -991,12 +445,6 @@ def user_record(request, uuid=None):
         'tipo_list': tipo_list,
         'situacao_list': situacao_list,
         'message': message,
-        'identity_document_available': bool(
-            getattr(associado, 'foto_identidade', '')
-        ),
-        'address_document_available': bool(
-            getattr(associado, 'foto_endereco', '')
-        ),
     }
 
     return render(request, 'users/user_record.html', context)
@@ -1004,30 +452,30 @@ def user_record(request, uuid=None):
 @login_required
 def user_credential(request, uuid):
     message = {}
-    menu_options = [MENU_VOLTAR]
-    # Tabela associados com apenas campos necessários
     associado = get_object_or_404(tbAssociadosCredentials, uuid=uuid)  # Busca pelo UUID
+    user = User.objects.filter(username=associado.codigo_associado).first()
     groups = Group.objects.all().order_by('id')
-    user_auth = User.objects.filter(last_name=associado.uuid).first()
-    user_group_id = user_auth.groups.first().id if user_auth and user_auth.groups.exists() else 5
+    user_group_id = user.groups.first().id if user and user.groups.exists() else None
+    menu_options = [MENU_VOLTAR]
 
     allow_edition = False 
 
     if request.user.is_authenticated:
         logged_id = list(request.user.groups.values_list("id", flat=True))[0]
-
-        if (is_admin(request) and logged_id <= user_group_id) or is_app_admin(request):
+        is_admin = request.session['user_data'] .get('is_admin', False)
+        
+        if is_admin and logged_id <= user_group_id:
             # Usuários com acesso admin verão todos os registros
             allow_edition = True  # Oculta a opção de busca
 
 
     if request.method == 'POST':
-        username = request.POST.get('email')
+        username = request.POST.get('username')
         email = request.POST.get('email')
         first_name = request.POST.get('first_name')
         last_name = uuid
         password = request.POST.get('password')
-        group_id = request.POST.get('group') or 'socio'
+        group_id = request.POST.get('group')
 
         group_id = int(group_id) if group_id else 0
 
@@ -1036,34 +484,28 @@ def user_credential(request, uuid):
                     'text': 'Você não tem permissão para essa alteração.',
                     'title': 'Definição de Acesso',
                     }
-            user_group_id = user_auth.groups.first().id if user_auth and user_auth.groups.exists() else None
+            user_group_id = user.groups.first().id if user and user.groups.exists() else None
         else:
         
             # Criar ou atualizar o usuário
-            if not user_auth:
-                user_auth = User.objects.create(username=username)
+            if not user:
+                user = User.objects.create(username=username)
 
-            user_auth.username = email
-            user_auth.email = email
-            user_auth.first_name = first_name
-            user_auth.last_name = last_name
+            user.email = email
+            user.first_name = first_name
+            user.last_name = last_name
             if password:
-                user_auth.set_password(password)
+                user.set_password(password)
 
-            user_auth.save()
-
-            log_id = save_log(request,
-                            description='tbUser',
-                            evento_log_id=3  # log: Definição de acesso modificada
-                        )
+            user.save()
 
             group = Group.objects.get(id=group_id)
-            user_auth.groups.clear()
-            user_auth.groups.add(group)
+            user.groups.clear()
+            user.groups.add(group)
 
             # Atualiza campos
             groups = Group.objects.all()
-            user_group_id = user_auth.groups.first().id if user_auth and user_auth.groups.exists() else None
+            user_group_id = user.groups.first().id if user and user.groups.exists() else None
 
             message = {'type': MESSAGE_TYPE_SUCCESS, 
                     'text': 'Credenciais atualizadas com sucesso!',
@@ -1071,7 +513,7 @@ def user_credential(request, uuid):
                     }
         
     context = {
-        'user': user_auth,
+        'user': user,
         'associado': associado,
         'groups': groups,
         'user_group_id': user_group_id,

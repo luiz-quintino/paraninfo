@@ -5,34 +5,18 @@
 {% block title %}Registro de novo usuário{% endblock %}
 
 {% block content %}
-    {% if expired %}
-        <div class="form-container">
-            <h2>{{ message.title }}</h2>
-            <div class="alert alert-error"><p>{{ message.text }}</p></div>
-        </div>
-    {% else %}
     <div class="form-container">
 
         <h2>{{ message.title }}</h2>
         <h3>{{ message.text}}</h3>
         <!-- Exibir mensagens de sucesso ou erro -->
         <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-            {% if editing %}
-                <p>Altere os dados necessários e reenvie a ficha enquanto ela estiver pendente de análise.</p>
-            {% else %}
-                <p>Preencha a Ficha de Inscrição abaixo e submeta os dados para registro.</p>
-                <p>Após o envio, você receberá um email de confirmação com um link para modificar os dados enquanto a ficha estiver pendente.</p>
-            {% endif %}
+            <p>Preencha a Ficha de Inscrição abaixo e submeta os dados para registro.</p>
+            <p>Assim que a comissão de formatura verificar os seus dados, você receberá um email com a confirmação de acesso</p>
             <p>Todos os campos em vermelho são obrigatórios</p>
         </div>
 
-        {% if messages %}
-            {% for notification in messages %}
-                <div class="alert alert-{{ notification.tags }}"><p>{{ notification }}</p></div>
-            {% endfor %}
-        {% endif %}
-
-        <form method="post" action="{% url 'invitation' route_uuid %}" class="user-form" id="formEntrada" enctype="multipart/form-data" data-editing="{{ editing|yesno:'true,false' }}">
+        <form method="post" class="user-form" id="formEntrada" enctype="multipart/form-data" urlaction="{% url 'invitation' uuid %}">
             {% csrf_token %}
 
             <input type="hidden" name="uuid" value="{{ uuid }}">
@@ -42,20 +26,20 @@
                 <input type="text" id="nome_responsavel" name="nome_responsavel" value="{{ associado.nome_responsavel }}"  placeholder="" required>
             </div>
             <div class="form-group">
-                <label for="nascimento_responsavel">Nascimento do responsável (dd/mm/aaaa)</label>
-                <input type="text" id="nascimento_responsavel" name="nascimento_responsavel" value="{{ associado.nascimento_responsavel }}" placeholder="dd/mm/aaaa" inputmode="numeric" autocomplete="bday" maxlength="10" required>
+                <label for="nascimento_responsavel">Nascimento do responsável</label>
+                <input type="text" id="nascimento_responsavel" name="nascimento_responsavel" value="{{ associado.nascimento_responsavel }}"  placeholder="dd/mm/aaaa" required>
             </div>
             <div class="form-group">
                 <label for="email">Email do responsável</label>
                 <input type="email" id="email" name="email" value="{{ associado.email }}"  placeholder="" required>
             </div>
             <div class="form-group">
-                <label for="cpf">CPF (000.000.000-00)</label>
-                <input type="text" id="cpf" name="cpf" value="{{ associado.cpf }}" placeholder="000.000.000-00" inputmode="numeric" autocomplete="off" maxlength="14" required>
+                <label for="cpf">CPF</label>
+                <input type="text" id="cpf" name="cpf" value="{{ associado.cpf }}"  placeholder="xxx.xxx.xxx-xx" required>
             </div>
             <div class="form-group">
-                <label for="telefone">Telefone ((00) 00000-0000)</label>
-                <input type="tel" id="telefone" name="telefone" value="{{ associado.telefone }}" placeholder="(00) 00000-0000" inputmode="tel" autocomplete="tel" maxlength="16" required>
+                <label for="telefone">Telefone</label>
+                <input type="text" id="telefone" name="telefone" value="{{ associado.telefone }}" placeholder="(xx)xxxxx-xxxx" required>
             </div>
             <div class="form-group">
                 <label for="aluno">Nome completo do aluno</label>
@@ -66,16 +50,16 @@
                 <input type="text" id="nome_de_guerra" name="nome_de_guerra" value="{{ associado.nome_de_guerra }}"  placeholder="" required>
             </div>
             <div class="form-group">
-                <label for="nascimento_aluno">Nascimento do Aluno (dd/mm/aaaa)</label>
-                <input type="text" id="nascimento_aluno" name="nascimento_aluno" value="{{ associado.nascimento_aluno }}" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10" required>
+                <label for="nascimento_aluno">Nascimento do Aluno</label>
+                <input type="text" id="nascimento_aluno" name="nascimento_aluno" value="{{ associado.nascimento_aluno }}" placeholder="dd/mm/yyyy" required>
             </div>
             <div class="form-group">
                 <label for="sexo">Sexo do aluno</label>
                 <!-- combo list -->
                  <select id="sexo" name="sexo" required>
                     <option value="" disabled selected>Selecione o sexo</option>
-                    <option value="Masculino" {% if associado.sexo == 'Masculino' %}selected{% endif %}>Masculino</option>
-                    <option value="Feminino" {% if associado.sexo == 'Feminino' %}selected{% endif %}>Feminino</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Feminino">Feminino</option>
                 </select>   
             </div>
             <div class="form-group">
@@ -103,18 +87,14 @@
                 <input type="text" id="cidade" name="cidade" value="{{ associado.cidade }}" placeholder="" required>
             </div>
             <div class="form-group">
-                <label for="cep">CEP (00000-000)</label>
-                <input type="text" id="cep" name="cep" value="{{ associado.cep }}" placeholder="00000-000" inputmode="numeric" autocomplete="postal-code" maxlength="9" required>
+                <label for="cep">CEP</label>
+                <input type="text" id="cep" name="cep" value="{{ associado.cep }}" placeholder="xx.xxx-xxx" required>
             </div>
 
             <!-- submeter documento de identidade e comprovante de endereço -->
             <div class="form-group">
                 <label for="RG">Identificação</label>
-                <span id="file1-name" style="border: 1px solid red;">{% if file1_name %}{{ file1_name }}{% else %}Documento de identidade do responsável com foto{% endif %}</span>
-                {% if file1_name %}
-                    <small>Documento já armazenado. Deixe sem alteração para mantê-lo.</small>
-                    <a href="{% url 'user_document' uuid=route_uuid document_key='identity' %}" target="_blank" rel="noopener noreferrer">Abrir documento atual</a>
-                {% endif %}
+                <span id="file1-name" style="border: 1px solid red; ">Documento de identidade do responsável com foto</span>
                 <label for="file1">
                     <img src="{% static 'open.png' %}" alt="Selecionar arquivo" class="upload-icon">
                 </label>
@@ -123,11 +103,7 @@
 
             <div class="form-group">
                 <label for="Residencia">Residência</label>
-                <span id="file2-name" style="border: 1px solid red;">{% if file2_name %}{{ file2_name }}{% else %}Comprovante de endereço no nome do responsável{% endif %}</span>
-                {% if file2_name %}
-                    <small>Documento já armazenado. Deixe sem alteração para mantê-lo.</small>
-                    <a href="{% url 'user_document' uuid=route_uuid document_key='address' %}" target="_blank" rel="noopener noreferrer">Abrir documento atual</a>
-                {% endif %}
+                <span id="file2-name" style="border: 1px solid red;" >Comprovante de endereço no nome do responsável</span>
                 <label for="file2">
                     <img src="{% static 'open.png' %}" alt="Selecionar arquivo" class="upload-icon">
                 </label>
@@ -138,21 +114,16 @@
             <div class="form-group">
                 <label for="Aceite1">Aceite</label>
                     <div class="aceite-termos">
-                        <input type="checkbox" id="aceite1" name="aceite1" required>
-                        <label for="aceite1">Declaro que li e estou de acordo com o 
-                            <a href="{% url 'invitation_document' invitation_uuid 'statute' %}" target="_blank" rel="noopener noreferrer">Regimento Interno da Comissão de Formatura</a>.
-                        </label>
-                    </div>
-                </label>
+                    <input type="checkbox" id="aceite1" name="aceite1" required>
+                    <label for="aceite">Declaro que li e estou de acordo com o <bold>Regimento Interno da Comissão de Formatura</bold>.</label>
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="Aceite2">Aceite</label>
                 <div class="aceite-termos">
                     <input type="checkbox" id="aceite2" name="aceite2" required>
-                    <label for="aceite2" style="width: 300;">Declaro que li e estou de acordo com a 
-                        <a href="{% url 'invitation_document' invitation_uuid 'certificate' %}" target="_blank" rel="noopener noreferrer">Declaracao de Praticas de Certificacao da Autoridade Certificadora</a>.
-                    </label>
+                    <label for="aceite2" style="width: 300;">Declaro que li e estou de acordo com a Declaracao de Praticas de Certificacao da Autoridade Certificadora.</label>
                 </div>
             </div>
 
@@ -166,7 +137,7 @@
 
             <!-- Botões de ação -->
             <div class="action-buttons">
-                <button type="submit" class="save-button">{% if editing %}Salvar alterações{% else %}Enviar registro{% endif %}</button>
+                <button type="submit" class="save-button" onclick="submitRequest()" >Eviar registro</button>
                 <button type="reset" class="cancel-button">Cancelar</button>
             </div>
         </form>
@@ -174,13 +145,6 @@
 
     <script>
         ['file1', 'file2'].forEach((fileId) => {
-            const fileLabel = document.getElementById(`${fileId}-name`);
-            if (fileLabel.textContent.trim() !== (fileId === 'file1'
-                ? 'Documento de identidade do responsável com foto'
-                : 'Comprovante de endereço no nome do responsável')) {
-                fileLabel.style.border = '1px solid green';
-            }
-
             document.getElementById(fileId).addEventListener('click', 
                 function() {
                     // Exibe a ampulheta antes de ler o arquivo
@@ -206,82 +170,7 @@
             );
         });
         
-        const inputMasks = {
-            nascimento_responsavel: { maxDigits: 8, format: formatDate },
-            nascimento_aluno: { maxDigits: 8, format: formatDate },
-            cpf: { maxDigits: 11, format: formatCpf },
-            telefone: { maxDigits: 11, format: formatPhone },
-            cep: { maxDigits: 8, format: formatCep },
-        };
-
-        function onlyDigits(value) {
-            return value.replace(/\D/g, '');
-        }
-
-        function formatDate(digits) {
-            if (digits.length > 4) return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-            if (digits.length > 2) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-            return digits;
-        }
-
-        function formatCpf(digits) {
-            if (digits.length > 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
-            if (digits.length > 6) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
-            if (digits.length > 3) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
-            return digits;
-        }
-
-        function formatPhone(digits) {
-            if (digits.length <= 2) return digits;
-            const areaCode = digits.slice(0, 2);
-            const number = digits.slice(2);
-            const mobile = digits.length > 10;
-            const splitAt = mobile ? 5 : 4;
-            const prefix = `(${areaCode}) `;
-            return number.length > splitAt
-                ? `${prefix}${number.slice(0, splitAt)}-${number.slice(splitAt)}`
-                : `${prefix}${number}`;
-        }
-
-        function formatCep(digits) {
-            return digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
-        }
-
-        function applyMask(input, mask) {
-            const digitsBeforeCursor = onlyDigits(input.value.slice(0, input.selectionStart)).length;
-            const digits = onlyDigits(input.value).slice(0, mask.maxDigits);
-            input.value = mask.format(digits);
-
-            let cursor = 0;
-            let digitsCount = 0;
-            while (cursor < input.value.length && digitsCount < digitsBeforeCursor) {
-                if (/\d/.test(input.value[cursor])) digitsCount++;
-                cursor++;
-            }
-            if (digitsBeforeCursor > 0 && cursor < input.value.length && /\D/.test(input.value[cursor - 1] || '')) {
-                cursor++;
-            }
-            input.setSelectionRange(cursor, cursor);
-        }
-
-        Object.entries(inputMasks).forEach(([inputId, mask]) => {
-            const input = document.getElementById(inputId);
-            input.addEventListener('input', () => applyMask(input, mask));
-            applyMask(input, mask);
-        });
-
-        function isValidDate(value) {
-            const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-            if (!match) return false;
-            const [, day, month, year] = match.map(Number);
-            const date = new Date(0);
-            date.setHours(0, 0, 0, 0);
-            date.setFullYear(year, month - 1, day);
-            return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
-        }
-
-        document.getElementById('formEntrada').addEventListener('submit', function(event) {
-            event.preventDefault();
+        function submitRequest() {
             // Campos do formulário
             const email = document.getElementById('email').value.trim();
             const nascimentoResponsavel = document.getElementById('nascimento_responsavel').value.trim();
@@ -293,31 +182,30 @@
             const file2 = document.getElementById('file2').files.length;
             const fileType1 = document.getElementById('file1').files[0]?.type;
             const fileType2 = document.getElementById('file2').files[0]?.type;
-            const editingMode = this.dataset.editing === 'true';
             const aceite1 = document.getElementById('aceite1').checked;
             const aceite2 = document.getElementById('aceite2').checked;
             const aceite3 = document.getElementById('aceite3').checked;
 
-            const cpfDigits = onlyDigits(cpf);
-            const telefoneDigits = onlyDigits(telefone);
-            const cepDigits = onlyDigits(cep);
-
-            // Validação do email
+            // Regex para validação
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/; // Formato: 000.000.000-00
+            const telefoneRegex = /^\(\d{2}\)\d{4,5}-\d{4}$/; // Formato: (00) 00000-0000
+            const cepRegex = /^\d{2}\.\d{3}-\d{3}$/; // Formato: 00.000-000
+            const dataRegex = /^\d{2}\/\d{2}\/\d{4}$/; // Formato: DD/MM/AAAA
 
             // Validação dos campos
             let errors = [];
 
             if (!email || !emailRegex.test(email)) errors.push('O campo "Email" está vazio ou em formato inválido.');
-            if (cpfDigits.length !== 11) errors.push('O campo "CPF" deve conter 11 números.');
-            if (telefoneDigits.length !== 10 && telefoneDigits.length !== 11) errors.push('O campo "Telefone" deve conter o DDD e 8 ou 9 números.');
-            if (cepDigits.length !== 8) errors.push('O campo "CEP" deve conter 8 números.');
-            if (!isValidDate(nascimentoResponsavel)) errors.push('Informe uma data de nascimento válida para o responsável (dd/mm/aaaa).');
-            if (!isValidDate(nascimentoAluno)) errors.push('Informe uma data de nascimento válida para o aluno (dd/mm/aaaa).');
-            if (!editingMode && file1 === 0) errors.push('O campo "Documento de identidade do responsável com foto" é obrigatório.');
-            if (!editingMode && file2 === 0) errors.push('O campo "Comprovante de endereço no nome do responsável" é obrigatório.');
-            if (file1 > 0 && fileType1 !== 'image/jpeg') errors.push('O arquivo do campo "Documento de identidade do responsável com foto" deve ser uma imagem JPG.');
-            if (file2 > 0 && fileType2 !== 'image/jpeg') errors.push('O arquivo do campo "Comprovante de endereço do responsável" deve ser uma imagem JPG.');
+            if (!cpf || !cpfRegex.test(cpf)) errors.push('O campo "CPF" está vazio ou em formato inválido (ex: 000.000.000-00).');
+            if (!telefone || !telefoneRegex.test(telefone)) errors.push('O campo "Telefone" está vazio ou em formato inválido (ex: (00) 00000-0000).');
+            if (!cep || !cepRegex.test(cep)) errors.push('O campo "CEP" está vazio ou em formato inválido (ex: 00.000-000).');
+            if (!nascimentoResponsavel || !dataRegex.test(nascimentoResponsavel)) errors.push('O campo "Nascimento do Responsável" está vazio ou em formato inválido (ex: DD/MM/AAAA).');
+            if (!nascimentoAluno || !dataRegex.test(nascimentoAluno)) errors.push('O campo "Nascimento do Aluno" está vazio ou em formato inválido (ex: DD/MM/AAAA).');
+            if (file1 === 0) errors.push('O campo "Documento de identidade do responsável com foto" é obrigatório.');
+            if (file2 === 0) errors.push('O campo "Comprovante de endereço no nome do responsável" é obrigatório.');    
+            if (fileType1 === 'undefined' || fileType1 !== 'image/jpeg') errors.push('O arquivo do campo "Documento de identidade do responsável com foto" deve ser uma imagem JPG.');
+            if (fileType2 === 'undefined' || fileType2 !== 'image/jpeg') errors.push('O arquivo do campo "Comprovante de endereço do responsável" deve ser uma imagem JPG.');
             if (!aceite1) errors.push('Você deve aceitar o Regimento Interno da Comissão de Formatura.');
             if (!aceite2) errors.push('Você deve aceitar a Declaração de Práticas de Certificação da Autoridade Certificadora.');
             if (!aceite3) errors.push('Você deve aceitar a autorização para uso dos seus dados conforme LGPD.');
@@ -328,9 +216,8 @@
             } else {
                 // Exibe a ampulheta antes de submeter o formulário
                 showLoadingOverlay();
-                this.submit();
+                document.getElementById('formEntrada').submit();
             }
-        });
+        }
     </script>
-    {% endif %}
 {% endblock %}

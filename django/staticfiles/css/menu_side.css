@@ -1,47 +1,24 @@
 /* Menu lateral */
 .sidebar {
-    width: 42px;
+    width: 30px;
     background-color: #333;
-    padding: 6px;
     transition: width 0.3s ease; /* Animação de expansão/retração */
     overflow: hidden;
 }
 
-.sidebar-toggle {
-    display: grid;
-    place-items: center;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    border: 0;
-    border-radius: 4px;
-    background: #333;
-    cursor: pointer;
-}
-
-.sidebar-toggle img {
-    display: block;
-    width: 24px;
-    height: 24px;
-}
-
 .menu-options_side {
-    display: none;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
     padding: 0;
     margin: 0;
-    list-style: none;
-}
-
-.sidebar.expanded .menu-options_side {
-    display: flex;
 }
 
 .menu-options_side li {
-    display: inline-block;
-    margin: 5px;
+    display: inline-block; 
+    margin: 5px; 
 }
+
 
 .sidebar.expanded {
     width: 100%;
@@ -62,7 +39,6 @@
     font-family: Arial, sans-serif;
     font-size: 16px;
     text-align: left;
-    width: 100%;
 }
 
 .menu-options_side button:hover,
@@ -70,16 +46,17 @@
     background-color: aquamarine;
     color: #000000;
     border-radius: 4px;
+    
 }
 
 /* Estilo para telas grandes (desktop) */
 @media (min-width: 920px) {
-    .sidebar.expanded .menu-options_side {
-        display: block;
+    .menu-options_side {
+        display: block; /* Mantém a lista vertical */
     }
 
-    .sidebar.expanded .menu-options_side li {
-        display: block;
+    .menu-options_side li {
+        display: block; /* Cada item ocupa uma linha */
     }
 
     .sidebar.expanded {

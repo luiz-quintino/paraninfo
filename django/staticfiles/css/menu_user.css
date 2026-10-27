@@ -11,13 +11,13 @@
     flex-direction: column; /* Empilha os elementos verticalmente */
 }
 
+
 .menu-user-options {
     display: none; /* Inicialmente oculto */
     opacity: 0; /* Transparente */
     position: absolute;
-    /* gap: -10px; */
-    /*top: -20px; /* Ajuste conforme necessário */
-    /*right: 1000; /* Alinha o menu à direita */
+    /* top: 40px; Ajuste conforme necessário */
+    right: 0; /* Alinha o menu à direita */
     
     background-color: #ffffff; /* Fundo branco */
     border: 1px solid #ddd; /* Borda cinza clara */
@@ -26,7 +26,7 @@
     list-style: none; /* Remove marcadores de lista */
     padding: 10px 0; /* Espaçamento interno */
     margin: 0; /* Remove margens externas */
-    z-index: 9999; /* Certifique-se de que o menu está acima de outros elementos */
+    z-index: 10005; /* Certifique-se de que o menu está acima de outros elementos */
     width: 200px; /* Define a largura do menu */
     transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; /* Transição suave para o fade e movimento */
 }

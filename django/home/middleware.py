@@ -69,13 +69,13 @@ class PersistentUserDataMiddleware:
                         'is_app_admin': 'app-admin' in groups,
                         'is_master': 'master' in groups,
                         'is_staff': 'staff' in groups,
-                        'is_admin': any(group in groups for group in ['sys-admin', 'app-admin', 'master', 'staff']),
+                        'is_admin': any(group in groups for group in ['sys-admin', 'app-admin', 'master']),
                     }
 
                 except tbAssociados.DoesNotExist:
                     pass
 
-                # print('dados do usuário atualizados na sessão')
+                print('dados do usuário atualizados na sessão')
 
             # Atualiza os atributos do request com os dados da sessão
             user_data = request.session['user_data']
@@ -85,7 +85,7 @@ class PersistentUserDataMiddleware:
 
 
         else:
-            # print('usuário não logado')
+            print('usuário não logado')
             # Limpar os dados da sessão para usuários não autenticados
             request.session.pop('user_data', None)
             for key in ['comissao', 'user_id', 'user_uuid', 'comissao_title', 'user_groups', 
@@ -93,5 +93,5 @@ class PersistentUserDataMiddleware:
                 setattr(request, key, None if key != 'user_groups' else [])
 
         response = self.get_response(request)
-        # print('response', response)
+        print('response', response)
         return response

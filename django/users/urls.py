@@ -8,10 +8,7 @@ urlpatterns = [
     path('user-record/', views.user_record, name='user_record'),  
     path('invited/', views.invited_view, name='invited'),  # gestão dos convidados
     path('invitation/<uuid:uuid>/', views.invitation_view, name='invitation'),  # registro de novos convidados
-    path('invitation/<uuid:uuid>/document/<slug:document_key>/', views.pdf_viewer, name='invitation_document'),
-    path('user-record/<uuid:uuid>/document/<slug:document_key>/', views.user_document_view, name='user_document'),
     path('user-credential/<uuid:uuid>/', user_credential, name='user_credential'),
-    path('user-products/<uuid:uuid>/', views.user_products, name='user_products'),
 
 
 ]
