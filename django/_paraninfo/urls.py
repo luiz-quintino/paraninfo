@@ -5,6 +5,7 @@ from django.urls import include
 
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
     # Rota para home projeto Django
@@ -14,10 +15,11 @@ urlpatterns = [
     path('users/', include('users.urls')),  # Inclui as URLs do app users
     path('paraninfo-admin/', include('paraninfo_admin.urls')),  # Inclui as URLs do app users
     path('transaction/', include('transaction.urls')),  # Inclui as URLs do app users
-    path('balance/', include('balance.urls')),  # Inclui as URLs do app users
+    path('balance/', include('balance.urls', namespace='balance')),  # Inclui as URLs do app contabilidade
+    path('products/', include('products.urls')),
 
 ]
 
-if True:  # Development
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+if settings.DEBUG:
+    urlpatterns += staticfiles_urlpatterns()
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

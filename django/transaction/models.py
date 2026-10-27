@@ -11,15 +11,41 @@ class lstBoletoStatus(models.Model):
     class Meta:
         db_table = 'lstBoletoStatus'  # Nome da tabela no banco de dados
 
-class tbTransacao(models.Model):
-    key = models.CharField(max_length=45, unique=True)
-    value = models.CharField(max_length=45)
-    color_name = models.CharField(max_length=45)
-    value = models.CharField(max_length=45)
+class lsttransacao(models.Model):
+    id = models.AutoField(primary_key=True)  # Campo ID como chave primária
+    key_name = models.CharField(max_length=45)
+    blocked = models.BooleanField(default=False)
+    color_name = models.CharField(max_length=45, null=True, blank=True)
 
     class Meta:
-        db_table = 'tbTransacao'
+        db_table = 'lsttransacao'
 
+
+class tbTransacao(models.Model):
+    sequencia = models.IntegerField(null=True, blank=False)
+    data = models.DateField(max_length=8, null=True, blank=False)
+    # key = models.CharField(max_length=45, unique=True)
+    valor = models.DecimalField(max_digits=10, decimal_places=2)
+
+    # Relacionamento com tbComissao
+    comissao = models.ForeignKey(
+        tbComissao, 
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transacao_comissao'
+    )
+
+    transacao = models.ForeignKey(
+        lsttransacao,
+        on_delete=models.SET_NULL,
+        null=True,  
+        blank=True,
+        related_name='transacao_key'
+    )
+
+    class Meta:
+        db_table = 'tbtransacao'  # Nome da tabela no banco de dados
 
 class tbExtratoConfig(models.Model):
     id = models.AutoField(primary_key=True)  # Campo ID como chave primária
@@ -131,7 +157,7 @@ class tbExtrato(models.Model):
 
     # Relacionamento com tbTransacao
     transacao = models.ForeignKey(
-        tbTransacao,
+        lsttransacao,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

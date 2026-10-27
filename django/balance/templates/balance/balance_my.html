@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Meus pagamentos{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'balance.css' %}?v=3">
+<script src="{% static 'balance.js' %}?v=1" defer></script>
+<div class="container">
+    <h2>{{ message.title }}</h2>
+
+    {% if not past_rows and not future_rows %}
+        <p class="alert">Nenhum pagamento ou débito encontrado.</p>
+    {% endif %}
+    
+    <!--  Lançamentos anteriores  -->
+    
+    <details class="balance-collapsible">
+        <summary>Lançamentos anteriores</summary>
+    <table class="table_big_list_simple">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Valor pago</th>
+                <th>Valor débito</th>
+                <th>Valor recebido</th>
+                <th>Descrição</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in past_rows %}
+                <tr>
+                    <td data-label="Data">{{ row.date|date:'d/m/Y' }}</td>
+                    <td data-label="Valor pago" class="payment-paid">{% if row.paid %}R$ {{ row.paid|floatformat:2 }}{% endif %}</td>
+                    <td data-label="Valor débito" class="payment-debit">{% if row.debit %}R$ {{ row.debit|floatformat:2 }}{% endif %}</td>
+                    <td data-label="Valor recebido">{% if row.received %}R$ {{ row.received|floatformat:2 }}{% endif %}</td>
+                    <td data-label="Descrição">
+                        {% if row.product_uuid %}
+                            <a href="{% url 'products:product_my_list' UUID=row.product_uuid %}">{{ row.description }}</a>
+                        {% else %}
+                            {{ row.description }}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        
+    </table>
+    </details>
+    
+    <!--  Situação atual  -->   
+    
+    <p>AITUAÇÃO ATUAL</p>
+    <table class="table_big_list_simple table_big_list_simple_highlight">
+        <thead >
+            <tr>
+                <th>Discriminação</th>
+                <th>Total pago</th>
+                <th>Total débito</th>
+                <th>Total recebido</th>
+                <th>Próximo pagamento</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="payment-summary-row payment-subtotal">
+                <th>Total parcial</th>
+                <td data-label="Total pago" class="payment-positive">R$ {{ total_paid|floatformat:2 }}</td>
+                <td data-label="Total débito" class="payment-negative">R$ {{ total_debit|floatformat:2 }}</td>
+                <td data-label="Total recebido">R$ {{ total_received|floatformat:2 }}</td>
+                <td data-label="Próximo pagamento">R$ {{ 0|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <th colspan="4">{% if balance < 0 %}Saldo negativo{% else %}Saldo positivo{% endif %}</th>
+                <td data-label="Saldo" class="{% if balance < 0 %}payment-negative{% else %}payment-positive{% endif %}">R$ {{ balance|floatformat:2 }}</td>
+            </tr>
+            {% if balance < 0 %}
+                <tr><th colspan="4">Previsão de multa (após o fechamento mensal)</th><td data-label="Previsão de multa" class="payment-negative">R$ {{ fine|floatformat:2 }}</td></tr>
+                <tr><th colspan="4">Previsão de juros de mora ({{ overdue_days }} dias, após o fechamento mensal)</th><td data-label="Previsão de juros de mora" class="payment-negative">R$ {{ interest|floatformat:2 }}</td></tr>
+            {% endif %}
+
+            {% if show_next_payment %}
+                {% if next_payment_qrcode_url %}
+                    <tr class="payment-summary-row payment-subtotal">
+                        <th colspan="4">Próximo pagamento para o mês de {{ next_payment_month }}</th>
+                        <td data-label="Próximo pagamento" class="{% if next_payment < 0 %}payment-negative{% else %}payment-positive{% endif %}">
+                            R$ {{ next_payment|floatformat:2 }}
+                        </td>
+                    </tr>
+                    <tr class="payment-summary-row payment-subtotal">
+                        <th colspan="4">qrcode para pagamento</th>
+                        <td data-label="Pix Copia e Cola" class="{% if next_payment < 0 %}payment-negative{% else %}payment-positive{% endif %}">
+                            <div class="next-payment-qrcode">
+                                <img src="{{ next_payment_qrcode_url }}" alt="QR Code Pix para pagamento de R$ {{ next_payment|floatformat:2 }}">
+                                <label for="next-payment-pix-code">Pix Copia e Cola</label>
+                                <textarea id="next-payment-pix-code" hidden readonly>{{ next_payment_pix_code }}</textarea>
+                                <button type="button" class="next-payment-copy-link" data-copy-pix-code="next-payment-pix-code">Copiar link para pagamento</button>
+                                <span class="next-payment-copy-status" aria-live="polite"></span>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+
+            {% endif %}
+
+            
+        </tbody>
+    </table>
+
+    <!--  Lançamentos futuros  --> 
+
+    <details class="balance-collapsible">
+        <summary>Lançamentos futuros</summary>
+    <table class="table_big_list_simple">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Valor pago</th>
+                <th>Valor débito</th>
+                <th>Valor recebido</th>
+                <th>Descrição</th>
+            </tr>
+        </thead>
+        <tbody>            
+            {% for row in future_rows %}
+                <tr>
+                    <td data-label="Data">{{ row.date|date:'d/m/Y' }}</td>
+                    <td data-label="Valor pago" class="payment-paid">{% if row.paid %}R$ {{ row.paid|floatformat:2 }}{% endif %}</td>
+                    <td data-label="Valor débito" class="payment-debit">{% if row.debit %}R$ {{ row.debit|floatformat:2 }}{% endif %}</td>
+                    <td data-label="Valor recebido">{% if row.received %}R$ {{ row.received|floatformat:2 }}{% endif %}</td>
+                    <td data-label="Descrição">
+                        {% if row.product_uuid %}
+                            <a href="{% url 'products:product_my_list' UUID=row.product_uuid %}">{{ row.description }}</a>
+                        {% else %}
+                            {{ row.description }}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </details>
+
+    <!-- Total Geral -->
+
+    <p>SITUAÇÃO FINAL</p>
+    <table class="table_big_list_simple table_big_list_simple_highlight">
+        <thead >
+            <tr>
+                <th>Discriminação</th>
+                <th>Total pago</th>
+                <th>Total débito</th>
+                <th>Total recebido</th>
+                <th>Próximo pagamento</th>
+            </tr>
+        </thead>
+            <tr class="payment-summary-row payment-subtotal">
+                <td data-label="Discriminação">Total geral</td>
+                <td data-label="Total pago" class="{% if grand_total_paid < 0 %}payment-negative{% else %}payment-positive{% endif %}">R$ {{ grand_total_paid|floatformat:2 }}</td>
+                <td data-label="Total débito" class="payment-negative">R$ {{ grand_total_debit|floatformat:2 }}</td>
+                <td data-label="Total recebido" class="{% if grand_total_received < 0 %}payment-negative{% else %}payment-positive{% endif %}">R$ {{ grand_total_received|floatformat:2 }}</td>
+                <td data-label="Próximo pagamento"></td>
+            </tr>
+        </tbody>
+        
+    </table>
+
+</div>
+{% endblock %}

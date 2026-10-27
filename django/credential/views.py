@@ -3,6 +3,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib import messages
 from django.utils.deprecation import MiddlewareMixin
 from django.contrib.auth.views import LoginView
+from django.urls import reverse
 
 
 def login_view(request):
@@ -16,5 +17,8 @@ class CustomLoginView(LoginView):
         if 'next' in request.GET:
             messages.info(request, "Somente usuários autorizados")
         return super().get(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse('home')
 
 

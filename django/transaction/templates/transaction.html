@@ -5,22 +5,23 @@
 
 {% block content %}
 
-        <!-- Conteúdo principal -->
-        <div class="container">
+    <!-- Conteúdo principal -->
+    <div class="container">
         
-            <h2>{{ message.title }}</h2>
+        <h2>{{ message.title }}</h2>
 
-            <div class="user-form">
-                {% if message.text %}
-                    {% include 'partials/popup_message.html' with message=message %}
+        <div class="user-form">
+            {% if message.text %}
+                {% include 'partials/popup_message.html' with message=message %}
 
-                {% elif is_dataframe_empty and file %}
-                    <div class="alert">
-                        Nenhum dado encontrado no arquivo.
-                    </div>
-                {% endif %}
-            </div>
-            
+            {% elif is_dataframe_empty and file %}
+                <div class="alert">
+                    Nenhum dado encontrado no arquivo.
+                </div>
+            {% endif %}
+        </div>
+
+        {% if show_import %}
             <!-- Entrada de arquivo com extrato .xls -->
             {% if is_dataframe_empty %}
                 <div >
@@ -65,15 +66,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for row in dataframe.values %}
-                            <!-- <tr onclick="submitExtratoForm({{ row.id }})" style="cursor: pointer;">
-                                <form method="post" action="{% url 'edit_extrato' %}" id="form-{{ linha.id }}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="extrato_id" value="{{ linha.id }}">
-                                </form> -->
+                            {% for row in dataframe_rows %}
+                            <tr>
 
-                                {% for cell in row %}
-                                <td>{{ cell }}</td>
+                                {% for column, cell in row.items %}
+                                <td data-label="{{ column }}">{{ cell }}</td>
                                 {% endfor %}
                             </tr>
                             {% endfor %}
@@ -81,8 +78,9 @@
                     </table>
                 </form>
             {% endif %}
+        {% endif %}
 
-        </div>
+    </div>
 
     <script>
         document.getElementById('file').addEventListener('click', 

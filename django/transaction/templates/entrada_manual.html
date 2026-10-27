@@ -25,17 +25,17 @@
 
         {% if not sucess %}
             {% if not error and not message %}
-                <div class="alert-error">
+                <!-- <div class="alert-error">
                     <p>Entradas manuais devem ser inseridas somente em casos específicos para valores que não estão 
                         representadas no extrato bancário, mas que poderão fazer parte do livro caixa</p>
                     ex. <li>Valores em espécie não depositados na conta,</li>
                         <li>ajuste de arrecadação total considerando rendimento de aplicação, 
                         uma vez que o extrato bancário não demonstra a evolução das aplicações.</li>
-                </div>
+                </div> -->
             {% endif %}
             <br>
 
-            <form method="post" class="user-form readonly-form">
+            <form method="post" class="user-form readonly-form" onsubmit="if (!validarNumero(document.getElementById('valor').value)) { alert('Insira um valor válido no formato 0,00 ou 1.234,56.'); return false; }">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="data">Data</label>
@@ -46,7 +46,7 @@
                     <label for="historico">Documento</label>
                     <select id="historico" name="historico" required>
                         <option value="MOVIMENTAÇÃO EM ESPÉCIE">MOVIMENTAÇÃO EM ESPÉCIE</option>
-                        <option value="RENDIMENTO APLICAÇÃO">RENDIMENTO APLICAÇÃO</option>
+                        <!-- <option value="RENDIMENTO APLICAÇÃO">RENDIMENTO APLICAÇÃO</option> -->
                     </select>
                 </div>
                 
@@ -63,7 +63,7 @@
                 
                 <div class="form-group">
                     <label for="valor">Valor</label>
-                    <input type="text" id="valor" name="valor" required placeholder="0,00" pattern="\d+(\,\d{1,2})?" title="Insira um valor válido, ex: 100,25">
+                    <input type="text" id="valor" name="valor" required placeholder="0,00"  pattern="\d*|\d*,\d{1,2}|\d{1,3}(\.\d{3})*,\d{1,2}" title="Insira um valor válido, ex: 100,25 ou 1.234,56" >
                 </div>
 
                 <div class="form-group">

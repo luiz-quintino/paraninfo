@@ -13,7 +13,7 @@ def home_view(request):
 
 
     # verifica todas as requisições
-    print("Requisições do usuário: ---------------------------------")
+    # print("Requisições do usuário: ---------------------------------")
     # for req in request.__dict__.items():
     #     if type(req[1]) == dict:
     #         print(f"{req[0]}:")

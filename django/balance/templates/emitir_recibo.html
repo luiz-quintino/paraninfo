@@ -21,7 +21,7 @@
             </div>
         {% else %}
         <div>
-                <form method="post" action="{% url 'emitir_recibo' %}" id="formRecibo">
+                <form method="post" action="{% url 'balance:emitir_recibo' %}" id="formRecibo">
                     {% csrf_token %}
                     <input type="hidden" id="linhasIgnoradas" name="linhasIgnoradas" value="">
 

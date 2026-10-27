@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Produtos{% endblock %}
+
+{% block header_title %}Produtos{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'products.css' %}?v=6">
+<script src="{% static 'products.js' %}?v=6" defer></script>
+<div class="products-page">
+    <h2>{{ message.title }}</h2>
+
+    {% if messages %}
+        <div class="product-new-messages" aria-live="polite">
+            {% for message in messages %}
+                <p class="product-new-message {{ message.tags }}">{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if is_data_empty %}
+        <div class="alert">Nenhum dado encontrado.</div>
+    {% endif %}
+
+    {% if is_admin and pending_count %}
+        <p><a href="{% url 'products:product_approval' %}">Compras pendentes de aprovação ({{ pending_count }})</a></p>
+    {% endif %}
+
+    {% for purchase in purchases %}
+        {% if purchase.produto.ativo < 2 or is_admin %}
+            <section class="product-card"
+                data-purchase-date="{{ purchase.dt_compra|date:'d/m/Y' }}"
+                data-purchase-quantity="{{ purchase.quantidade }}"
+                data-purchase-original="{{ purchase.valor_original|floatformat:2 }}"
+                data-purchase-increase="{{ purchase.valor_acrescimo|default_if_none:0|floatformat:2 }}"
+                data-purchase-discount="{{ purchase.valor_desconto|default_if_none:0|floatformat:2 }}"
+                data-purchase-total="{{ purchase.valor_total|floatformat:2 }}"
+                data-purchase-approver="{{ purchase.aprovador_associado.nome_responsavel|default:'' }}"
+                data-purchase-approval-date="{{ purchase.dt_aprovacao|date:'d/m/Y' }}">
+                <h2>
+                    <button class="product-detail-trigger product-title-trigger" type="button" data-product-name="{{ purchase.produto.produto }}" data-product-description="{{ purchase.produto.descricao }}" aria-label="Ver descrição de {{ purchase.produto.produto }}">
+                        {{ purchase.produto.produto }}
+                    </button>
+                </h2>
+
+                <button class="product-image-trigger product-detail-trigger" type="button" data-product-name="{{ purchase.produto.produto }}" data-product-description="{{ purchase.produto.descricao }}" aria-label="Ver descrição de {{ purchase.produto.produto }}">
+                    <img class="product-image" src="{{ purchase.product_image_url }}" alt="Imagem de {{ purchase.produto }}" loading="lazy">
+                </button>
+
+                {% if purchase.status == 0 %}
+                    <p class="alert-error">Compra aguardando aprovação</p>
+                {% elif purchase.status == 1 %}
+                    <p class="alert-success">Compra aprovada</p>
+                {% elif purchase.status == 2 %}
+                    <p class="alert-error">Compra rejeitada</p>
+                {% endif %}
+
+                {% if is_admin and purchase.produto.ativo == 2 %}
+                    <p class="alert-error">Produto oculto</p>
+                {% endif %}
+
+                <details class="purchase-payment-details">
+                    <summary>Ver detalhes do plano de pagamento</summary>
+                    {% if purchase.payment_installments %}
+                        <div class="installment-table-scroll">
+                            <table class="installment-table">
+                                <thead>
+                                    <tr><th>Parcela</th><th>Vencimento</th><th>Valor</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for installment in purchase.payment_installments %}
+                                        <tr>
+                                            <td>{{ installment.parcela_numero }}</td>
+                                            <td>{{ installment.dt_vencimento|date:'d/m/Y' }}</td>
+                                            <td>R$ {{ installment.valor|floatformat:2 }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p>Não há parcelas cadastradas para esta compra.</p>
+                    {% endif %}
+                </details>
+
+            </section>
+        {% endif %}
+    {% empty %}
+        <p>Nenhum produto disponível.</p>
+    {% endfor %}
+
+</div>
+
+<div class="product-modal-backdrop" id="product-detail-modal" hidden>
+    <section class="product-modal product-detail-modal" role="dialog" aria-modal="true" aria-labelledby="product-detail-title">
+        <button type="button" class="product-modal-close" data-close-product-detail aria-label="Fechar descrição">&times;</button>
+        <h2 id="product-detail-title"></h2>
+        <img class="product-detail-modal-image" id="product-detail-image" src="" alt="">
+        <p class="product-detail-description" id="product-detail-description"></p>
+        <section class="product-purchase-details" aria-labelledby="product-purchase-details-title">
+            <h3 id="product-purchase-details-title">Detalhes da compra</h3>
+            <dl>
+                <div><dt>Data da compra</dt><dd id="product-purchase-date"></dd></div>
+                <div><dt>Quantidade</dt><dd id="product-purchase-quantity"></dd></div>
+                <div><dt>Valor original</dt><dd id="product-purchase-original"></dd></div>
+                <div><dt>Acréscimos cobrados</dt><dd id="product-purchase-increase"></dd></div>
+                <div><dt>Descontos concedidos</dt><dd id="product-purchase-discount"></dd></div>
+                <div><dt>Valor total cobrado</dt><dd id="product-purchase-total"></dd></div>
+                <div><dt>Aprovado por</dt><dd id="product-purchase-approver"></dd></div>
+                <div><dt>Data da aprovação</dt><dd id="product-purchase-approval-date"></dd></div>
+            </dl>
+        </section>
+    </section>
+</div>
+{% endblock %}
