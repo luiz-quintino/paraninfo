@@ -8,6 +8,7 @@ __pycache__/
 atualizar_codigo.sh
 
 # Server files
+atualizar_codigo.sh
 *.service
 django/media/
 db/
