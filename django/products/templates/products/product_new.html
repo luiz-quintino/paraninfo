@@ -64,8 +64,21 @@
                 <img id="product-image-preview" alt="Pré-visualização da imagem do produto" hidden>
             </div>
             <label class="product-active-field" for="product-active">
-                <input id="product-active" type="checkbox" name="ativo" {% if form_data.ativo or not form_data %}checked{% endif %}>
-                Produto ativo
+                Situação do Produto:
+                <select id="product-active" name="ativo">
+                    <option value=0 {% if product.ativo == 0 %}selected{% endif %}>Novo</option>
+                    <option value=1 {% if product.ativo == 1 %}selected{% endif %}>Ativo</option>
+                    <option value=2 {% if product.ativo == 2 %}selected{% endif %}>Oculto</option>
+                    <option value=3 {% if product.ativo == 3 %}selected{% endif %}>Cancelado</option>
+                </select>
+            </label>
+            <label class="product-active-field" for="product-active">
+                Ajustar atradadas:
+                <select id="product-adjuts" name="adjust">
+                    <option value=0 {% if product.ajustar_atrasadas == 0 %}selected{% endif %}>Distribuir em parcelas futuras [🗓️🪙🪙🪙]</option>
+                    <option value=1 {% if product.ajustar_atrasadas == 1 %}selected{% endif %}>Acumular parcelas vencidas     [🗓️💰🪙]</option>
+                    <option value=2 {% if product.ajustar_atrasadas == 2 %}selected{% endif %}>Manter com datas vencidas      [🪙🪙🗓️🪙]</option>
+                </select>
             </label>
         </div>
 
@@ -124,6 +137,7 @@
             Total atual das parcelas: <strong id="installment-total">R$ 0,00</strong>
         </div>
         <div class="installment-popup-toolbar">
+            <button type="button" class="save-button" id="recalculate-installments">Recalcular valores</button>
             <button type="button" class="save-button" id="add-installment">Adicionar parcela</button>
         </div>
         <div class="installment-table-scroll">

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Emails enviados{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if messages %}
+        {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% endif %}
+    <h2>Emails enviados</h2>
+    <table class="table email-table">
+        <thead><tr><th>Data</th><th>Título</th></tr></thead>
+        <tbody>
+        {% for email in emails %}
+            <tr class="email-row" data-id="{{ email.id }}">
+                <td>{{ email.data|date:"d/m/Y H:i" }}</td>
+                <td>{{ email.titulo }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="2">Nenhum email enviado.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div id="email-detail-modal" class="email-modal" hidden>
+    <div class="email-modal-card" role="dialog" aria-modal="true" aria-labelledby="email-modal-title">
+        <button type="button" id="email-modal-close" class="email-modal-close" aria-label="Fechar">×</button>
+        <h3 id="email-modal-title">Detalhes do email</h3>
+        <p><strong>Data:</strong> <span id="detail-data"></span></p>
+        <p><strong>Título:</strong> <span id="detail-titulo"></span></p>
+        <p><strong>Conteúdo:</strong></p>
+        <div id="detail-conteudo"></div>
+        <p><strong>Lista de distribuição:</strong></p>
+        <ul id="detail-distribuicao"></ul>
+        <p><strong>Enviado por:</strong> <span id="detail-remetente"></span></p>
+    </div>
+</div>
+<script src="{% static 'email.js' %}"></script>
+{% endblock %}

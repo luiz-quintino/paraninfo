@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="{% static 'products.css' %}">
 <script src="{% static 'products.js' %}?v=4" defer></script>
 <div class="products-page">
+    
     <h2>{{ message.title }}</h2>
 
     {% if messages %}
@@ -113,4 +114,5 @@
         </form>
     </section>
 </div>
+
 {% endblock %}

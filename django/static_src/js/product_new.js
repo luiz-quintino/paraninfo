@@ -15,6 +15,7 @@
     const installmentPopupError = document.getElementById('installment-popup-error');
     const installmentTotal = document.getElementById('installment-total');
     const dueDayInput = document.getElementById('product-due-day');
+    const startDateInput = document.getElementById('product-start-date');
     const dueDayHint = document.getElementById('due-day-hint');
     let plans = [];
     let editingPlanIndex = null;
@@ -43,19 +44,19 @@
         return Number.isInteger(day) && day >= 1 && day <= 31 ? day : 7;
     };
 
-    const dateForMonth = (monthOffset, day) => {
+    const getStartDate = () => {
+        if (startDateInput.value) return startDateInput.value;
         const today = new Date();
-        const monthStart = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
-        const lastDay = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0).getDate();
-        const dueDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), Math.min(day, lastDay));
-        return `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}-${String(dueDate.getDate()).padStart(2, '0')}`;
+        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     };
 
-    const dateAfter = (dateString, day) => {
-        const [year, month] = dateString.split('-').map(Number);
-        const nextMonth = new Date(year, month, 1);
-        const lastDay = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate();
-        const dueDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), Math.min(day, lastDay));
+    const dateForMonth = (monthOffset, day) => {
+        const startDate = getStartDate();
+        const [year, month, startDay] = startDate.split('-').map(Number);
+        const firstMonthOffset = day < startDay ? 1 : 0;
+        const monthStart = new Date(year, month - 1 + firstMonthOffset + monthOffset, 1);
+        const lastDay = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0).getDate();
+        const dueDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), Math.min(day, lastDay));
         return `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}-${String(dueDate.getDate()).padStart(2, '0')}`;
     };
 
@@ -63,13 +64,29 @@
         const option = Array.from(paymentType.options).find((item) => item.value === String(plan.payment_type_id));
         const kind = option?.dataset.kind || '';
         const count = kind === 'cash' ? 1 : Number(plan.installments) + (kind === 'entry' ? 1 : 0);
+        const values = splitTotalIntoInstallments(count);
+        return Array.from({ length: count }, (_, index) => ({
+            value: values[index],
+            due_date: dateForMonth(index, getDueDay()),
+        }));
+    };
+
+    const splitTotalIntoInstallments = (count) => {
         const totalCents = Math.max(0, Math.round(updateTotal() * 100));
         const baseCents = Math.floor(totalCents / count);
         const extraCents = totalCents % count;
-        return Array.from({ length: count }, (_, index) => ({
-            value: ((baseCents + (index < extraCents ? 1 : 0)) / 100).toFixed(2),
-            due_date: dateForMonth(index + 1, getDueDay()),
-        }));
+        return Array.from({ length: count }, (_, index) =>
+            ((baseCents + (index < extraCents ? 1 : 0)) / 100).toFixed(2)
+        );
+    };
+
+    const updatePlanDueDates = () => {
+        plans.forEach((plan) => {
+            plan.schedule = plan.schedule.map((installment, index) => ({
+                ...installment,
+                due_date: dateForMonth(index, getDueDay()),
+            }));
+        });
     };
 
     plans = plans.map((plan) => ({
@@ -82,7 +99,7 @@
 
     const updateDueDayHint = () => {
         const day = getDueDay();
-        dueDayHint.textContent = `Adicione um ou mais planos. As parcelas vencem no dia ${day}, começando no próximo mês. Em meses mais curtos, será usado o último dia do mês.`;
+        dueDayHint.textContent = `As parcelas vencem no dia ${day}, começando no mês da Data de início. Em meses mais curtos, será usado o último dia do mês.`;
     };
 
     const syncPlans = () => {
@@ -260,10 +277,9 @@
     document.getElementById('add-installment').addEventListener('click', () => {
         const currentSchedule = readInstallmentRows();
         if (currentSchedule.length >= 121) return;
-        const lastDate = currentSchedule[currentSchedule.length - 1]?.due_date;
         currentSchedule.push({
             value: '0.00',
-            due_date: lastDate ? dateAfter(lastDate, getDueDay()) : dateForMonth(1, getDueDay()),
+            due_date: dateForMonth(currentSchedule.length, getDueDay()),
         });
         renderInstallmentRows(currentSchedule);
     });
@@ -273,6 +289,14 @@
         const currentSchedule = readInstallmentRows();
         currentSchedule.splice(Number(removeButton.dataset.removeIndex), 1);
         renderInstallmentRows(currentSchedule);
+    });
+    document.getElementById('recalculate-installments').addEventListener('click', () => {
+        const currentSchedule = readInstallmentRows();
+        const values = splitTotalIntoInstallments(currentSchedule.length);
+        renderInstallmentRows(currentSchedule.map((installment, index) => ({
+            ...installment,
+            value: values[index],
+        })));
     });
     document.getElementById('save-installment-edits').addEventListener('click', () => {
         const editedSchedule = readInstallmentRows();
@@ -293,18 +317,18 @@
 
     ['product-value', 'product-increase', 'product-discount'].forEach((id) => {
         document.getElementById(id).addEventListener('input', () => {
-            plans.forEach((plan) => {
-                if (!plan.schedule_edited) plan.schedule = makeSchedule(plan);
-            });
             syncPlans();
         });
     });
 
     dueDayInput.addEventListener('input', updateDueDayHint);
     dueDayInput.addEventListener('change', () => {
-        plans.forEach((plan) => {
-            if (!plan.schedule_edited) plan.schedule = makeSchedule(plan);
-        });
+        updatePlanDueDates();
+        syncPlans();
+    });
+
+    startDateInput.addEventListener('change', () => {
+        updatePlanDueDates();
         syncPlans();
     });
 

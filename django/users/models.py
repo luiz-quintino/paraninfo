@@ -85,6 +85,10 @@ class tbConvidado(models.Model):
     foto_endereco = models.CharField(max_length=100, null=True, blank=True)
     foto_identidade = models.CharField(max_length=100, null=True, blank=True)
 
+    # situacao_id = 1  # novo
+    # situacao_id = 2  # aprovado
+    # situacao_id = 3  # rejeitado/cancelado
+
     situacao = models.ForeignKey(
         lstSituacao,
         on_delete=models.SET_NULL,

@@ -2,10 +2,14 @@ import calendar
 import json
 import os
 import unicodedata
+from html import escape
 from datetime import date, datetime
+from email.mime.image import MIMEImage
+from email.utils import formataddr, parseaddr
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -43,6 +47,7 @@ def _attach_product_images(products):
 
 
 def _payment_options_by_product(products):
+	# Atualiza a lista de planos de pagamentos
 	products_by_id = {product.id: product for product in products}
 	links = list(
 		tbPlanoPagamentoProduto.objects.filter(produto_id__in=products_by_id).order_by('id')
@@ -186,7 +191,7 @@ def product_list(request, UUID=None):
 					raise ValueError('O plano selecionado não possui parcelas cadastradas.')
 				purchase_schedule = _build_purchase_schedule(
 					product,
-					plan_link.parcelas_id,
+					plan_link.parcelas_id,		# a vista, parcelado, entrada + parcelas
 					source_installments,
 					quantity,
 				)
@@ -232,9 +237,57 @@ def product_list(request, UUID=None):
 					)
 
 				messages.success(request, 'Compra registrada com sucesso. Aprovação pendente.')
+				sending_email = purchase_mail (purchase_schedule, product, quantity, request, associado)
+				# payment_text = ''.join([' '.join(['   ',f'{str(compra['number']):2}:',str(compra['due_date'].strftime("%d/%m/%Y")), f'R${compra["value"]:>8.2f}', '\n']) for compra in purchase_schedule])
+				# email_error = False
+				# subject = f'Compra - {product.produto}'
+				# success_message = (
+				# 	f'Compra realizada\n\n'
+				# 	f'Situação: Pendente de aprovação.\n\n'
+				# 	f'Produto: {product.produto}\n'
+				# 	f'Quantidade: {quantity}\n'
+				# 	f'{product.descricao}\n\n'
+				# 	f'Valor total: R${product.valor_total}\n'
+				# 	f'Plano de pagamento:\n{payment_text}\n\n'
+				# 	f'Atenciosamente,\n{request.comissao_title}'
+				# )
+				# try:
+				# 	from_address = parseaddr(settings.DEFAULT_FROM_EMAIL)[1]
+				# 	email = EmailMultiAlternatives(
+				# 		subject=subject,
+				# 		body=success_message,
+				# 		from_email=formataddr(('Paraninfo', from_address)),
+				# 		to=[associado.email],
+				# 	)
+				# 	media = tbMediaFiles.objects.filter(id=product.img_id).first()
+				# 	image_html = ''
+				# 	if media:
+				# 		media_folder = media.folder.removeprefix('/media/').strip('/')
+				# 		image_path = (Path(settings.MEDIA_ROOT) / media_folder / media.new_file_name).resolve()
+				# 		if image_path.is_file():
+				# 			image_html = '<p><img src="cid:product-image" alt="Imagem do produto" style="max-width:500px;height:auto;"></p>'
+				# 			image = MIMEImage(image_path.read_bytes())
+				# 			image.add_header('Content-ID', '<product-image>')
+				# 			image.add_header('Content-Disposition', 'inline', filename=media.new_file_name)
+				# 			email.attach(image)
+				# 	html_message = (
+				# 		f'<h2>{escape(subject)}</h2>'
+				# 		f'{image_html}'
+				# 		f'<p><strong>Situação:</strong> Pendente de aprovação.</p>'
+				# 		f'<p><strong>Produto:</strong> {escape(product.produto)}<br>'
+				# 		f'<strong>Quantidade:</strong> {quantity}<br>{escape(product.descricao)}</p>'
+				# 		f'<p><strong>Valor total:</strong> R$ {product.valor_total}</p>'
+				# 		f'<p><strong>Plano de pagamento:</strong><br>{escape(payment_text).replace(chr(10), "<br>")}</p>'
+				# 		f'<p>Atenciosamente,<br>{escape(request.comissao_title or "Paraninfo")}</p>'
+				# 	)
+				# 	email.attach_alternative(html_message, 'text/html')
+				# 	email.send(fail_silently=False)
+				# except Exception:
+				# 	email_error = True
 
 			except (ValueError, TypeError) as error:
 				messages.error(request, f'Selecione um plano de pagamento válido. {error}')
+
 		return redirect('products:product_list')
 
 	context = product_list_context(request, associado)
@@ -284,27 +337,41 @@ def _monthly_due_dates(count, due_day, today=None):
 	return due_dates
 
 
+def _product_due_dates(count, start_date, due_day):
+	if count < 1:
+		return []
+	due_dates = []
+	first_month_offset = int(due_day < start_date.day)
+	for month_offset in range(count):
+		month_index = start_date.year * 12 + start_date.month - 1 + first_month_offset + month_offset
+		year = month_index // 12
+		month = month_index % 12 + 1
+		due_dates.append(date(year, month, min(due_day, calendar.monthrange(year, month)[1])))
+	return due_dates
+
+
 def _build_purchase_schedule(product, payment_type_id, source_installments, quantity, today=None):
+	# Ajusta as datas dos plano de pagamento de acordo com a opção em ajustar
 	today = today or date.today()
 	total_value = product.valor_total * quantity
 	due_day = product.dia_vencimento
 
-	if payment_type_id == 1:
+	if payment_type_id == 1:	# a vista, parcelado, entrada + parcelas
 		values = [total_value]
 		due_dates = _monthly_due_dates(1, due_day, today)
 	elif payment_type_id in (2, 3):
 		# ajustar atrasadas: 0 não ajustar (vencimento a partir do próximo mês), 1 ajustar (calcular vencidas e distribuir valores a vencer), 2 manter datas originais
 		
 		# não ajustar
-		if product.ajustar_atrasadas == 0:	
+		if product.ajustar_atrasadas == 0:	# Distribuir em parcelas futuras
 			installment_count = max(1, len(source_installments))
 			values = _split_amount(total_value, installment_count)
 			due_dates = _monthly_due_dates(installment_count, due_day, today)
 		
 		#  1 ajustar
-		elif product.ajustar_atrasadas == 1:
-			overdue = [item for item in source_installments if item.dt_vencimento < today]
-			upcoming = [item for item in source_installments if item.dt_vencimento >= today]
+		elif product.ajustar_atrasadas == 1:	# Acumular parcelas vencidas
+			overdue = [item for item in source_installments if item.dt_vencimento <= today]
+			upcoming = [item for item in source_installments if item.dt_vencimento > today]
 			if payment_type_id == 2:
 				if not upcoming:
 					raise ValueError('Não há parcelas a vencer para recalcular este plano.')
@@ -313,7 +380,7 @@ def _build_purchase_schedule(product, payment_type_id, source_installments, quan
 				) * quantity
 				values = _split_amount(installment_total, len(upcoming))
 				due_dates = _monthly_due_dates(len(upcoming), due_day, today)
-			else:
+			else:						# Manter com datas vencidas
 				if not upcoming:
 					raise ValueError('Não há parcelas a vencer para recalcular este plano.')
 				first_value = (
@@ -326,7 +393,7 @@ def _build_purchase_schedule(product, payment_type_id, source_installments, quan
 		else: 	# manter datas originais
 			installment_count = max(1, len(source_installments))
 			values = _split_amount(total_value, installment_count)
-			due_dates = _monthly_due_dates(installment_count, due_day, product.dt_inicio)
+			due_dates = [item.dt_vencimento for item in source_installments]
 
 	else:
 		return [
@@ -453,8 +520,11 @@ def product_new(request):
 				if provided_schedule is None:
 					installment_values = _split_amount(total_value, installment_count)
 					schedule = [
-						{'value': value, 'due_date': _next_due_date(index, due_day)}
-						for index, value in enumerate(installment_values, start=1)
+						{'value': value, 'due_date': due_date}
+						for value, due_date in zip(
+							installment_values,
+							_product_due_dates(installment_count, start_date, due_day),
+						)
 					]
 				else:
 					if not isinstance(provided_schedule, list) or not 1 <= len(provided_schedule) <= 121:
@@ -491,19 +561,26 @@ def product_new(request):
 			uploaded_image = request.FILES.get('imagem')
 			image_extension = _validate_product_image(uploaded_image) if uploaded_image else None
 			
+			# cria log
+			log_id = save_log(request,
+				description='tbProduto',
+				evento_log_id=14  # log: Adicionado novo produto 
+			)
+
 			product = tbProduto(
 				produto=name,
 				descricao=description,
 				valor_original=original_value,
 				dt_inicio=start_date,
 				dt_previsao=forecast_date,
-				ativo=request.POST.get('ativo') == 'on',
 				associado_id=associated_id,
 				img_id=None,
 				vr_desconto=discount,
 				vr_acrescimo=increase,
 				dia_vencimento=due_day,
-				ajustar_atrasadas=0,
+				ajustar_atrasadas=int(request.POST.get('adjust')),
+				ativo=int(request.POST.get('ativo')),
+				log_id=log_id
 			)
 
 			with transaction.atomic():
@@ -581,11 +658,6 @@ def product_new(request):
 				saved_image_path.unlink(missing_ok=True)
 			messages.error(request, 'Não foi possível salvar o arquivo da imagem no diretório de mídia.')
 		else:
-			# cria log
-			log_id = save_log(request,
-				description='tbProduto',
-				evento_log_id=14  # log: Adicionado novo produto 
-			)
 			messages.success(request, 'Produto e planos de pagamento cadastrados com sucesso.')
 			return redirect('products:product_list')
 
@@ -620,7 +692,6 @@ def product_my_list(request, UUID=None):
 
 
 @login_required
-@user_passes_test(is_admin)
 def product_edit(request, product_id):
 
 	message = {'type': 'info', 'text': '', 'title': 'Editar Produto', 'function': ''}
@@ -754,28 +825,64 @@ def product_edit(request, product_id):
 					product.img_id = media.id
 
 				list(tbParcelamento.objects.select_for_update().order_by('id'))
+				existing_links = list(
+					tbPlanoPagamentoProduto.objects.select_for_update()
+					.filter(produto_id=product.id)
+					.order_by('id')
+				)
+				existing_plan_codes = {link.plano_pagamento_id for link in existing_links}
+				existing_rows_by_plan = {}
+				for installment in tbParcelamento.objects.filter(
+					plano_pagamento__in=existing_plan_codes
+				).order_by('plano_pagamento', 'parcela_numero', 'id'):
+					existing_rows_by_plan.setdefault(installment.plano_pagamento, []).append(installment)
+
+				existing_by_schedule = {}
+				for link in existing_links:
+					rows = existing_rows_by_plan.get(link.plano_pagamento_id, [])
+					key = tuple((row.valor, row.dt_vencimento) for row in rows)
+					existing_by_schedule.setdefault(key, []).append(link)
+
 				last_schedule_number = tbParcelamento.objects.aggregate(last_number=Max('plano_pagamento'))['last_number'] or 0
 				last_link_number = tbPlanoPagamentoProduto.objects.aggregate(last_number=Max('plano_pagamento_id'))['last_number'] or 0
 				last_purchase_number = tbCompra.objects.aggregate(last_number=Max('plano_pagamento'))['last_number'] or 0
 				next_plan_number = max(last_schedule_number, last_link_number, last_purchase_number) + 1
-				tbPlanoPagamentoProduto.objects.filter(produto_id=product.id).delete()
-				for plan_index, (payment_type, schedule) in enumerate(validated_plans):
-					tbPlanoPagamentoProduto.objects.create(
-						produto_id=product.id,
-						plano_pagamento_id=next_plan_number,
-						parcelas_id=payment_type.id,
-					)
-					for number, installment in enumerate(schedule, start=1):
-						tbParcelamento.objects.create(
-							plano_pagamento=next_plan_number,
-							parcela_numero=number,
-							valor=installment['value'],
-							dt_vencimento=installment['due_date'],
-							origem=1,
+				retained_link_ids = set()
+				first_plan_number = None
+				for payment_type, schedule in validated_plans:
+					schedule_key = tuple((item['value'], item['due_date']) for item in schedule)
+					matching_links = existing_by_schedule.get(schedule_key, [])
+					if matching_links:
+						link = matching_links.pop(0)
+						plan_number = link.plano_pagamento_id
+						retained_link_ids.add(link.id)
+						if link.parcelas_id != payment_type.id:
+							tbPlanoPagamentoProduto.objects.filter(id=link.id).update(
+								parcelas_id=payment_type.id
+							)
+					else:
+						plan_number = next_plan_number
+						tbPlanoPagamentoProduto.objects.create(
+							produto_id=product.id,
+							plano_pagamento_id=plan_number,
+							parcelas_id=payment_type.id,
 						)
-					if plan_index == 0:
-						product.plano_pagamento_id = next_plan_number
-					next_plan_number += 1
+						for number, installment in enumerate(schedule, start=1):
+							tbParcelamento.objects.create(
+								plano_pagamento=plan_number,
+								parcela_numero=number,
+								valor=installment['value'],
+								dt_vencimento=installment['due_date'],
+								origem=1,
+							)
+						next_plan_number += 1
+					if first_plan_number is None:
+						first_plan_number = plan_number
+
+				links_to_remove = [link.id for link in existing_links if link.id not in retained_link_ids]
+				if links_to_remove:
+					tbPlanoPagamentoProduto.objects.filter(id__in=links_to_remove).delete()
+				product.plano_pagamento_id = first_plan_number
 
 				product.save(force_update=True)
 		except (InvalidOperation, TypeError, ValueError, json.JSONDecodeError) as error:
@@ -807,7 +914,6 @@ def product_edit(request, product_id):
 
 
 @login_required
-@user_passes_test(is_admin)
 def product_approval(request):
 	message = {'type': 'info', 'text': '', 'title': 'Compras pendentes de aprovação', 'function': ''}
 	menu_options = [MENU_VOLTAR]
@@ -870,6 +976,9 @@ def product_approval(request):
 								description='tbProduto',
 								evento_log_id=19  # log: Compra aprovada 
 							)
+
+				compra_result = 'APROVADA' if action == 'approve' else 'REPROVADA'
+				sending_email = purchase_approved_mail (purchase.produto, request, associado, compra_result)
 				return redirect('products:product_approval')
 
 	purchases = tbCompra.objects.filter(status=tbCompra.STATUS_PENDENTE).select_related('produto', 'associado')
@@ -883,3 +992,98 @@ def product_approval(request):
 
 from django.shortcuts import render
 
+def purchase_mail(purchase_schedule, product, quantity, request, associado) -> bool:
+	payment_text = ''.join([' '.join(['   ',f'{str(compra['number']):2}:',str(compra['due_date'].strftime("%d/%m/%Y")), f'R${compra["value"]:>8.2f}', '\n']) for compra in purchase_schedule])
+	email_error = False
+	subject = f'Recebemos seu pedio para {product.produto}'
+	success_message = (
+		f'Compra realizada\n\n'
+		f'Situação: Pendente de aprovação.\n\n'
+		f'Produto: {product.produto}\n'
+		f'Quantidade: {quantity}\n'
+		f'{product.descricao}\n\n'
+		f'Valor total: R${product.valor_total}\n'
+		f'Plano de pagamento:\n{payment_text}\n\n'
+		f'Atenciosamente,\n{request.comissao_title}'
+	)
+	try:
+		from_address = parseaddr(settings.DEFAULT_FROM_EMAIL)[1]
+		email = EmailMultiAlternatives(
+			subject=subject,
+			body=success_message,
+			from_email=formataddr(('Paraninfo', from_address)),
+			to=[associado.email],
+		)
+		media = tbMediaFiles.objects.filter(id=product.img_id).first()
+		image_html = ''
+		if media:
+			media_folder = media.folder.removeprefix('/media/').strip('/')
+			image_path = (Path(settings.MEDIA_ROOT) / media_folder / media.new_file_name).resolve()
+			if image_path.is_file():
+				image_html = '<p><img src="cid:product-image" alt="Imagem do produto" style="max-width:500px;height:auto;"></p>'
+				image = MIMEImage(image_path.read_bytes())
+				image.add_header('Content-ID', '<product-image>')
+				image.add_header('Content-Disposition', 'inline', filename=media.new_file_name)
+				email.attach(image)
+		html_message = (
+			f'<h2>{escape(subject)}</h2>'
+			f'{image_html}'
+			f'<p><strong>Situação:</strong> Pendente de aprovação.</p>'
+			f'<p><strong>Produto:</strong> {escape(product.produto)}<br>'
+			f'<strong>Quantidade:</strong> {quantity}<br>{escape(product.descricao)}</p>'
+			f'<p><strong>Valor total:</strong> R$ {product.valor_total}</p>'
+			f'<p><strong>Plano de pagamento:</strong><br>{escape(payment_text).replace(chr(10), "<br>")}</p>'
+			f'<p>Atenciosamente,<br>{escape(request.comissao_title or "Paraninfo")}</p>'
+		)
+		email.attach_alternative(html_message, 'text/html')
+		email.send(fail_silently=False)
+	except Exception:
+		email_error = True
+
+	return email_error
+
+def purchase_approved_mail(product, request, associado, result) -> bool:
+	email_error = False
+	subject = f'Resulta do seu pedido para {product.produto}'
+	success_message = (
+		f'Situação da Compra: {result}.\n\n'
+		f'Produto: {product.produto}\n'
+		f'{product.descricao}\n\n'
+		f'Valor total: R${product.valor_total}\n'
+		f'Atenciosamente,\n{request.comissao_title}'
+	)
+	
+	try:
+		from_address = parseaddr(settings.DEFAULT_FROM_EMAIL)[1]
+		email = EmailMultiAlternatives(
+			subject=subject,
+			body=success_message,
+			from_email=formataddr(('Paraninfo', from_address)),
+			to=[associado.email],
+		)
+		media = tbMediaFiles.objects.filter(id=product.img_id).first()
+		image_html = ''
+		if media:
+			media_folder = media.folder.removeprefix('/media/').strip('/')
+			image_path = (Path(settings.MEDIA_ROOT) / media_folder / media.new_file_name).resolve()
+			if image_path.is_file():
+				image_html = '<p><img src="cid:product-image" alt="Imagem do produto" style="max-width:500px;height:auto;"></p>'
+				image = MIMEImage(image_path.read_bytes())
+				image.add_header('Content-ID', '<product-image>')
+				image.add_header('Content-Disposition', 'inline', filename=media.new_file_name)
+				email.attach(image)
+		html_message = (
+			f'<h2>{escape(subject)}</h2>'
+			f'{image_html}'
+			f'<p><strong>Situação da compra:</strong> {escape(result)}</p>'
+			f'<p><strong>Produto:</strong> {escape(product.produto)}<br>'
+			f'<strong>Quantidade:</strong> {escape(product.descricao)}</p>'
+			f'<p><strong>Valor total:</strong> R$ {product.valor_total}</p>'
+			f'<p>Atenciosamente,<br>{escape(request.comissao_title or "Paraninfo")}</p>'
+		)
+		email.attach_alternative(html_message, 'text/html')
+		email.send(fail_silently=False)
+	except Exception:
+		email_error = True
+
+	return email_error

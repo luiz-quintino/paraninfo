@@ -1,10 +1,13 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Compras pendentes{% endblock %}
 {% block header_title %}Compras pendentes de aprovação{% endblock %}
 
 {% block content %}
-    
+<link rel="stylesheet" href="{% static 'products.css' %}">
+<script src="{% static 'products.js' %}?v=4" defer></script>    
+
     {% if message.text %}
         {% include 'partials/popup_message.html' with message=message %}
     {% endif %}
@@ -29,7 +32,7 @@
         </div>
 
         <!-- Tabela de produtos pendentes -->
-        <form method="post">
+        <form method="post" id="purchase-approvement-form">
             {% csrf_token %}
             <table class="table">
                 <thead>

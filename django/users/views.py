@@ -12,6 +12,7 @@ from django.contrib.auth.views import LoginView
 from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from email.utils import formataddr, parseaddr
 import uuid as uuid_generate # Certifique-se de que o módulo uuid está importado corretamente
 from django.utils.timezone import localtime, get_current_timezone, timezone, now
 from datetime import timedelta, datetime
@@ -32,56 +33,13 @@ from config.menus import menu_url,  MENU_USERS_INCLUIR_USUARIO, \
                                     MENU_VOLTAR, \
                                     MENU_PRODUTOS_USER, \
                                     MENU_PRODUTOS, \
-                                    MENU_BALANCE_MY \
+                                    MENU_BALANCE_MY 
 
 from config.constants import MESSAGE_TYPE_INFO, \
                              MESSAGE_TYPE_ERROR, \
                              MESSAGE_TYPE_WARNING, \
                              MESSAGE_TYPE_SUCCESS, \
                              MESSAGE_TYPE_CONFIRM
-
-
-# # Função para verificar se o usuário pertence ao grupo 'admin'
-# def is_app_admin(request) -> bool:
-#     uuid = request.session['user_data']['user_uuid']
-    
-#     user = User.objects.filter(last_name=uuid).first()
-
-#     is_admin = user.groups.filter(name='sys-admin').exists() or \
-#             user.groups.filter(name='app-admin').exists()
-
-#     if is_admin:
-#         user_ = tbAssociados.objects.filter(uuid=uuid).first()
-#         if user_.situacao.lower() == 'ativo':
-#             return True
-    
-#     return False
-
-# def is_admin(request) -> bool:
-#     uuid = request.session['user_data']['user_uuid']
-
-#     user = User.objects.filter(last_name=uuid).first()
-
-#     is_admin = user.groups.filter(name='sys-admin').exists() or \
-#             user.groups.filter(name='app-admin').exists() or \
-#             user.groups.filter(name='master').exists() or \
-#             user.groups.filter(name='staff').exists()
-
-#     if is_admin:
-#         user_ = tbAssociados.objects.filter(uuid=uuid).first()
-#         if user_.situacao.lower() == 'ativo':
-#             return True
-    
-#     return False
-
-# def user_role(request) -> str:
-#     uuid = request.session['user_data']['user_uuid']
-#     if is_admin(request):
-#         user_ = tbAssociados.objects.filter(uuid=uuid).first()
-#         return user_.tipo.lower()
-
-#     return ''
-
 
 def _digits_only(value: str) -> str:
     return ''.join(character for character in value if character.isdigit())
@@ -93,8 +51,8 @@ def _email_already_in_use(email: str, exclude_uuid=None) -> bool:
     if not email:
         return False
 
-    associates = tbAssociados.objects.filter(email__iexact=email)
-    guests = tbConvidado.objects.filter(email__iexact=email)
+    associates = tbAssociados.objects.filter(email__iexact=email, situacao='ativo')
+    guests = tbConvidado.objects.filter(email__iexact=email, situacao_id=1)
     if exclude_uuid:
         associates = associates.exclude(uuid=exclude_uuid)
         guests = guests.exclude(uuid=exclude_uuid)
@@ -393,25 +351,52 @@ def invitation_view(request, uuid):
     edit_url = request.build_absolute_uri(
         reverse('invitation', kwargs={'uuid': record.uuid})
     )
-    success_message = (
-        'Sua ficha de inscrição foi enviada com sucesso. '
-        'Para modificar e reenviar os dados enquanto estiverem pendentes, use o link enviado para '
-        f'{record.email}.'
-    )
-    email_error = False
-    try:
-        send_mail(
-            subject='Ficha de inscrição enviada com sucesso',
-            message=(
-                f'{success_message}\n\n'
-                f'Link para edição: {edit_url}'
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[record.email],
-            fail_silently=False,
+
+    primeiro_nome = record.nome_responsavel.split()[0].title()
+
+    if convite_field:
+        # Novo registro
+        subject = f'Ficha de Inscrição - {convite_field.nome_curto}'
+        success_message = (
+            f'Ilustre {primeiro_nome},\n\n'
+
+            f'Temos o prazer de informa que a sua Ficha de Inscrição para a {convite_field.nome_curto} foi enviada com sucesso. \n'
+            f'Após a análise da documentação, você receberá um email de confirmação ou alguém irá entrar em contato com você. \n\n'
+
+
+            'Utilize o link abaixo caso necessite alterar alguma informação ou algum docucumento. \n'
+            f'Link para edição: {edit_url}\n'
+            'O link ficará disponível até que sua solicitação seja processada. \n\n\n'
+
+            'Esse é um email automático. Não responda a esse email\n\n'
+
+            'Atenciosamente,\n'
+            f'{convite_field.nome_comissao}\n'
+            f'cnpj:{convite_field.cnpj}'
         )
-    except Exception:
-        email_error = True
+
+    else:
+        # Edita um registro existente
+        subject = f'Ficha de Inscrição - Revisão'
+        success_message = (
+                    f'Ilustre {primeiro_nome},\n\n'
+        
+                    f'Sua Ficha de Inscrição foi atualizada com sucesso. \n'
+                    f'Após a análise da documentação, você receberá um email de confirmação ou alguém irá entrar em contato com você. \n\n'
+        
+        
+                    'Utilize o link abaixo caso necessite alterar alguma informação ou algum docucumento. \n'
+                    f'Link para edição: {edit_url}\n'
+                    'O link ficará disponível até que sua solicitação seja processada. \n\n\n'
+        
+                    'Esse é um email automático. Não responda a esse email\n\n'
+
+                )
+
+    user_email = record.email
+    email_error = send_uer_email(subject, success_message, user_email)
+
+    success_message = f'Ficha de Inscrição enviada com sucesso.\nVocê receberá um email de confirmação.\nUse o link a seguir caso necesside revisar algum dado. {edit_url}'
 
     if email_error:
         success_message += (
@@ -976,7 +961,29 @@ def user_record(request, uuid=None):
                     'text': 'Registro salvo com sucesso!',
                     'title': 'Atualização de registro',
                     }
-        
+
+
+        subject = f'Associação aprovada'
+        primeiro_nome = associado.nome_responsavel.split()[0].title()
+        success_message = (
+            f'Olá, {primeiro_nome}!\n\n'
+
+            f'Gostaríamos de dar-lhe as boas vindas à {request.session['user_data']['comissao_title']}\n\n'
+
+            f'Estamos preparando tudo pra você.\nAguarde algumas horas e acesso o site paraninfo.com.br. Clique em [Esqueci minha senha] e siga as instruções para gerar uma senha e acessar o sistema.\n'
+            f'Acesse o sistema para ver como está o seu pagamento, as últimas notícias e tudo relacionado ao evento de formatua.\n\n'
+
+            f'Atenciosamente,\n'
+            f'{request.session['user_data']['comissao_title']},\n'
+
+                        )
+
+        email_error = send_uer_email(subject, success_message, associado.email)
+        presidente_id = request.session['user_data']['comissao_presidente_id']
+        presidente_email = tbAssociados.objects.filter(id=presidente_id).first().email
+        if presidente_email:
+            email_error = send_uer_email(subject, success_message, presidente_email)
+
         # Atualiza registros
         associado_dict = store_user_fields(associado, convidado, request, uuid)
         
@@ -1080,3 +1087,21 @@ def user_credential(request, uuid):
         'message': message
     }
     return render(request, 'users/user_credential.html', context)
+
+def send_uer_email(subject, message_text, user_email) -> bool:
+    email_error = False
+    from_address = parseaddr(settings.DEFAULT_FROM_EMAIL)[1]
+    try:
+        send_mail(
+            subject=subject,
+            message=(
+                f'{message_text}'
+            ),
+            from_email=formataddr(('Paraninfo', from_address)),
+            recipient_list=[user_email],
+            fail_silently=False,
+        )
+    except Exception:
+        email_error = True
+
+    return email_error

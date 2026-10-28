@@ -90,6 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const purchaseApproveForm = document.getElementById('purchase-approvement-form');
+    purchaseApproveForm?.addEventListener('submit', () => {
+        showLoadingOverlay();
+    });
+
     if (!modal || !optionsElement || !optionSelect) return;
 
     let optionsByProduct;
@@ -194,6 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.add('product-modal-open');
             optionSelect.focus();
         });
+    });
+
+    const purchaseForm = document.getElementById('purchase-plan-form');
+    purchaseForm.addEventListener('submit', () => {
+        submitButton.disabled = true;
+        showLoadingOverlay();
     });
 
     optionSelect.addEventListener('change', renderPlan);

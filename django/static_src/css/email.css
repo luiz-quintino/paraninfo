@@ -1,0 +1,11 @@
+.email-distribution { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.email-distribution section { min-width: 0; }
+.email-recipient-list { min-height: 16rem; max-height: 24rem; overflow-y: auto; border: 1px solid #ccd; border-radius: 6px; padding: .5rem; margin-top: .5rem; }
+.email-recipient-list .recipient { display: block; width: 100%; border: 0; border-bottom: 1px solid #eee; background: #fff; text-align: left; padding: .65rem; cursor: pointer; }
+.email-recipient-list .recipient:hover { background: #eef5ff; }
+.email-table .email-row { cursor: pointer; }
+.email-modal { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: rgba(0,0,0,.55); }
+.email-modal[hidden] { display: none; }
+.email-modal-card { position: relative; width: min(680px, 92vw); max-height: 85vh; overflow-y: auto; background: #fff; border-radius: 8px; padding: 1.5rem; }
+.email-modal-close { position: absolute; right: 1rem; top: .5rem; border: 0; background: transparent; font-size: 1.75rem; cursor: pointer; }
+@media (max-width: 700px) { .email-distribution { grid-template-columns: 1fr; } }
