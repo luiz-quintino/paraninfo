@@ -34,6 +34,17 @@
                 </option>
                 {% endfor %}
             </select>
+
+            {% if is_admin_user %}
+            <label for="status_filter">Status: </label>
+            <select name="status" onchange="toggleFilterPeriod(this)" class="filter-select" id="status_filter">
+                {% for status in status_options %}
+                <option value="{{ status.value }}" {% if selected_status == status.value %}selected{% endif %}>
+                    {{ status.label }}
+                </option>
+                {% endfor %}
+            </select>
+            {% endif %}
         </form>
 
         <table class="table_big_list_simple">
@@ -70,18 +81,8 @@
     <script>
         // Filtra extrato por período
         function toggleFilterPeriod(selectElement) {
-            // Obter a opção selecionada
-            const selectedOption = selectElement.options[selectElement.selectedIndex];
-            // Verifica se o período está selecionado
-            if (selectElement.selectedIndex) {
-                // Exibe a ampulheta
-                showLoadingOverlay();
-                // Se sim, envia o formulário
-                document.getElementById('period_form').submit();
-            } else {
-                // Se não, limpa o filtro
-                // window.location.href = "{% url 'balance:balance' %}";
-            }
+            showLoadingOverlay();
+            document.getElementById('period_form').submit();
         }
 
 

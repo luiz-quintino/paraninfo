@@ -138,6 +138,12 @@ class tbBoleto(models.Model):
 
 
 class tbExtrato(models.Model):
+    STATUS_EXTRATO_NOVO = None
+    STATUS_EXTRATO_CANCELADO = 0
+    STATUS_EXTRATO_CLASSIFICADO = 1
+    STATUS_EXTRATO_INCORPORADO = 2
+    STATUS_EXTRATO_BALANCO_FECHADO = 3
+
     id = models.AutoField(primary_key=True)  # Campo ID como chave primária
     comissao_id = models.IntegerField(null=True, blank=False)
     data = models.DateField(max_length=8, null=True, blank=False)

@@ -182,13 +182,16 @@ def product_list(request, UUID=None):
 					pk=option_id,
 					produto_id=product.id,
 				).first()
+
 				if plan_link is None:
 					raise ValueError('A opção de pagamento selecionada não pertence a este produto.')
 				source_installments = list(tbParcelamento.objects.filter(
 					plano_pagamento=plan_link.plano_pagamento_id
 				).order_by('parcela_numero', 'id'))
+
 				if not source_installments:
 					raise ValueError('O plano selecionado não possui parcelas cadastradas.')
+				
 				purchase_schedule = _build_purchase_schedule(
 					product,
 					plan_link.parcelas_id,		# a vista, parcelado, entrada + parcelas
@@ -375,18 +378,21 @@ def _build_purchase_schedule(product, payment_type_id, source_installments, quan
 			if payment_type_id == 2:
 				if not upcoming:
 					raise ValueError('Não há parcelas a vencer para recalcular este plano.')
+				values = _split_amount(total_value, len(upcoming))
+				due_dates = _monthly_due_dates(len(upcoming), due_day, today)
+			else:  # Manter com datas vencidas
+				if not upcoming:
+					raise ValueError('Não há parcelas a vencer para recalcular este plano.')
+				
 				installment_total = sum(
 					(item.valor for item in source_installments), Decimal('0.00')
 				) * quantity
-				values = _split_amount(installment_total, len(upcoming))
-				due_dates = _monthly_due_dates(len(upcoming), due_day, today)
-			else:						# Manter com datas vencidas
-				if not upcoming:
-					raise ValueError('Não há parcelas a vencer para recalcular este plano.')
+
 				first_value = (
 					sum((item.valor for item in overdue), Decimal('0.00'))
 					+ upcoming[0].valor
-				) * quantity
+				) * quantity + total_value - installment_total
+
 				values = [first_value, *(item.valor * quantity for item in upcoming[1:])]
 				due_dates = _monthly_due_dates(len(upcoming), due_day, today)
 		

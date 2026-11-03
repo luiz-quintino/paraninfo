@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.http import FileResponse, Http404, JsonResponse
 from pathlib import Path
 
-from config.constants import MONTHS
+from config.constants import MONTHS, SKIP_MONTH_CHECK
 from utils import save_log, is_admin, is_app_admin, user_role
 from .services.balance_calc import month_enclosed, user_balance
 
@@ -194,17 +194,18 @@ def close_balance_view(request):
     enclose_month = datetime.now().month
     enclose_month = enclose_month - 1 if enclose_month > 1 else 12
 
-    if enclose_month != comissaodb.mes:
-        if enclose_month > comissaodb.mes:
-            message['text'] = f'Erro na sequência de fechamento. Esperado o mês: {comissaodb.mes}/{comissaodb.ano} '
-        else:
-            message['text'] = f'Aguarde o mês terminar para fazer o fechamento do mês referente à {comissaodb.mes}/{comissaodb.ano} '
+    if not SKIP_MONTH_CHECK:
+        if enclose_month != comissaodb.mes:
+            if enclose_month > comissaodb.mes:
+                message['text'] = f'Erro na sequência de fechamento. Esperado o mês: {comissaodb.mes}/{comissaodb.ano} '
+            else:
+                message['text'] = f'Aguarde o mês terminar para fazer o fechamento do mês referente à {comissaodb.mes}/{comissaodb.ano} '
 
-        message['type'] = MESSAGE_TYPE_WARNING
-        message['function'] = 'submitForm("formSuccess")'
-        close_balance = False
+            message['type'] = MESSAGE_TYPE_WARNING
+            message['function'] = 'submitForm("formSuccess")'
+            close_balance = False
 
-        wrong_month = True
+            wrong_month = True
 
 
     if request.method == 'POST':
@@ -237,13 +238,15 @@ def close_balance_view(request):
             )
 
             if extratos:
-                month_enclosed(comissao, extratos)
+                #**************************************************************
+                # É aqui que a mágica acontece
+                #**************************************************************
+                month_enclosed(request, comissao, extratos)
 
                 message['text'] = f'Fechamento realizado com sucesso. O relatório encontra-se disponível no menu Resumo de operações'
                 message['type'] = MESSAGE_TYPE_INFO
                 message['function'] = 'submitForm("formSuccess")'
                 close_balance = False
-                
 
             else:
                 message['text'] = f'Não existem movimentação para fechamento para o mês {comissaodb.mes}/{comissaodb.ano}'
@@ -300,6 +303,7 @@ def balance_view(request):
         Render the balance view.
     """
     message = {'type': 'info', 'text': '', 'title': 'Extrato de movimentações', 'function': ''}
+    is_admin_user = is_admin(request)
     menu_options = [
         MENU_VOLTAR,
         MENU_CONTABILIDADE_VER_EXTRATO,
@@ -343,10 +347,35 @@ def balance_view(request):
     # Filtra os registros de tbExtrato para o mês e ano da data atual
     extratos = tbExtrato.objects.filter(
         comissao_id=request.comissao if request.comissao else 1,  # Valor padrão para comissao_id
-        status=2,
         data__year=ano_atual,  # Filtra pelo ano
         data__month=mes_atual  # Filtra pelo mês
     )
+
+    status_options = [
+        {'value': '', 'label': 'Todos os status'},
+        {'value': 'novo', 'label': 'Novo'},
+        {'value': str(tbExtrato.STATUS_EXTRATO_CANCELADO), 'label': 'Cancelado'},
+        {'value': str(tbExtrato.STATUS_EXTRATO_CLASSIFICADO), 'label': 'Classificado'},
+        {'value': str(tbExtrato.STATUS_EXTRATO_INCORPORADO), 'label': 'Incorporado'},
+        {'value': str(tbExtrato.STATUS_EXTRATO_BALANCO_FECHADO), 'label': 'Balanço fechado'},
+    ]
+
+    if is_admin_user:
+        selected_status = request.GET.get('status', '')
+        if selected_status == 'novo':
+            extratos = extratos.filter(status__isnull=True)
+        elif selected_status in {
+            str(tbExtrato.STATUS_EXTRATO_CANCELADO),
+            str(tbExtrato.STATUS_EXTRATO_CLASSIFICADO),
+            str(tbExtrato.STATUS_EXTRATO_INCORPORADO),
+            str(tbExtrato.STATUS_EXTRATO_BALANCO_FECHADO),
+        }:
+            extratos = extratos.filter(status=int(selected_status))
+        else:
+            selected_status = ''
+    else:
+        selected_status = str(tbExtrato.STATUS_EXTRATO_BALANCO_FECHADO)
+        extratos = extratos.filter(status=tbExtrato.STATUS_EXTRATO_BALANCO_FECHADO)
 
     extrato_list = []
     for index, extrato in enumerate(extratos):
@@ -367,6 +396,9 @@ def balance_view(request):
         'extrato_list': extrato_list,
         'periodos': periodos,
         'search_query': search_query,
+        'is_admin_user': is_admin_user,
+        'status_options': status_options,
+        'selected_status': selected_status,
     }
     return render(request, 'balance.html', context)
 

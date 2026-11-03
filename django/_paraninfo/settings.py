@@ -50,8 +50,9 @@ INSTALLED_APPS = [
     "home",
     "paraninfo_admin",
     "transaction",
-    "balance"
-    ,"products"
+    "balance",
+    "products",
+    "certificate",
 ]
 
 MIDDLEWARE = [

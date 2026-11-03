@@ -1,10 +1,25 @@
 import pandas as pd
 import regex as re
 from datetime import datetime
-from home.models import lstPagina, tbLog
+from home.models import lstPagina, tbLog, tbSessao
 from users.models import tbAssociados
 from django.contrib.auth.models import User, Group
 
+
+def get_user_from_log_id(log_id) -> int:
+    log = tbLog.objects.filter(
+        id=log_id
+    ).first()
+
+    if log:
+        sessao = tbSessao.objects.filter(
+            id = log.sessao_ativa_id
+        ).first()
+
+        if sessao:
+            return sessao.usuario_id
+
+    return -1
 
 # Função para verificar se o usuário pertence ao grupo 'admin'
 def is_app_admin(request) -> bool:

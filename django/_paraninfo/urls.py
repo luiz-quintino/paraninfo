@@ -18,6 +18,7 @@ urlpatterns = [
     path('transaction/', include('transaction.urls')),  # Inclui as URLs do app users
     path('balance/', include('balance.urls', namespace='balance')),  # Inclui as URLs do app contabilidade
     path('products/', include('products.urls')),
+    path('certificate/', include('certificate.urls')),
 
 ]
 

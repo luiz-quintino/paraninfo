@@ -1,8 +1,9 @@
 from django.conf import settings
 from decimal import Decimal, ROUND_HALF_UP
-from config.constants import MONTHS
+from config.constants import MONTHS, FIELDS_USED_FOR_COTA, SEND_ALL_EMAILS, SKIP_EMAIL_NOTIFICATION_AFTER_CLOSE_BALANCE
 from pathlib import Path
 from transaction.models import tbExtrato, tbTransacao, lsttransacao, tbAssociados
+from products.models import tbProduto
 from balance.models import tbRelatorio
 
 from datetime import datetime, date
@@ -14,15 +15,28 @@ from PyPDF2 import PdfFileReader, PdfFileWriter
 from PIL import ImageFont
 from products.models import tbCompra, tbParcelamento
 from paraninfo_admin.models import tbComissao
+from home.models import tbLog
 import io
 import os
 import copy
 import json
 import math
+from utils import get_user_from_log_id
 
-def month_enclosed(comissao: dict, extratos):
+from certificate.cert_lib.sign_document import signing_by_cert_id
+
+def month_enclosed(request, comissao: dict, extratos):
     """
-        Realiza o fechamento mensal do mês anterior
+    Realiza o fechamento mensal do mês anterior
+    +---------------------+   +----------------------+   +---------------------+   +---------------------+
+    |                     |   |                      |   |                     |   |                     |   
+    | cria relatorio PDF  o-->|Atualiza tbTransacaoo o-->| Atualiza Associados o-->| Atualiza tbComissao |
+    |                     |   |                      |   |                     |   |                     |   
+    +---------------------+   +----------------------+   +---------------------+   +---------------------+
+    cria e assina relatorio  resumo de transações       situação de pagamento     atualiza mês e sequência
+                                no mês e adiciona          de cada associado         de fecamento
+                                cota ao valor do poudto    e envia por email
+
     """
 
     sequence = comissao['sequence']     # 8
@@ -30,8 +44,8 @@ def month_enclosed(comissao: dict, extratos):
     inscricao = comissao['inscricao']   # '1478340/001-2'
     cnpj = comissao['cnpj']             # '50.945.607/0001-12'
     comissao_id = comissao['comissao_id']
-    year = comissao['year']
-    month = comissao['month']
+    year = comissao['year']             # mês para o fechamento
+    month = comissao['month']           # ano para o fechamento
 
     main_data =  {'comissao_id': comissao_id, 'year':year, 'month':month, 'sequence':sequence}
 
@@ -52,7 +66,6 @@ def month_enclosed(comissao: dict, extratos):
         popup_list.append(transacao_.key_name)
 
     # Cria o caminho do modelo de relatório em PDF e da pasta onde será salvo o relatório
-    # TODO colocar em um db os recursos
     model_name = os.path.join(Path(settings.RESOURCES_ROOT), 'livro_caixa_template.pdf')  
     folder_name = f'media/{str(comissao_id)}/reports/{str(year)}'
 
@@ -99,12 +112,32 @@ def month_enclosed(comissao: dict, extratos):
     except Exception as e:
         error['report'] = e
 
+    # try:
+    report_name = settings.BASE_DIR / folder_name / file_name
+
+    user_id_assinaturas = [
+        get_user_from_log_id(extratos[0].log_registro_id),
+        get_user_from_log_id(extratos[0].log_fechamento_id),
+        request.user_id
+    ]
+
+    # assinaturas = list(set(assinaturas))
+
+    for position_id, user_id_assinatura in enumerate(user_id_assinaturas):
+        cert_id = tbAssociados.objects.filter(id=user_id_assinatura).first().certificado
+        report_name, cert_id_new = signing_by_cert_id(file_pdf=report_name, cert_id=cert_id, index_position=position_id, user_id=user_id_assinatura, comissao=comissao['title'])
+        if cert_id != cert_id_new:
+            tbAssociados.objects.filter(id=user_id_assinatura).update(certificado=cert_id_new)
+
     # *******************************************************************************************************************************
     #  Atualiza tbTransacao com os valores totais de cada tipo de transação 
     # *******************************************************************************************************************************
     if not error:
         try:
+            # Atualiza transações com os valores correntes
             update_transactions(transaction_list, transaction_report, totals, main_data)
+            # Atualiza Produtos com o novo valor se o o produto tiver a configuação de atualização automática de cota
+            update_cota_in_product(main_data)
         except Exception as e:
             error['update_transaction'] = e
 
@@ -115,14 +148,14 @@ def month_enclosed(comissao: dict, extratos):
         data__year=year,
         data__month=month,
         status=2, # Extratos prontos para fechamento
-        id=1600,
+        # id=1600,
         ).update(status=3)
 
 
         # *******************************************************************************************************************************
-        #  Atualiza a situação dos pagamentos dos associados
+        #  Atualiza a situação dos pagamentos dos associados e envia email com o resumo
         # *******************************************************************************************************************************
-        update_associado(comissao_id)
+        update_associado(comissao_id, main_data)
 
 
         # *******************************************************************************************************************************
@@ -142,17 +175,23 @@ def month_enclosed(comissao: dict, extratos):
         )
 
 
-def update_associado(comissao_id):
+def update_associado(comissao_id, main_data):
     associados = tbAssociados.objects.filter(
         comissao=comissao_id,
         situacao='Ativo'  # Associado ativo
     )
 
     today = date.today()
+    if today.month != main_data['month'] or today.year != main_data['year']:
+        today = datetime.strptime(f'1/{main_data["month"]}/{main_data["year"]}', "%d/%m/%Y").date()
+
     for associado in associados:
+        # calcula o resumo do historico de pagamento para o associado
         summary = user_balance(associado, today)
+
+        # cria uma pacela de multa se existir pagamento em aberto
         if summary['fine'] > 0 :
-            print(associado.nome_responsavel, summary['balance'], summary['fine'], summary['interest'], summary['plan'])
+            # print(associado.nome_responsavel, summary['balance'], summary['fine'], summary['interest'], summary['plan'])
             parcelamento = tbParcelamento.objects.create(
                             plano_pagamento = summary['plan'],
                             parcela_numero = 0,
@@ -161,6 +200,7 @@ def update_associado(comissao_id):
                             origem = 3  # parcela atuomática
                         ).save()
             
+        # cria uma pacela de juros se existir pagamento em aberto
         if summary['interest'] > 0:
             parcelamento = tbParcelamento.objects.create(
                             plano_pagamento = summary['plan'],
@@ -169,8 +209,41 @@ def update_associado(comissao_id):
                             dt_vencimento = today,
                             origem = 4  # parcela atuomática
                         ).save()
+            
+        if not SKIP_EMAIL_NOTIFICATION_AFTER_CLOSE_BALANCE:
+            send_email_to_associado(associado, summary, main_data)
 
 
+def send_email_to_associado(associado, summary, main_data):
+    from django.core.mail import EmailMessage
+    from django.template.loader import render_to_string
+
+    if SEND_ALL_EMAILS or (not SEND_ALL_EMAILS and associado.email == 'luiz.quintino@gmail.com'):
+        subject = f"Resumo de Pagamento - {main_data['month']}/{main_data['year']}'"
+        message = render_to_string('email_associado_summary.html', {
+            'associado': associado,
+            'summary': summary,
+        })
+        email = EmailMessage(subject, message, to=[associado.email])
+        email.content_subtype = "html"
+        email.send()
+
+
+def update_cota_in_product(main_data):
+    cota_value = tbTransacao.objects.filter(
+                sequencia=main_data.get('sequence'),
+                comissao_id=main_data.get('comissao_id'),
+                transacao_id=40).first() # 40 = Valor da cota
+    value = cota_value.valor if cota_value else 0
+    produtos = tbProduto.objects.filter(
+        ativo=1
+    )
+    
+    for produto in produtos:
+        if produto.ajustar_cota == 1:
+            produto.vr_acrescimo = value
+            produto.save()
+    
 
 def update_transactions(transaction_list, transaction_report, totals, main_data):
     avoid_duplicates = ['Saldo Inicial']
@@ -189,7 +262,7 @@ def update_transactions(transaction_list, transaction_report, totals, main_data)
     
         # soma com o valor atual de transaction_.key_name de totals, se existir
         if transaction_.key_name in totals:
-            valor = valor + float(totals[transaction_.key_name])
+            valor = valor + float(totals[transaction_.key_name])        
 
         # cria um novo registro em tbTransacao com o valor total de cada tipo de transação no mês
         tbTransacao.objects.create( 
@@ -199,6 +272,19 @@ def update_transactions(transaction_list, transaction_report, totals, main_data)
             transacao=transaction_,
             valor=valor
         ).save()
+
+    transaction_ = lsttransacao.objects.filter(id=40).first()
+    # atualiza valor da cota
+    count_users = tbAssociados.objects.filter(situacao='ativo').count() or 1
+    cota = sum([totals.get(field, 0) for field in FIELDS_USED_FOR_COTA])
+    cota = cota / count_users
+
+    tbTransacao.objects.filter( 
+            sequencia=main_data.get('sequence'),
+            data=date(main_data.get('year'), main_data.get('month'), 1),
+            comissao_id=main_data.get('comissao_id'),
+            transacao_id=transaction_,
+        ).update(valor=cota)     # 'Última transação deve ser o valor da cota)
 
 
 def create_account_report(data_list: list, config: dict) -> dict:
@@ -339,6 +425,7 @@ def create_account_report(data_list: list, config: dict) -> dict:
 
 
 def user_balance(associado, today):
+    # Cria uma lista de dicionários com os dados dos extratos e das compras do associado
     rows = []
     extratos = tbExtrato.objects.filter(associado_id=associado.id).select_related('transacao').order_by('data', 'id')
     for extrato in extratos:
@@ -377,7 +464,6 @@ def user_balance(associado, today):
             continue
 
         product_description = 'multa' if installment.origem == 4 else 'juros' if installment.origem == 3 else product.produto
-        # TODO Não mostra link para produto sem uuid
         product_uuid = associado.uuid if installment.origem < 3 else None
         rows.append({
             'date': installment.dt_vencimento,
@@ -394,6 +480,7 @@ def user_balance(associado, today):
     return summary
 
 def _payment_history_summary(rows, today, associado):
+    # Organiza as linhas de extrato e compras em ordem de data e separa em linhas passadas e futuras
     rows = sorted(rows, key=lambda row: (row['date'], row.get('order', 0)))
     past_rows = [row for row in rows if row['date'] <= today]
     future_rows = [row for row in rows if row['date'] > today]
@@ -430,13 +517,16 @@ def _payment_history_summary(rows, today, associado):
         fine = Decimal('0.00')
         interest = Decimal('0.00')
 
+    next_month = today.month #+ 1 if today.month < 12 else 1
+    next_year = today.year #+ 1 if today.month == 1 else today.year
+
     next_debit = sum(
         (
             row['debit']
             for row in future_rows
             if row['debit'] > 0
-            and row['date'].year == today.year
-            and row['date'].month == today.month
+            and row['date'].year == next_year
+            and row['date'].month == next_month
         ),
         Decimal('0.00'),
     )

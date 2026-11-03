@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Resumo de Conta - Associado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            background-color: aquamarine;
+            color: rgb(26, 108, 70);
+            padding: 10px 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            background-color: white;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Resumo Financeiro do Associado</h2>
+        </div>
+        
+        <div class="content">
+            <!-- Supondo que 'associado' seja o objeto passado no contexto -->
+            <p>Olá, <strong>{{ associado.nome_responsavel }}</strong>,</p>
+            <p>Abaixo segue o resumo da sua situação financeira referente ao fechamento do último mês.</p>
+            <p><i>Consulte o seu extrato atualizado em <a href="paraninfo.com.br" target="_blank">paraninfo.com.br</a></i></p>
+            <table class="table_big_list_simple">
+                <tr>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                </tr>
+                <tr>
+                    <td>Total pago</td>
+                    <td>R$ {{ summary.total_paid }}</td>
+                </tr>
+                <tr>
+                    <td>Total débitos</td>
+                    <td>R$ {{ summary.total_debit }}</td>
+                </tr>
+                <tr>
+                    <td>Saldo</td>
+                    <td>R$ {{ summary.balance }}</td>
+                </tr>
+                <tr>
+                    <td>Multa / Juros por débitos em aberto</td>
+                    <td>R$ {{ summary.fine }}</td>
+                </tr>
+                <!-- <tr>
+                    <td>Débitos do próximo mês</td>
+                    <td>R$ {{ summary.next_debit }}</td>
+                </tr> -->
+            </table>
+
+            {% if summary.future_rows %}
+                <h3>Lançamentos Futuros / Pendentes:</h3>
+                <ul>
+                {% for row in summary.future_rows %}
+                    <li>{{ row.date|date:"d/m/Y" }} - {{ row.description }}: R$ {{ row.debit }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            <p>Este é um e-mail automático gerado pelo sistema Paraninfo. Por favor, não responda.</p>
+        </div>
+    </div>
+</body>
+</html>
