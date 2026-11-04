@@ -49,6 +49,10 @@
                     <th>Aluno</th>
                     <th>Nome de Guerra</th>
                     <th>Situação</th>
+                    {% if appa %}
+                        <th>Comissão</th>
+                    {% endif %}
+                    
 
                 </tr>
             </thead>
@@ -60,6 +64,9 @@
                         <td data-label="Aluno">{{ associado.aluno }}</td>
                         <td data-label="Nome de Guerra">{{ associado.nome_de_guerra }}</td>
                         <td data-label="Situação">{{ associado.situacao }}</td>
+                        {% if appa %}
+                            <td data-label="Comissçao">{{ associado.comissao }}</td>
+                        {% endif %}
 
                     </tr>
                 {% empty %}

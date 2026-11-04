@@ -151,9 +151,9 @@
             <!-- Botões de ação -->
             <div class="action-buttons">
                 {% if allow_edition %}
-                    <button type="submit" class="save-button">{% if convidado %}Aceitar convidado{% else %}Salvar{% endif %}</button>
+                    <button type="submit" name='approval' value='approved' class="save-button">{% if convidado %}Aceitar convidado{% else %}Salvar{% endif %}</button>
                     {% if convidado %}
-                        <button type="submit" form="formReject" class="cancel-button">Rejeitar convidado</button>
+                        <button type="submit" name='approval' value='rejected' form="formReject" class="cancel-button">Rejeitar convidado</button>
                     {% else %}
                         <button type="reset" class="cancel-button">Cancelar alterações</button>
                     {% endif %}

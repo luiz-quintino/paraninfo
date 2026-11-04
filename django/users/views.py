@@ -360,7 +360,7 @@ def invitation_view(request, uuid):
         success_message = (
             f'Ilustre {primeiro_nome},\n\n'
 
-            f'Temos o prazer de informa que a sua Ficha de Inscrição para a {convite_field.nome_curto} foi enviada com sucesso. \n'
+            f'Temos o prazer de informar que a sua Ficha de Inscrição para a {convite_field.nome_curto} foi enviada com sucesso. \n\n'
             f'Após a análise da documentação, você receberá um email de confirmação ou alguém irá entrar em contato com você. \n\n'
 
 
@@ -630,17 +630,20 @@ def user_list(request):
         'codigo_associado', 
         'nome_responsavel', 
         'aluno', 
-        'nome_de_guerra'
+        'nome_de_guerra', 
+        'comissao'
     )  # Seleciona apenas os campos necessários
 
     show_search = False  # Oculta a opção de busca
+    appa = False
 
-    if not is_admin(request):
-        # Usuário com acesso "user" verá apenas o próprio registro
-        associados = associados.filter(codigo_associado=request.user.username)
-    else:
+    if is_admin(request) or is_app_admin(request):
         # Usuários com acesso admin verão todos os registros com a mesma comissão
-        associados = associados.filter(comissao=request.comissao).order_by('id') 
+        if is_app_admin(request):
+            associados = associados.filter().order_by('comissao', 'id') 
+            appa = True
+        else:
+            associados = associados.filter(comissao=request.comissao).order_by('id') 
 
         if search_query:
             # Filtrar os registros com base no texto de busca
@@ -655,6 +658,10 @@ def user_list(request):
             menu_options.append(MENU_USERS_INCLUIR_USUARIO) 
             menu_options.append(MENU_USERS_CONVIDADOS)
 
+    else:
+        # Usuário com acesso "user" verá apenas o próprio registro
+        associados = associados.filter(codigo_associado=request.user.username)
+
     # Paginação: 10 registros por página
     paginator = Paginator(associados, 10)
     page_number = request.GET.get('page')
@@ -664,7 +671,8 @@ def user_list(request):
         'associados': associados_page,
         'show_search': show_search,
         'menu_options': menu_options,
-        'count_new_users': count_new_users
+        'count_new_users': count_new_users,
+        'appa': appa
     }
 
     return render(request, 'users/user_list.html', context)  # Renderiza o template com o contexto})
@@ -749,6 +757,7 @@ def user_record(request, uuid=None):
     menu_options = [MENU_VOLTAR]
     convidado = False
     allow_edition = False  
+    approved = False
 
     if uuid:
         # Busca o registro pelo UUID
@@ -815,7 +824,10 @@ def user_record(request, uuid=None):
         })
 
     if request.method == 'POST':
-        if convidado:
+        if convidado and request.POST.get('approval')=='approved':   
+            #****************************************************************************************************
+            # Aprova convidado e salva no registro em tbAssociado
+            #****************************************************************************************************
             can_review_guest = (
                 (is_admin(request) and user_role(request) in ['presidente', 'vice-presidente', 'secretario'])
                 or is_app_admin(request)
@@ -896,27 +908,53 @@ def user_record(request, uuid=None):
                 messages.error(request, 'Não foi possível aprovar o convidado. Nenhuma alteração foi concluída.')
                 return redirect('user_record', uuid=uuid)
 
-            messages.success(request, 'Convidado aprovado e associado criado com situação "novo".')
+            # Envia email de confirmação de associação aprovada
+            subject = f'Associação aprovada'
+            primeiro_nome = associado.nome_responsavel.split()[0].title()
+            success_message = (
+                f'Olá, {primeiro_nome}!\n\n'
+
+                f'Gostaríamos de dar-lhe as boas vindas à {request.session['user_data']['comissao_title']}\n\n'
+
+                f'Estamos preparando tudo pra você.\nAguarde algumas horas e acesso o site paraninfo.com.br. Clique em [Esqueci minha senha] e siga as instruções para gerar uma senha e acessar o sistema.\n'
+                f'Acesse o sistema para ver como está o seu pagamento, as últimas notícias e tudo relacionado ao evento de formatua.\n\n'
+
+                f'Atenciosamente,\n'
+                f'{request.session['user_data']['comissao_title']},\n'
+                            )
+
+            email_error = send_uer_email(subject, success_message, associado.email)
+            presidente_id = request.session['user_data']['comissao_presidente_id']
+            presidente_email = tbAssociados.objects.filter(id=presidente_id).first().email
+            if presidente_email:
+                email_error = send_uer_email(subject, success_message, presidente_email)
+
+            messages.success(request, 'Convidado aprovado com sucesso')
             return redirect('user_record', uuid=associado.uuid)
 
+            #------------------------------------------------------------------------------------------------
+        
+        #****************************************************************************************************
+        # Sava atualização no registro do associado
+        #****************************************************************************************************
         submitted_email = request.POST.get('email', '').strip().lower()
         email_error = ''
         try:
             validate_email(submitted_email)
         except ValidationError:
             email_error = 'Informe um endereço de email válido.'
+
         if not email_error and _email_already_in_use(
             submitted_email,
             exclude_uuid=associado.uuid if uuid else None,
         ):
             email_error = (
-                'Este email já está cadastrado e é utilizado para login. '
+                f'O email "{submitted_email}" já está cadastrado e é utilizado para login. '
                 'Informe outro endereço de email.'
             )
         if email_error:
             return render_email_error(email_error, submitted_email)
 
-        # try:
         # Gera um UUID apenas para novos registros
         if not uuid or convidado:
             associado.data = convert_date(f'{datetime.now().date():%d/%m/%Y}')
@@ -961,28 +999,6 @@ def user_record(request, uuid=None):
                     'text': 'Registro salvo com sucesso!',
                     'title': 'Atualização de registro',
                     }
-
-
-        subject = f'Associação aprovada'
-        primeiro_nome = associado.nome_responsavel.split()[0].title()
-        success_message = (
-            f'Olá, {primeiro_nome}!\n\n'
-
-            f'Gostaríamos de dar-lhe as boas vindas à {request.session['user_data']['comissao_title']}\n\n'
-
-            f'Estamos preparando tudo pra você.\nAguarde algumas horas e acesso o site paraninfo.com.br. Clique em [Esqueci minha senha] e siga as instruções para gerar uma senha e acessar o sistema.\n'
-            f'Acesse o sistema para ver como está o seu pagamento, as últimas notícias e tudo relacionado ao evento de formatua.\n\n'
-
-            f'Atenciosamente,\n'
-            f'{request.session['user_data']['comissao_title']},\n'
-
-                        )
-
-        email_error = send_uer_email(subject, success_message, associado.email)
-        presidente_id = request.session['user_data']['comissao_presidente_id']
-        presidente_email = tbAssociados.objects.filter(id=presidente_id).first().email
-        if presidente_email:
-            email_error = send_uer_email(subject, success_message, presidente_email)
 
         # Atualiza registros
         associado_dict = store_user_fields(associado, convidado, request, uuid)

@@ -241,6 +241,7 @@ def product_list(request, UUID=None):
 
 				messages.success(request, 'Compra registrada com sucesso. Aprovação pendente.')
 				sending_email = purchase_mail (purchase_schedule, product, quantity, request, associado)
+				
 				# payment_text = ''.join([' '.join(['   ',f'{str(compra['number']):2}:',str(compra['due_date'].strftime("%d/%m/%Y")), f'R${compra["value"]:>8.2f}', '\n']) for compra in purchase_schedule])
 				# email_error = False
 				# subject = f'Compra - {product.produto}'
@@ -1020,7 +1021,7 @@ from django.shortcuts import render
 def purchase_mail(purchase_schedule, product, quantity, request, associado) -> bool:
 	payment_text = ''.join([' '.join(['   ',f'{str(compra['number']):2}:',str(compra['due_date'].strftime("%d/%m/%Y")), f'R${compra["value"]:>8.2f}', '\n']) for compra in purchase_schedule])
 	email_error = False
-	subject = f'Recebemos seu pedio para {product.produto}'
+	subject = f'Recebemos seu pedido para {product.produto}'
 	success_message = (
 		f'Compra realizada\n\n'
 		f'Situação: Pendente de aprovação.\n\n'
