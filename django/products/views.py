@@ -357,48 +357,67 @@ def _build_purchase_schedule(product, payment_type_id, source_installments, quan
 	# Ajusta as datas dos plano de pagamento de acordo com a opção em ajustar
 	today = today or date.today()
 	total_value = product.valor_total * quantity
+	installment_total = sum(
+						(item.valor for item in source_installments), Decimal('0.00')
+					) * quantity
+	value_delta = max(total_value - installment_total, Decimal(0))
+	
 	due_day = product.dia_vencimento
 
-	if payment_type_id == 1:	# a vista, parcelado, entrada + parcelas
+	if payment_type_id == 1:		# a vista
 		values = [total_value]
-		due_dates = _monthly_due_dates(1, due_day, today)
-	elif payment_type_id in (2, 3):
+		if product.ajustar_atrasadas == 2:	# (2) manter datas originais
+			due_dates = [item.dt_vencimento for item in source_installments]
+		else:
+			due_dates = _monthly_due_dates(1, due_day, today)
+
+	elif payment_type_id in (2, 3):	# 2 parcelado, 3 entrada + parcelas
 		# ajustar atrasadas: 0 não ajustar (vencimento a partir do próximo mês), 1 ajustar (calcular vencidas e distribuir valores a vencer), 2 manter datas originais
 		
 		# não ajustar
-		if product.ajustar_atrasadas == 0:	# Distribuir em parcelas futuras
+		if product.ajustar_atrasadas == 0:		# (0) Distribuir em parcelas futuras
 			installment_count = max(1, len(source_installments))
-			values = _split_amount(total_value, installment_count)
+			if payment_type_id == 2:				## parcelas 
+				values = _split_amount(total_value + value_delta, installment_count)
+				# values = [source.valor for source in source_installments]
+				# values[0] = values[0] + value_delta
+			if payment_type_id == 3:				## entrada + parcelas iguais
+				values = _split_amount(total_value, installment_count)
+				values[0] = values[0] + value_delta
 			due_dates = _monthly_due_dates(installment_count, due_day, today)
 		
 		#  1 ajustar
-		elif product.ajustar_atrasadas == 1:	# Acumular parcelas vencidas
+		elif product.ajustar_atrasadas == 1:	# (1) Acumular parcelas vencidas
 			overdue = [item for item in source_installments if item.dt_vencimento <= today]
 			upcoming = [item for item in source_installments if item.dt_vencimento > today]
-			if payment_type_id == 2:
+			
+			if payment_type_id == 2:				## parcelas iguais
 				if not upcoming:
 					raise ValueError('Não há parcelas a vencer para recalcular este plano.')
 				values = _split_amount(total_value, len(upcoming))
 				due_dates = _monthly_due_dates(len(upcoming), due_day, today)
-			else:  # Manter com datas vencidas
+
+			elif payment_type_id == 3:  			## entrada + parcelas iguais
 				if not upcoming:
 					raise ValueError('Não há parcelas a vencer para recalcular este plano.')
-				
-				installment_total = sum(
-					(item.valor for item in source_installments), Decimal('0.00')
-				) * quantity
 
 				first_value = (
 					sum((item.valor for item in overdue), Decimal('0.00'))
 					+ upcoming[0].valor
-				) * quantity + total_value - installment_total
+				) * quantity + value_delta
 
 				values = [first_value, *(item.valor * quantity for item in upcoming[1:])]
 				due_dates = _monthly_due_dates(len(upcoming), due_day, today)
 		
-		else: 	# manter datas originais
+		elif product.ajustar_atrasadas == 2:	# (2) manter datas vencidas
 			installment_count = max(1, len(source_installments))
-			values = _split_amount(total_value, installment_count)
+			if payment_type_id == 2:				## parcelas iguais
+				values = [source.valor for source in source_installments]
+				values[0] = values[0] + value_delta
+			elif payment_type_id == 3:  			## entrada + parcelas iguais
+				values = _split_amount(total_value - value_delta, installment_count)
+				values[0] = values[0] + value_delta
+
 			due_dates = [item.dt_vencimento for item in source_installments]
 
 	else:
