@@ -1,3 +1,5 @@
+/* js version 0.0.0 */
+
 // Seleciona os elementos do menu e do botão
 const menu = document.querySelector('.menu-options');
 const menuButton = document.querySelector('.menu-button');
