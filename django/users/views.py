@@ -649,15 +649,16 @@ def user_list(request):
     )  # Exibe apenas se há email/senha, sem trazer os valores para a listagem
 
     show_search = False  # Oculta a opção de busca
-    appa = False
+    appa = 0
 
     if is_admin(request) or is_app_admin(request):
         # Usuários com acesso admin verão todos os registros com a mesma comissão
         if is_app_admin(request):
             associados = associados.filter().order_by('comissao', 'id') 
-            appa = True
+            appa = 2
         else:
             associados = associados.filter(comissao=request.comissao).order_by('id') 
+            appa = 1
 
         
 
