@@ -49,6 +49,7 @@
                     <th>Aluno</th>
                     <th>Nome de Guerra</th>
                     <th>Situação</th>
+                    <th>Acesso</th>
                     {% if appa %}
                         <th>Comissão</th>
                     {% endif %}
@@ -64,6 +65,7 @@
                         <td data-label="Aluno">{{ associado.aluno }}</td>
                         <td data-label="Nome de Guerra">{{ associado.nome_de_guerra }}</td>
                         <td data-label="Situação">{{ associado.situacao }}</td>
+                        <td data-label="Acesso">{% if associado.user_has_email %}✉️{% endif %}{% if associado.user_has_password %}🔑{% endif %}</td>
                         {% if appa %}
                             <td data-label="Comissçao">{{ associado.comissao }}</td>
                         {% endif %}
@@ -71,7 +73,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="4">Nenhum associado encontrado.</td>
+                        <td colspan="{% if appa %}7{% else %}6{% endif %}">Nenhum associado encontrado.</td>
                     </tr>
                 {% endfor %}
             </tbody>

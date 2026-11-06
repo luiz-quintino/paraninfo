@@ -23,9 +23,9 @@ MESSAGE_TYPE_SUCCESS = 'success'
 # Não realiza a congruência do mês atual vs tbComissao para o fechamento mensal em close_balance_view()
 SKIP_MONTH_CHECK = True
 # Não envia email de notificação para associado após o fechamento mensal
-SKIP_EMAIL_NOTIFICATION_AFTER_CLOSE_BALANCE = False
+SKIP_EMAIL_NOTIFICATION_AFTER_CLOSE_BALANCE = True
 # Envia somente email de teste
-SEND_ALL_EMAILS = False
+SEND_ALL_EMAILS = True
 
 # Seleção de registos para realiar o cálculo do valor extra para coto de lsttransacao
 FIELDS_USED_FOR_COTA = ['Doação recebida', 'Arrecadação de Eventos', 'Rendimento aplicação']

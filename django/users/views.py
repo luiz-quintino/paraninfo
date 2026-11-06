@@ -24,7 +24,8 @@ from utils import convert_date, save_log, is_admin, is_app_admin, user_role
 from django.core.files.storage import FileSystemStorage
 from django.core.files.storage import default_storage
 from django.db import IntegrityError, transaction as db_transaction
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
+from django.db.models.functions import Collate
 from config.menus import menu_url,  MENU_USERS_INCLUIR_USUARIO, \
                                     MENU_USERS_DEFINICAO_ACESSO, \
                                     MENU_USERS_CONVIDADOS, \
@@ -632,7 +633,20 @@ def user_list(request):
         'aluno', 
         'nome_de_guerra', 
         'comissao'
-    )  # Seleciona apenas os campos necessários
+    ).annotate(
+        user_has_email=Exists(
+            User.objects.filter(
+                last_name=Collate(OuterRef('uuid'), 'utf8mb4_unicode_ci'),
+                email__gt='',
+            )
+        ),
+        user_has_password=Exists(
+            User.objects.filter(
+                last_name=Collate(OuterRef('uuid'), 'utf8mb4_unicode_ci'),
+                password__gt='',
+            )
+        ),
+    )  # Exibe apenas se há email/senha, sem trazer os valores para a listagem
 
     show_search = False  # Oculta a opção de busca
     appa = False
@@ -644,6 +658,8 @@ def user_list(request):
             appa = True
         else:
             associados = associados.filter(comissao=request.comissao).order_by('id') 
+
+        
 
         if search_query:
             # Filtrar os registros com base no texto de busca
