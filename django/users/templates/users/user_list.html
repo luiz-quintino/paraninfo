@@ -44,6 +44,7 @@
         <table class="table">
             <thead>
                 <tr>
+                    <th>Código de pagamento</th>
                     <th>Código do Associado</th>
                     <th>Nome do Responsável</th>
                     <th>Aluno</th>
@@ -62,6 +63,7 @@
             <tbody>
                 {% for associado in associados %}
                     <tr onclick="window.location.href='{% url 'user_record' uuid=associado.uuid %}';" style="cursor: pointer;">
+                        <td data-label="Código de pagamento">{{ associado.codigo_pagamento }}</td>
                         <td data-label="Código do Associado">{{ associado.codigo_associado }}</td>
                         <td data-label="Nome do Responsável">{{ associado.nome_responsavel }}</td>
                         <td data-label="Aluno">{{ associado.aluno }}</td>
@@ -71,7 +73,7 @@
                             <td data-label="Acesso">{% if associado.user_has_email %}✉️{% endif %}{% if associado.user_has_password %}🔑{% endif %}</td>
                          {% endif %}
                         {% if appa == 2 %}
-                            <td data-label="Comissçao">{{ associado.comissao }}</td>
+                            <td data-label="Comissão">{{ associado.comissao }}</td>
                         {% endif %}
 
                     </tr>

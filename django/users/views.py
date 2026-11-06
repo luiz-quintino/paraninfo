@@ -628,6 +628,7 @@ def user_list(request):
     search_query = request.GET.get('search', '')  # Obtém o texto do filtro
     associados = tbAssociadosListView.objects.only(
         'uuid',
+        'codigo_pagamento',
         'codigo_associado', 
         'nome_responsavel', 
         'aluno', 
@@ -654,10 +655,10 @@ def user_list(request):
     if is_admin(request) or is_app_admin(request):
         # Usuários com acesso admin verão todos os registros com a mesma comissão
         if is_app_admin(request):
-            associados = associados.filter().order_by('comissao', 'id') 
+            associados = associados.filter().order_by('comissao', 'codigo_pagamento') 
             appa = 2
         else:
-            associados = associados.filter(comissao=request.comissao).order_by('id') 
+            associados = associados.filter(comissao=request.comissao).order_by('codigo_pagamento') 
             appa = 1
 
         
