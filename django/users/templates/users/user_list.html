@@ -70,7 +70,7 @@
                         {% if appa > 0 %}
                             <td data-label="Acesso">{% if associado.user_has_email %}✉️{% endif %}{% if associado.user_has_password %}🔑{% endif %}</td>
                          {% endif %}
-                        {% if appa %}
+                        {% if appa == 2 %}
                             <td data-label="Comissçao">{{ associado.comissao }}</td>
                         {% endif %}
 
