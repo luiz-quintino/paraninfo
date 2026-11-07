@@ -178,7 +178,7 @@ def month_enclosed(request, comissao: dict, extratos):
 
     if error:
         for k, v in error.items():
-            error_description = f'{k}: {v.__doc__}, {','.join(e.args)}'
+            error_description = f'{k}: {v.__doc__}, {','.join(v.args)}'
             error_description = error_description[:255]
             save_log(request, error_description, 21)    # Erro de execução 
 
