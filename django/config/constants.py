@@ -32,3 +32,7 @@ FIELDS_USED_FOR_COTA = ['Doação recebida', 'Arrecadação de Eventos', 'Rendim
 
 # Indice para registrar o valor da última diferença de cota
 FIELD_COTA_ID = 40
+
+
+# Usuário
+ATIVO = 'ativo'

@@ -605,7 +605,7 @@ def product_new(request):
 				vr_acrescimo=increase,
 				dia_vencimento=due_day,
 				ajustar_atrasadas=int(request.POST.get('adjust')),
-				ativo=int(request.POST.get('ativo')),
+				ativo=int(request.POST.get(ATIVO)),
 				log_id=log_id
 			)
 
@@ -823,7 +823,7 @@ def product_edit(request, product_id):
 				product.dt_inicio = start_date
 				product.dt_previsao = forecast_date
 				product.dia_vencimento = due_day
-				product.ativo = int(request.POST.get('ativo'))
+				product.ativo = int(request.POST.get(ATIVO))
 				product.ajustar_atrasadas = int(request.POST.get('adjust'))
 				product.parcelas = max(len(schedule) for _, schedule in validated_plans)
 

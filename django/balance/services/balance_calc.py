@@ -21,7 +21,8 @@ import os
 import copy
 import json
 import math
-from utils import get_user_from_log_id
+from utils import get_user_from_log_id, save_log
+from config.constants import ATIVO
 
 from certificate.cert_lib.sign_document import signing_by_cert_id
 
@@ -107,27 +108,28 @@ def month_enclosed(request, comissao: dict, extratos):
     # Cria o relatório em PDF usando o modelo e os dados coletados
     # *******************************************************************************************************************************
     error = {}
+    report_name = ''
     try:
         file_name, totals = create_account_report(data_list, config)
+        report_name = settings.BASE_DIR / folder_name / file_name
     except Exception as e:
         error['report'] = e
 
     # try:
-    report_name = settings.BASE_DIR / folder_name / file_name
+    if not error:
+        user_id_assinaturas = [
+            get_user_from_log_id(extratos[0].log_registro_id),
+            get_user_from_log_id(extratos[0].log_fechamento_id),
+            request.user_id
+        ]
 
-    user_id_assinaturas = [
-        get_user_from_log_id(extratos[0].log_registro_id),
-        get_user_from_log_id(extratos[0].log_fechamento_id),
-        request.user_id
-    ]
+        # assinaturas = list(set(assinaturas))
 
-    # assinaturas = list(set(assinaturas))
-
-    for position_id, user_id_assinatura in enumerate(user_id_assinaturas):
-        cert_id = tbAssociados.objects.filter(id=user_id_assinatura).first().certificado
-        report_name, cert_id_new = signing_by_cert_id(file_pdf=report_name, cert_id=cert_id, index_position=position_id, user_id=user_id_assinatura, comissao=comissao['title'])
-        if cert_id != cert_id_new:
-            tbAssociados.objects.filter(id=user_id_assinatura).update(certificado=cert_id_new)
+        for position_id, user_id_assinatura in enumerate(user_id_assinaturas):
+            cert_id = tbAssociados.objects.filter(id=user_id_assinatura).first().certificado
+            report_name, cert_id_new = signing_by_cert_id(file_pdf=report_name, cert_id=cert_id, index_position=position_id, user_id=user_id_assinatura, comissao=comissao['title'])
+            if cert_id != cert_id_new:
+                tbAssociados.objects.filter(id=user_id_assinatura).update(certificado=cert_id_new)
 
     # *******************************************************************************************************************************
     #  Atualiza tbTransacao com os valores totais de cada tipo de transação 
@@ -174,11 +176,17 @@ def month_enclosed(request, comissao: dict, extratos):
             data=date.today()
         )
 
+    if error:
+        for err in error:
+            error_description = err.__str__
+            error_description = error_description[:45]
+            save_log(request, error_description, 21)    # Erro de execução 
+
 
 def update_associado(comissao_id, main_data):
     associados = tbAssociados.objects.filter(
         comissao=comissao_id,
-        situacao='Ativo'  # Associado ativo
+        situacao=ATIVO  # Associado ativo
     )
 
     today = date.today()
@@ -275,7 +283,7 @@ def update_transactions(transaction_list, transaction_report, totals, main_data)
 
     transaction_ = lsttransacao.objects.filter(id=40).first()
     # atualiza valor da cota
-    count_users = tbAssociados.objects.filter(situacao='ativo').count() or 1
+    count_users = tbAssociados.objects.filter(situacao=ATIVO).count() or 1
     cota = sum([totals.get(field, 0) for field in FIELDS_USED_FOR_COTA])
     cota = cota / count_users
 

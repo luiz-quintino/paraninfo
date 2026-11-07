@@ -12,7 +12,8 @@
 {% block content %}
     {% if user.is_authenticated %}
         <h1>Bem-vindo, {{ request.session.apelido }}!</h1>
-        <p>Você está logado em {{ request.comissao_title }}.</p>
+
+        <p>Você está logado em <i>{{ request.comissao_title }}</i> como {{ request.session.funcao }}</p>
  
         <p>
             {% with user.first_name|split:" " as name_parts %}

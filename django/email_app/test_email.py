@@ -7,6 +7,7 @@ from django.urls import reverse
 from email_app.models import tbEmail
 from email_app.views import email_detail
 from users.models import tbAssociados
+from config.constants import ATIVO
 
 
 class EmailViewTests(TestCase):
@@ -14,7 +15,7 @@ class EmailViewTests(TestCase):
         self.user = User.objects.create_user(username='sender', password='test')
         self.associado = tbAssociados.objects.create(
             uuid='sender-uuid', nome_responsavel='Remetente', email='sender@example.com',
-            comissao=1, situacao='ativo', cpf='000', telefone='000',
+            comissao=1, situacao=ATIVO, cpf='000', telefone='000',
             aluno='Aluno', nome_de_guerra='Guerra', codigo_associado='0001',
         )
         self.user.last_name = self.associado.uuid
@@ -24,7 +25,7 @@ class EmailViewTests(TestCase):
 
         self.recipient = tbAssociados.objects.create(
             uuid='recipient-uuid', nome_responsavel='Destinatário', email='dest@example.com',
-            comissao=1, situacao='ativo', cpf='111', telefone='111',
+            comissao=1, situacao=ATIVO, cpf='111', telefone='111',
             aluno='Aluno', nome_de_guerra='Guerra', codigo_associado='0002',
         )
 

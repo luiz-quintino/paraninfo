@@ -4,7 +4,7 @@ from datetime import datetime
 from home.models import lstPagina, tbLog, tbSessao
 from users.models import tbAssociados
 from django.contrib.auth.models import User, Group
-
+from config.constants import ATIVO
 
 def get_user_from_log_id(log_id) -> int:
     log = tbLog.objects.filter(
@@ -32,7 +32,7 @@ def is_app_admin(request) -> bool:
 
     if is_admin:
         user_ = tbAssociados.objects.filter(uuid=uuid).first()
-        if user_.situacao.lower() == 'ativo':
+        if user_.situacao.lower() == ATIVO:
             return True
     
     return False
@@ -49,18 +49,16 @@ def is_admin(request) -> bool:
 
     if is_admin:
         user_ = tbAssociados.objects.filter(uuid=uuid).first()
-        if user_.situacao.lower() == 'ativo':
+        if user_.situacao.lower() == ATIVO:
             return True
     
     return False
 
 def user_role(request) -> str:
     uuid = request.session['user_data']['user_uuid']
-    if is_admin(request):
-        user_ = tbAssociados.objects.filter(uuid=uuid).first()
-        return user_.tipo.lower()
-
-    return ''
+    # if is_admin(request):
+    user_ = tbAssociados.objects.filter(uuid=uuid).first()
+    return user_.tipo.lower()
 
 def convert_date(date_str) -> str:
     date = ""

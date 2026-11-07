@@ -42,6 +42,8 @@ from config.constants import MESSAGE_TYPE_INFO, \
                              MESSAGE_TYPE_SUCCESS, \
                              MESSAGE_TYPE_CONFIRM
 
+from config.constants import ATIVO
+
 def _digits_only(value: str) -> str:
     return ''.join(character for character in value if character.isdigit())
 
@@ -52,7 +54,7 @@ def _email_already_in_use(email: str, exclude_uuid=None) -> bool:
     if not email:
         return False
 
-    associates = tbAssociados.objects.filter(email__iexact=email, situacao='ativo')
+    associates = tbAssociados.objects.filter(email__iexact=email, situacao=ATIVO)
     guests = tbConvidado.objects.filter(email__iexact=email, situacao_id=1)
     if exclude_uuid:
         associates = associates.exclude(uuid=exclude_uuid)
@@ -756,7 +758,7 @@ def store_user_fields(associado, convidado, request, uuid):
         associado_dict['codigo_associado'] = f"{request.comissao:02}{associado.matricula}{codigo_pagamento}"
         associado_dict['codigo_pagamento'] = codigo_pagamento
         associado_dict['tipo'] = 'socio'  
-        associado_dict['situacao'] = 'ativo'
+        associado_dict['situacao'] = ATIVO
 
     else:
         # registros para usuários atuais
@@ -815,7 +817,7 @@ def user_record(request, uuid=None):
         if uuid and (user_role(request) in ['presidente', 'vice-presidente', 'secretario'] or is_app_admin(request)):           
             menu_options.append(menu_url(MENU_PRODUTOS, url=reverse('products:product_list', kwargs={'UUID': associado.uuid})))
 
-        if request.session['user_uuid'] == uuid or  (user_role(request) in ['presidente', 'vice-presidente', 'secretario'] or is_app_admin(request)):
+        if request.session['user_uuid'] == uuid or (uuid and (user_role(request) in ['presidente', 'vice-presidente', 'secretario'] or is_app_admin(request))):
             menu_options.append(menu_url(MENU_PRODUTOS_USER, url=reverse('products:product_my_list', kwargs={'UUID': associado.uuid})))
             menu_options.append(menu_url(MENU_BALANCE_MY, url=reverse('balance:balance_my', kwargs={'usuario': associado.uuid})))
     

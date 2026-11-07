@@ -60,7 +60,7 @@ def boleto_manual_view(request):
 
     associados = tbAssociados.objects.filter(
             comissao=request.comissao,
-            situacao="ativo",  # Filtra apenas associados ativos
+            situacao=ATIVO,  # Filtra apenas associados ativos
             ).order_by('nome_responsavel')
     
     mensalidade = 0.0
@@ -193,7 +193,7 @@ def boleto_view(request):
                 # Gera boletos para todos os associados mensalmente
                 resumo_associado = tbAssociados.objects.filter(
                     comissao=request.comissao,
-                    situacao="ativo",  # Filtra apenas associados ativos
+                    situacao=ATIVO,  # Filtra apenas associados ativos
                     ).order_by('id')
 
             else:
@@ -201,7 +201,7 @@ def boleto_view(request):
                 mensalidade20 = mensalidade * 0.2  # 20% do valor da mensalidade
                 resumo_associado = tbAssociados.objects.filter(
                     comissao=request.comissao,
-                    situacao="ativo",  # Filtra apenas associados ativos
+                    situacao=ATIVO,  # Filtra apenas associados ativos
                     resumo_associado__valor_em_aberto__gt=mensalidade20
                         ).annotate(
                             valor_em_aberto=Subquery(
@@ -885,7 +885,7 @@ def analise_movimentacao_view(request):
     # Lê tabela tbAssociado para preencher os códigos de pagamento (filtrando por comissão atual)
     associados = tbAssociados.objects.filter(
         comissao=request.comissao,  # Filtrar por comissão atual
-        situacao='ativo',
+        situacao=ATIVO,
     ).order_by('id')
     
     

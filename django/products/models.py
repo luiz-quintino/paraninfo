@@ -1,6 +1,6 @@
 from django.db import models
 from users.models import tbAssociados
-
+from config.constants import ATIVO
 
 class lstprodutoativo(models.Model):
 	id = models.AutoField(primary_key=True)
@@ -34,7 +34,7 @@ class tbProduto(models.Model):
 		db_column='lstprodutoativo_id',
 		null=True,
 		blank=True,
-		related_name='ativo'
+		related_name=ATIVO
 	)
 	ativo = models.IntegerField()
 

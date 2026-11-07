@@ -2,40 +2,33 @@
     <hr>
     <div class="footer_page">
         <p>Paraninfo foi desenvolvido para auxiliar na gestão de associações e entidades.</p>
-        <p>&copy; Paraninfo 2026.Todos os direitos reservados. Versão 0.1.1</p>
+        <p>&copy; Paraninfo 2026.Todos os direitos reservados. Versão 0.2.0</p>
     </div>
     {% if DEVELOPMENT_ENVIRONMENT %}
-        <p>
-            Informações para depuração:
-        </p>
-        
-        {% if user.is_authenticated %}
-
-            <p>GrupoAdmim: 
-                {% if reuest.is_admin %}
-                    sim
-                {% else %}
-                    não
-                {% endif %}
+        <div class="debug_page">
+            <p>
+                Informações para depuração:
             </p>
+            
+            {% if user.is_authenticated %}
+                <p>Grupo: 
+                    {% if request.is_admin %}
+                        admin,
+                    {% endif %}
+    
+                    {% if request.is_sys_admin %}
+                        is_sys_admin,
+                    {% endif %}
 
-            <p>is_sys_admin: 
-                {% if request.is_sys_admin %}
-                    sim
-                {% else %}
-                    não
-                {% endif %}
-            </p>
-            <p>is_app_admin: 
-                {% if request.is_app_admin %}
-                    sim
-                {% else %}
-                    não
-                {% endif %}
-            </p>
+                    {% if request.is_app_admin %}
+                        is_app_admin
+                    {% endif %}
 
-        {% endif %}
-        <p>Página atual: {{ request.comissao }} </p>
-        <p>Página atual: {{ request.resolver_match.url_name }}</p>
+                    {{ request.session.funcao }}
+                </p>
+
+            {% endif %}
+            <p>Página atual: {{ request.comissao }}, {{ request.resolver_match.url_name }}</p>
+        </div>    
     {% endif %}
 </footer>

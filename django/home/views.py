@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from config.menus import MENU_AJUDA
-
+from utils import user_role
 
 
 def home_view(request):
@@ -33,11 +33,11 @@ def home_view(request):
         # Armazena o apelido e o UUID na sessão
         request.session['apelido'] = apelido
         request.session['user_uuid'] = request.user.last_name
+        request.session['funcao'] = user_role(request)
 
         fields = ['COMPUTERNAME', 'HOMEPATH', 'LANG', 'LOGONSERVER', 'OS', 'USERDOMAIN', 'USERNAME', 'HTTP_HOST']
         # for field in fields:
             # print(f"Valor do campo {field}: {getattr(request.user, field, 'Campo não encontrado')}")
-    
 
     else:
         # Define valores padrão para usuários não autenticados

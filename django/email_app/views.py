@@ -12,6 +12,7 @@ from home.models import tbLog, tbSessao
 from email_app.models import tbEmail
 from users.models import tbAssociados
 from utils import save_log
+from config.constants import ATIVO
 
 
 def _email_permission(request):
@@ -28,7 +29,7 @@ def email(request):
 
     associados = tbAssociados.objects.filter(
         comissao=request.comissao,
-        situacao='ativo',
+        situacao=ATIVO,
     ).exclude(email__isnull=True).exclude(email='').order_by('nome_responsavel')
 
     if request.method == 'POST':
