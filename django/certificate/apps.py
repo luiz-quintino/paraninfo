@@ -14,6 +14,7 @@ class CertificadoConfig(AppConfig):
             # Importe sua função aqui dentro para evitar problemas de importação circular
             from .cert_lib.sign_document import intall_root_certificate_and_check_validity
 
+            os.makedirs("cert/", exist_ok=True)
             intall_root_certificate_and_check_validity()
             
             # (Opcional) Adicione uma trava para garantir que rode apenas uma vez 
