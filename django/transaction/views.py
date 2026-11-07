@@ -20,7 +20,7 @@ from config.constants import MESSAGE_TYPE_INFO, \
                                         MESSAGE_TYPE_SUCCESS, \
                                             MESSAGE_TYPE_CONFIRM
 
-from utils import  convert_date, save_log, get_user_by_responsible_name, is_app_admin, is_admin, user_role
+from utils import  convert_date, save_log, get_user_by_responsible_name, is_app_admin, is_admin, user_role, ATIVO
 
 from .services.imports import process_sicoob_input_txt, process_sicoob_input_xls, import_boletos_xls, identify_transaction
                     
