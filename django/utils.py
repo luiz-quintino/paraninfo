@@ -5,6 +5,20 @@ from home.models import lstPagina, tbLog, tbSessao
 from users.models import tbAssociados
 from django.contrib.auth.models import User, Group
 from config.constants import ATIVO
+import os, traceback
+
+def save_erro_log(request, error: dict):
+    if error:
+        for k, v in error.items():
+            frames = traceback.extract_tb(v.__traceback__)
+            if frames:
+                erro = frames[-1]
+                file_error = os.path.split(erro.filename)[-1]
+                error_description = f"{k}::{v} in {file_error}.{erro.name}: {erro.lineno} {erro.line}"
+
+                error_description = error_description[:255]
+                save_log(request, error_description, 21)    # Erro de execução 
+
 
 def get_user_from_log_id(log_id) -> int:
     log = tbLog.objects.filter(

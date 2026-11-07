@@ -31,16 +31,6 @@ def home_view(request):
         else:
             apelido = name_parts[0]
 
-        try:
-            print(1/0)
-        except Exception as e:
-            frames = traceback.extract_tb(e.__traceback__)
-            if frames:
-                erro = frames[-1]
-                print(f"Arquivo: {erro.filename}, linha: {erro.lineno}, função: {erro.name}")
-                print(f"Código: {erro.line}")
-                print(f"Erro: {e}")
-
         # Armazena o apelido e o UUID na sessão
         request.session['apelido'] = apelido
         request.session['user_uuid'] = request.user.last_name

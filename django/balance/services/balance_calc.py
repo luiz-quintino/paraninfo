@@ -22,7 +22,7 @@ import os
 import copy
 import json
 import math
-from utils import get_user_from_log_id, save_log
+from utils import get_user_from_log_id, save_erro_log
 from config.constants import ATIVO
 
 from certificate.cert_lib.sign_document import signing_by_cert_id
@@ -111,7 +111,7 @@ def month_enclosed(request, comissao: dict, extratos):
     error = {}
     report_name = ''
     try:
-        file_name, totals = create_account_report(data_list, config)
+        file_name, totals = create_account_report(request, data_list, config)
         report_name = settings.BASE_DIR / folder_name / file_name
     except Exception as e:
         error['report'] = e
@@ -158,8 +158,10 @@ def month_enclosed(request, comissao: dict, extratos):
         # *******************************************************************************************************************************
         #  Atualiza a situação dos pagamentos dos associados e envia email com o resumo
         # *******************************************************************************************************************************
-        update_associado(comissao_id, main_data)
-
+        try:
+            update_associado(comissao_id, main_data)
+        except Exception as e:
+            error['update_associado'] = e
 
         # *******************************************************************************************************************************
         #  Atualiza fechamento em tbComissao
@@ -178,17 +180,7 @@ def month_enclosed(request, comissao: dict, extratos):
         )
 
     if error:
-        for k, v in error.items():
-            frames = traceback.extract_tb(v.__traceback__)
-            if frames:
-                erro = frames[-1]
-                file_error = os.path.split(erro.filename)[-1]
-                error_description = f"{v} in {file_error}.{erro.name}: {erro.lineno} {erro.line}"
-                # print(f"Erro: {e}")
-
-
-            error_description = error_description[:255]
-            save_log(request, error_description, 21)    # Erro de execução 
+        save_erro_log(request, error)
 
 
 def update_associado(comissao_id, main_data):
@@ -303,8 +295,9 @@ def update_transactions(transaction_list, transaction_report, totals, main_data)
         ).update(valor=cota)     # 'Última transação deve ser o valor da cota)
 
 
-def create_account_report(data_list: list, config: dict) -> dict:
+def create_account_report(request, data_list: list, config: dict) -> dict:
     """ Cria o relatório em PDF usando o modelo e os dados coletados """
+    error = {}
     pdf_in = PdfFileReader(config.get('model_name'))
     pdf_out = PdfFileWriter()
 
@@ -322,8 +315,10 @@ def create_account_report(data_list: list, config: dict) -> dict:
     l_pages += [(items + 10) % 35] if items > 35 else [items] if items < 25 else [35 - items]
     # l_pages = [5, 16, 8, 5]
     font_file = os.path.join(Path(settings.RESOURCES_ROOT), 'resources/times.ttf')
+    # if os.path.exists(font_file):
+        # pass
     # pdfmetrics.registerFont(TTFont('Times-Roman', font_file._str)) #??
-    font = ImageFont.truetype(font_file, 12)
+    # font = ImageFont.truetype(font_file, 12)
     # sizex, sizey = font.getsize('A')
     sizex = math.ceil(pdfmetrics.stringWidth('A', 'Times-Roman', 12)) 
     ascent,descent = pdfmetrics.getAscentDescent('Times-Roman', 12)
@@ -434,8 +429,14 @@ def create_account_report(data_list: list, config: dict) -> dict:
     # Cria o caminho, se não existe
     os.makedirs(config.get('folder_name'), exist_ok=True)
 
-    with open(os.path.join(config.get('folder_name'), file_name), 'wb') as of:
-        pdf_out.write(of)
+    try:
+        with open(os.path.join(config.get('folder_name'), file_name), 'wb') as of:
+            pdf_out.write(of)
+    except Exception as e:
+            error['pdf_out.write'] = e
+
+    if error:
+        save_erro_log(request, error)
 
     return file_name, totals
 

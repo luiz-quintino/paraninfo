@@ -243,7 +243,7 @@ def close_balance_view(request):
                 #**************************************************************
                 month_enclosed(request, comissao, extratos)
 
-                message['text'] = f'Fechamento realizado com sucesso. O relatório encontra-se disponível no menu Resumo de operações'
+                message['text'] = f'Fechamento realizado com sucesso. O relatório encontra-se disponível no menu Livro Caixa'
                 message['type'] = MESSAGE_TYPE_INFO
                 message['function'] = 'submitForm("formSuccess")'
                 close_balance = False
