@@ -17,6 +17,9 @@ db/
 *.gz
 *.7z
 
+# Local certificates
+django/cert
+
 # Distribution / packaging
 .Python
 build/
