@@ -6,14 +6,12 @@ import uuid as uuid_generate # Certifique-se de que o módulo uuid está importa
 from django.urls import reverse
 from config.menus import menu_url, MENU_VOLTAR, MENU_CLIENTS_INCLUIR_COMISSAO
 from utils import save_log
+from django.contrib.auth.decorators import user_passes_test, login_required
 
 uuid = ''
 
-# Função para verificar se o usuário pertence ao grupo 'sys_admin'
-def is_sys_admin(user):
-    return user.groups.filter(name='sys-admin').exists()
 
-@user_passes_test(is_sys_admin)
+@login_required()
 def client_details(request, uuid=None):
     menu_options = [MENU_VOLTAR]
 
@@ -70,7 +68,7 @@ def client_details(request, uuid=None):
     
     return render(request, 'paraninfo_admin/client_details.html', context)
 
-@user_passes_test(is_sys_admin)
+@login_required
 def client_list(request):
     menu_options = [MENU_VOLTAR]
     search_query = request.GET.get('search', '')  # Obtém o texto de busca
@@ -90,7 +88,7 @@ def client_list(request):
             presidente__icontains=search_query
         )
 
-
+    # TODO need app admin?
     menu_options.append(MENU_CLIENTS_INCLUIR_COMISSAO)
     
     context = {
