@@ -5,6 +5,7 @@ from pathlib import Path
 from transaction.models import tbExtrato, tbTransacao, lsttransacao, tbAssociados
 from products.models import tbProduto
 from balance.models import tbRelatorio
+import traceback
 
 from datetime import datetime, date
 from reportlab.pdfgen import canvas
@@ -178,7 +179,14 @@ def month_enclosed(request, comissao: dict, extratos):
 
     if error:
         for k, v in error.items():
-            error_description = f'{k}: {v.__doc__}, {','.join(v.args)}'
+            frames = traceback.extract_tb(v.__traceback__)
+            if frames:
+                erro = frames[-1]
+                file_error = os.path.split(erro.filename)[-1]
+                error_description = f"{v} in {file_error}.{erro.name}: {erro.lineno} {erro.line}"
+                # print(f"Erro: {e}")
+
+
             error_description = error_description[:255]
             save_log(request, error_description, 21)    # Erro de execução 
 
