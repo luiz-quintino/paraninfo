@@ -37,7 +37,7 @@ class tbLog(models.Model):
     pagina_id = models.IntegerField()  # Campo inteiro para identificar a página
     evento_log_id = models.IntegerField()  # Campo inteiro para identificar o evento
     sessao_ativa_id = models.IntegerField()  
-    descricao = models.CharField(max_length=45)
+    descricao = models.CharField(max_length=255)
 
     class Meta:
         db_table = 'tbLog'  # Nome da tabela no banco de dados

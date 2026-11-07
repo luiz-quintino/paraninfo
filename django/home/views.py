@@ -29,7 +29,7 @@ def home_view(request):
             apelido = f"{name_parts[0]} {name_parts[1]}"
         else:
             apelido = name_parts[0]
-        
+
         # Armazena o apelido e o UUID na sessão
         request.session['apelido'] = apelido
         request.session['user_uuid'] = request.user.last_name
