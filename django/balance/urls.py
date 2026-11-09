@@ -5,8 +5,9 @@ from . import views
 app_name = "balance"
 
 urlpatterns = [
-    path("", views.balance_view, name="balance"), 
+    path("", views.balance_overview, name="balance"), 
     path("balance-overview/", views.balance_overview, name="balance-overview"),
+    path("balance-extract/", views.balance_extract_view, name="balance-extract"),
     path("reports/<int:report_id>/file/", views.balance_report_file, name="balance-report-file"),
     path("balance-my/<str:usuario>/", views.balance_my_view, name="balance_my"),
     path('get-extrato-details/<int:extrato_id>/', views.get_extrato_details, name='get_extrato_details'),

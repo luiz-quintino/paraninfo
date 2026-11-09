@@ -9,9 +9,8 @@
     {% if has_months %}
         <label for="month">Mês de referência</label>
         <div class="action-buttons" aria-label="Navegação mensal">
-            {% if previous_month %}
-                <a class="back-button" href="?month={{ previous_month }}" aria-label="Mês anterior">← Mês anterior</a>
-            {% endif %}
+            
+            <a class="back-button" href="?month={{ previous_month }}" aria-label="Mês anterior" {% if previous_month %}  {% else %} style="pointer-events: none; color: rgb(187, 245, 193);" {% endif %}>← Mês anterior</a>
 
             <form method="get" class="month-selector-form">
                 <select id="month" name="month" onchange="this.form.submit()">
@@ -24,9 +23,7 @@
                 <noscript><button type="submit">Exibir</button></noscript>
             </form>
 
-            {% if next_month %}
-                <a class="back-button" href="?month={{ next_month }}" aria-label="Mês seguinte">Mês seguinte →</a>
-            {% endif %}
+            <a class="back-button" href="?month={{ next_month }}" aria-label="Mês seguinte" {% if next_month %}  {% else %} style="pointer-events: none; color: rgb(187, 245, 193);" {% endif %}>Mês seguinte →</a>
         </div>
 
         <!-- <h3>{{ period_label }}{% if selected_sequence != None %} — Sequência {{ selected_sequence }}{% endif %}</h3> -->
@@ -43,7 +40,7 @@
                 <tbody>
                     {% for transaction in transactions %}
                         <tr>
-                            <td data-label="Data">{{ transaction.data|date:"d/m/Y" }}</td>
+                            <td data-label="Data">{% if transaction.data %}{{ transaction.data|date:"d/m/Y" }}{% elif show_totals %}Totais{% endif %}</td>
                             <td data-label="Transação" style="color: {{ transaction.color_name|default:'#212529' }};">
                                 {{ transaction.transacao_id }}
                             </td>

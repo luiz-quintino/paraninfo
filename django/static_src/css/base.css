@@ -122,7 +122,8 @@ h3 {
 }
 
 .action-buttons .back-button {
-    background-color: #ccc;
+    background-color: #2fefa2;
+    color: #215427;
 }
 
 .action-buttons .cancel-button:hover {

@@ -25,6 +25,18 @@ document.addEventListener('DOMContentLoaded', () => {
         approver: document.getElementById('product-purchase-approver'),
         approvalDate: document.getElementById('product-purchase-approval-date'),
     };
+    const cancelPurchaseForm = document.getElementById('cancel-purchase-form');
+    const cancelPurchaseId = document.getElementById('cancel-purchase-id');
+    const cancelPurchaseButton = document.getElementById('cancel-purchase-button');
+
+    cancelPurchaseForm?.addEventListener('submit', (event) => {
+        if (!window.confirm('Tem certeza que quer cancelar essa compra? Essa ação não poderá ser desfeita')) {
+            event.preventDefault();
+            return;
+        }
+        cancelPurchaseButton.disabled = true;
+        showLoadingOverlay();
+    });
 
     if (detailModal && detailTitle && detailDescription && detailImage) {
         let lastDetailTrigger = null;
@@ -38,6 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
             trigger.addEventListener('click', () => {
                 const card = trigger.closest('.product-card');
                 const image = card?.querySelector('.product-image');
+                if (cancelPurchaseId && cancelPurchaseButton && card) {
+                    cancelPurchaseId.value = card.dataset.purchaseId || '';
+                    cancelPurchaseButton.hidden = card.dataset.purchaseStatus === '3';
+                    cancelPurchaseButton.disabled = false;
+                }
                 detailTitle.textContent = trigger.dataset.productName || '';
                 detailDescription.textContent = trigger.dataset.productDescription || '';
                 detailImage.src = image?.currentSrc || image?.src || '';

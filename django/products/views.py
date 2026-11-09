@@ -710,6 +710,33 @@ def product_my_list(request, UUID=None):
 		return redirect('products:product_list')
 
 	associado = get_object_or_404(tbAssociados, uuid=UUID)
+	if request.method == 'POST':
+		if not is_admin_:
+			messages.error(request, 'Você não tem permissão para cancelar compras.')
+			return redirect('products:product_my_list', UUID=UUID)
+
+		purchase_id = request.POST.get('purchase_id')
+		purchase = get_object_or_404(
+			tbCompra,
+			id=purchase_id,
+			associado=associado,
+		)
+		if purchase.status == tbCompra.STATUS_CANCELADO:
+			messages.info(request, 'Esta compra já está cancelada.')
+			return redirect('products:product_my_list', UUID=UUID)
+
+		with transaction.atomic():
+			purchase.status = tbCompra.STATUS_CANCELADO
+			purchase.save(force_update=True, update_fields=['status'])
+			save_log(
+				request,
+				description=f'tbCompra cancelada: {purchase.id}',
+				evento_log_id=19,  # Evento de compra; detalhado na descrição do log.
+			)
+
+		messages.success(request, 'Compra cancelada.')
+		return redirect('products:product_my_list', UUID=UUID)
+
 	context = product_my_list_context(request, associado)
 	context['menu_options'] = menu_options
 	context['message'] = message

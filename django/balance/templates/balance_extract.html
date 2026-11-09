@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Contabilidade da Comissão {% endblock %}
+
+{% block content %}
+    {% include 'partials/popup_movimentacao.html' %}
+
+    {% if message.text %}
+        <!-- de transaction.partials.popup_movimentacao.html  -->
+        {% include 'partials/popup_message.html' with message=message %}
+    {% endif %}
+
+    <div class="container">
+        <h2>{{ message.title }}</h2>
+
+        <div class="user-form">
+            {% if is_data_empty %}
+                <div class="alert">
+                    Nenhum dado encontrado.
+                </div>
+            {% endif %}
+        </div>
+
+        <div>
+            Próximo fechamento {{ fechamento }}
+            <p></p>
+        </div>
+
+        <!-- Filtro de dados -->
+        <form method="get" action="{% url 'balance:balance-extract' %}" class="filter-form" id='period_form'>
+
+            <label>Período: </label>
+            <select name="periodo_index" onchange="toggleFilterPeriod(this)" class="filter-select" id="select_control">
+                <option value="todos" {% if search_query == 'todos' %}selected{% endif %}>Todos</option>
+                {% for periodo in periodos %}
+                <option value="{{ forloop.counter }}" {% if search_query == forloop.counter|stringformat:"s" %} selected {% endif %}>
+                    {{ periodo.combinado }}
+                </option>
+                {% endfor %}
+            </select>
+
+            {% if is_admin_user %}
+            <label for="status_filter"> Status: </label>
+            <select name="status" onchange="toggleFilterPeriod(this)" class="filter-select" id="status_filter">
+                {% for status in status_options %}
+                <option value="{{ status.value }}" {% if selected_status == status.value %}selected{% endif %}>
+                    {{ status.label }}
+                </option>
+                {% endfor %}
+            </select>
+            {% endif %}
+        </form>
+
+        <table class="table_big_list_simple">
+            <thead>
+                <tr>
+                    <th>Indice</th>
+                    <th>Data</th>
+                    <th>Histórico</th>
+                    <th>Crédito</th>
+                    <th>Débito</th>
+                    <th>Tipo de Transação</th>
+                    <th>Código do Associado</th>
+                    {% if is_admin_user %}
+                        <th>Status</th>
+                    {% endif %}
+                </tr>
+
+            </thead>
+            <tbody>
+                {% for extrato in extrato_list %}
+                    <tr style="color: {{ extrato.cor }}; cursor: pointer;" data-id="{{ extrato.id }}" data-details-url="{% url 'balance:get_extrato_details' extrato_id=extrato.id %}" id="row-{{ extrato.id }}" class="openPopup" onclick="openPopupBalanceDetails({{ extrato.id }})">
+                        
+                        <td data-label="Índice"> {{ extrato.indice }} </td>
+                        <td data-label="Data"> {{ extrato.data }} </td>
+                        <td data-label="Histórico"> {{ extrato.historico }}</td> 
+                        <td data-label="Crédito"> {{ extrato.credito }} </td>
+                        <td data-label="Débito"> {{ extrato.debito }} </td>
+                        <td data-label="Tipo de Transação"> {{ extrato.transacao_key }} </td>
+                        <td data-label="Código do Associado"> {{ extrato.associado_id }} </td>
+                        {% if is_admin_user %}
+                            <td data-label="Status"> {{ extrato.status }} </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+            
+        </table>
+    </div>
+    
+    <script>
+        // Filtra extrato por período
+        function toggleFilterPeriod(selectElement) {
+            showLoadingOverlay();
+            document.getElementById('period_form').submit();
+        }
+
+
+    // Faz uma requisição AJAX para buscar os dados da linha selecionada
+        function openPopupBalanceDetails(id) {
+            // Exibe a ampulheta
+            showLoadingOverlay();
+
+            // Aguarda um pequeno intervalo para permitir que o navegador atualize a interface
+            setTimeout(() => {
+                openPopupBalanceDetails_(id);
+            }, 1); // Executa imediatamente após a atualização da interface
+        }
+
+        async function openPopupBalanceDetails_(id) {
+            try {
+                const row = document.getElementById(`row-${id}`);
+                const response = await fetch(row.dataset.detailsUrl, {
+                    headers: {'X-Requested-With': 'XMLHttpRequest'},
+                });
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP ${response.status} ao buscar o extrato ${id}`);
+                }
+                const data = await response.json();
+
+                    // Preencher os campos do popup com os dados retornados
+
+                    document.getElementById('popup_title').innerText = `Registro: ${data.historico}`;
+
+                    document.getElementById('popup-data').value = data.data;
+                    document.getElementById('popup-credito').value = String(data.credito || '').replace('.', ',');
+                    document.getElementById('popup-debito').value = String(data.debito || '').replace('.', ',');
+                    document.getElementById('popup-nome').value = data.nome;
+                    document.getElementById('popup-registro_name').value = data.registro_log.name;
+                    document.getElementById('popup-registro').value = data.registro_log.data;
+                    document.getElementById('popup-associacao_name').value = data.associacao_log.name;
+                    document.getElementById('popup-associacao').value = data.associacao_log.data;
+                    document.getElementById('popup-fechamento_name').value = data.fechamento_log.name;
+                    document.getElementById('popup-fechamento').value = data.fechamento_log.data;
+                    document.getElementById('popup-transacao').value = data.transacao;
+                    window.configureReturnReviewButton?.(data);
+
+                    document.getElementById('popup-user_id').style.display = 'none';
+                    document.getElementById('default-movimentacao').style.display = 'none';
+                    document.getElementById('contabil-movimentacao').style.display = 'block';
+                    
+                    if (data.credito === '') {
+                        document.getElementById('popup-credito-group').style = 'display: none;';
+                        document.getElementById('popup-debito-group').style = 'display: block;';
+                    } else {
+                        document.getElementById('popup-credito-group').style = 'display: block;';
+                        document.getElementById('popup-debito-group').style = 'display: none;';
+                    }
+
+                    if (data.nome === '') {
+                        document.getElementById('popup-nome-group').style = 'display: none;';
+                    } else {
+                        document.getElementById('popup-nome-group').style = 'display: block;';
+                    }
+
+                    // Exibir o popup
+                    document.getElementById('popup-modal').style.display = 'flex';
+
+                    // Adicionar classe ao corpo para impedir scroll e seleção
+                    document.body.classList.add('popup-active');
+            } catch (error) {
+                console.error('Falha ao carregar detalhes do extrato:', error);
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
+        function closePopup() {
+            // Ocultar o popup
+            document.getElementById('popup-modal').style.display = 'none';
+
+            // Remover classe do corpo para permitir scroll e seleção
+            document.body.classList.remove('popup-active');
+            
+            // Esconder a ampulheta
+            hideLoadingOverlay()
+        }
+    </script>
+
+
+{% endblock %}

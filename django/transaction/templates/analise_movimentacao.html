@@ -248,6 +248,7 @@
                     document.getElementById('popup-cpf').value = data.cpf;
                     document.getElementById('popup-nota').value = data.nota;
                     document.getElementById('popup-user_id').value = `código de pagamento: ${data.codigo_pagamento}`;
+                    window.configureReturnReviewButton?.(data);
 
                     // Exibir o popup
                     document.getElementById('popup-modal').style.display = 'flex';

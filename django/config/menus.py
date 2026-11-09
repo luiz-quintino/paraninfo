@@ -184,7 +184,7 @@ MENU_BALANCE_FECHAR_ANALISE_CONFIRMAR   = {'name': 'Confirmar fechamento',
                                            'tip': 'Confirmar o fechamento da análise de movimentações financeiras realizadas'}
 
 MENU_CONTABILIDADE_VER_EXTRATO          = {'name': 'Extrato de movimentações',
-                                           'url': "/balance", 
+                                           'url': "/balance/balance-extract", 
                                            'tip': 'Acesse o extrato para visualizar as movimentações financeiras'}
 
 MENU_CONTABILIDADE_FECHAR_BALANCO       = {'name': 'Fechar balanço mensal',

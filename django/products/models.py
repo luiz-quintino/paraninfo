@@ -95,6 +95,7 @@ class tbCompra(models.Model):
 	STATUS_PENDENTE = 0
 	STATUS_APROVADO = 1
 	STATUS_REPROVADO = 2
+	STATUS_CANCELADO = 3
 
 	id = models.AutoField(primary_key=True)
 	associado = models.ForeignKey(tbAssociados, db_column='associado_id', on_delete=models.DO_NOTHING,

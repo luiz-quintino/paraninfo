@@ -9,6 +9,7 @@ from datetime import datetime
 from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import get_object_or_404
 from django.http import FileResponse, Http404, JsonResponse
+from django.db.models import Sum
 from pathlib import Path
 
 from config.constants import MONTHS, SKIP_MONTH_CHECK
@@ -298,7 +299,7 @@ def close_balance_view(request):
     return render(request, 'close_balance.html', context)
 
 @login_required()
-def balance_view(request):
+def balance_extract_view(request):
     """
         Render the balance view.
     """
@@ -361,7 +362,7 @@ def balance_view(request):
         {'value': 'novo', 'label': 'Novo'},
         {'value': str(tbExtrato.STATUS_EXTRATO_CANCELADO), 'label': 'Cancelado'},
         {'value': str(tbExtrato.STATUS_EXTRATO_CLASSIFICADO), 'label': 'Classificado'},
-        {'value': str(tbExtrato.STATUS_EXTRATO_INCORPORADO), 'label': 'Incorporado'},
+        {'value': str(tbExtrato.STATUS_EXTRATO_INCORPORADO), 'label': 'Revisado'},
         {'value': str(tbExtrato.STATUS_EXTRATO_BALANCO_FECHADO), 'label': 'Balanço fechado'},
     ]
 
@@ -393,6 +394,7 @@ def balance_view(request):
             'debito': extrato.debito or '',
             'transacao_key': extrato.transacao.key_name if extrato.transacao else '',
             'associado_id': extrato.associado_id if extrato.associado_id else '',
+            'status': extrato.status or '',
         })
 
     comissao = tbComissao.objects.filter(
@@ -412,7 +414,7 @@ def balance_view(request):
         'selected_status': selected_status,
         'fechamento': fechamento,
     }
-    return render(request, 'balance.html', context)
+    return render(request, 'balance_extract.html', context)
 
 
 @login_required()
@@ -438,17 +440,21 @@ def balance_overview(request):
         (period.year, period.month)
         for period in transactions.dates('data', 'month', order='DESC')
     ]
-    available_month_options = [
+    available_month_options = [{'value': 'totais', 'label': 'Totais'}]
+    available_month_options.extend(
         {
             'value': f'{year:04d}-{month:02d}',
             'label': f'{MONTHS[month].title()} de {year}',
         }
         for year, month in available_months
-    ]
+    )
     selected_month = None
+    show_totals = False
 
     requested_month = request.GET.get('month', '')
-    if requested_month:
+    if requested_month == 'totais' and available_months:
+        show_totals = True
+    elif requested_month:
         try:
             year, month = (int(part) for part in requested_month.split('-', 1))
             if 1 <= month <= 12 and (year, month) in available_months:
@@ -456,7 +462,7 @@ def balance_overview(request):
         except (ValueError, TypeError):
             pass
 
-    if selected_month is None and available_months:
+    if selected_month is None and available_months and not show_totals:
         selected_month = available_months[0]
 
     selected_transactions = tbTransacao.objects.none()
@@ -465,7 +471,62 @@ def balance_overview(request):
     previous_month = None
     next_month = None
 
-    if selected_month:
+    if show_totals:
+        period_label = 'Totais'
+        omitted_names = ['Saldo inicial', 'Saldo bloqueado']
+        latest_month = available_months[0]
+        latest_year, latest_month_number = latest_month
+        latest_sequence = (
+            transactions.filter(
+                data__year=latest_year,
+                data__month=latest_month_number,
+            )
+            .order_by('-sequencia')
+            .values_list('sequencia', flat=True)
+            .first()
+        )
+
+        balance_names = ['Saldo CC', 'Saldo CC + Apl', 'Saldo Total CC + Apl']
+        total_rows = (
+            transactions.filter(transacao__isnull=False)
+            .exclude(transacao__key_name__in=omitted_names)
+            .exclude(transacao__key_name__in=balance_names)
+            .values('transacao__key_name', 'transacao__color_name')
+            .annotate(total=Sum('valor'))
+            .order_by('transacao__key_name')
+        )
+        transaction_rows = [
+            {
+                'data': None,
+                'transacao_id': item['transacao__key_name'] or '—',
+                'valor': item['total'],
+                'color_name': item['transacao__color_name'],
+            }
+            for item in total_rows
+        ]
+
+        if latest_sequence is not None:
+            latest_balances = (
+                transactions.filter(
+                    data__year=latest_year,
+                    data__month=latest_month_number,
+                    sequencia=latest_sequence,
+                    transacao__key_name__in=balance_names,
+                )
+                .select_related('transacao')
+                .order_by('id')
+            )
+            transaction_rows.extend(
+                {
+                    'data': item.data,
+                    'transacao_id': item.transacao.key_name if item.transacao else '—',
+                    'valor': item.valor,
+                    'color_name': item.transacao.color_name if item.transacao else None,
+                }
+                for item in latest_balances
+            )
+
+    elif selected_month:
         year, month = selected_month
         period_label = f'{MONTHS[month].title()} de {year}'
         month_transactions = transactions.filter(data__year=year, data__month=month)
@@ -491,24 +552,28 @@ def balance_overview(request):
             year_, month_ = available_months[month_index - 1]
             next_month = f'{year_:04d}-{month_:02d}'
 
-    transaction_rows = [
-        {
-            'data': item.data,
-            'transacao_id': item.transacao.key_name if item.transacao else '—',
-            'valor': item.valor,
-            'color_name': item.transacao.color_name if item.transacao else None,
-        }
-        for item in selected_transactions
-    ]
+    if not show_totals:
+        transaction_rows = [
+            {
+                'data': item.data,
+                'transacao_id': item.transacao.key_name if item.transacao else '—',
+                'valor': item.valor,
+                'color_name': item.transacao.color_name if item.transacao else None,
+            }
+            for item in selected_transactions
+        ]
 
     context = {
         'message': message,
         'menu_options': menu_options,
         'transactions': transaction_rows,
         'period_label': period_label,
+        'show_totals': show_totals,
         'selected_month': (
-            f'{selected_month[0]:04d}-{selected_month[1]:02d}'
-            if selected_month else ''
+            'totais' if show_totals else (
+                f'{selected_month[0]:04d}-{selected_month[1]:02d}'
+                if selected_month else ''
+            )
         ),
         'previous_month': previous_month,
         'next_month': next_month,
@@ -632,6 +697,11 @@ def get_extrato_details(request, extrato_id):
         'registro_log': log_details(extrato.log_registro_id),
         'associacao_log': log_details(extrato.log_associacao_id),
         'fechamento_log': log_details(extrato.log_fechamento_id),
+        'status': extrato.status,
+        'can_return_to_review': (
+            user_role(request) == 'presidente'
+            and extrato.status == tbExtrato.STATUS_EXTRATO_INCORPORADO
+        ),
     }
 
     return JsonResponse(context)

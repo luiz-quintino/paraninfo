@@ -62,6 +62,9 @@
                     <th>Débito</th>
                     <th>Tipo de Transação</th>
                     <th>Código do Associado</th>
+                    {% if is_admin_user %}
+                        <th>Status</th>
+                    {% endif %}
                 </tr>
 
             </thead>
@@ -76,6 +79,9 @@
                         <td data-label="Débito"> {{ extrato.debito }} </td>
                         <td data-label="Tipo de Transação"> {{ extrato.transacao_key }} </td>
                         <td data-label="Código do Associado"> {{ extrato.associado_id }} </td>
+                        {% if is_admin_user %}
+                            <td data-label="Status"> {{ extrato.status }} </td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
             </tbody>
@@ -128,6 +134,7 @@
                     document.getElementById('popup-fechamento_name').value = data.fechamento_log.name;
                     document.getElementById('popup-fechamento').value = data.fechamento_log.data;
                     document.getElementById('popup-transacao').value = data.transacao;
+                    window.configureReturnReviewButton?.(data);
 
                     document.getElementById('popup-user_id').style.display = 'none';
                     document.getElementById('default-movimentacao').style.display = 'none';

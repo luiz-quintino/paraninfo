@@ -3,6 +3,7 @@ from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import OuterRef, Subquery
+from django.db import transaction as db_transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
@@ -614,6 +615,36 @@ def analise_movimentacao_view(request):
     # metodo post
     if request.method == 'POST':
 
+        if request.POST.get('return_to_review'):
+            if user_role(request) != 'presidente':
+                return JsonResponse({'error': 'Ação permitida somente ao presidente.'}, status=403)
+
+            with db_transaction.atomic():
+                extrato = (
+                    tbExtrato.objects.select_for_update()
+                    .filter(
+                        id=request.POST.get('extrato_id'),
+                        comissao_id=request.comissao,
+                        status=tbExtrato.STATUS_EXTRATO_INCORPORADO,
+                    )
+                    .first()
+                )
+                if extrato is None:
+                    return JsonResponse(
+                        {'error': 'Registro não encontrado ou não está revisado.'},
+                        status=409,
+                    )
+
+                log_id = save_log(
+                    request,
+                    description=f'Retornado para revisão: tbExtrato {extrato.id}',
+                    evento_log_id=10,  # log: Análise/revisão de movimentação
+                )
+                extrato.status = tbExtrato.STATUS_EXTRATO_CLASSIFICADO
+                extrato.save(update_fields=['status'])
+
+            return JsonResponse({'success': True, 'status': tbExtrato.STATUS_EXTRATO_CLASSIFICADO})
+
         if request.POST.get('review', ''):
             # Revisar movimentação
             target_status = 1  
@@ -834,6 +865,7 @@ def analise_movimentacao_view(request):
         ).update(status=2, log_fechamento_id=log_id)  # Atualiza status para 2: fechado
         
         num_deleted = tbExtrato.objects.filter(
+            ~Q(status=0),
             comissao_id=request.comissao if request.comissao else 1,  # Valor padrão para comissao_id
             log_associacao_id__isnull=True,
         ).update(status=0, log_fechamento_id=log_id)  # Atualiza status para 0: deletado
@@ -909,7 +941,11 @@ def get_extrato_details(request, extrato_id):
         Retorna os detalhes de um extrato específico em formato JSON.
     """
     
-    extrato = get_object_or_404(tbExtrato, id=extrato_id)
+    extrato = get_object_or_404(
+        tbExtrato,
+        id=extrato_id,
+        comissao_id=request.comissao,
+    )
     comissao = request.comissao
     codigo_pagamento = ''
 
@@ -928,6 +964,11 @@ def get_extrato_details(request, extrato_id):
         'cpf': extrato.cpf or '',
         'nota': extrato.nota or '',
         'codigo_pagamento': codigo_pagamento,
+        'status': extrato.status,
+        'can_return_to_review': (
+            user_role(request) == 'presidente'
+            and extrato.status == tbExtrato.STATUS_EXTRATO_INCORPORADO
+        ),
     }
 
     return JsonResponse(data)

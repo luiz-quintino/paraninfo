@@ -7,7 +7,7 @@
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'products.css' %}?v=6">
-<script src="{% static 'products.js' %}?v=6" defer></script>
+<script src="{% static 'products.js' %}?v=7" defer></script>
 <div class="products-page">
     <h2>{{ message.title }}</h2>
 
@@ -30,6 +30,8 @@
     {% for purchase in purchases %}
         {% if purchase.produto.ativo < 2 or is_admin %}
             <section class="product-card"
+                data-purchase-id="{{ purchase.id }}"
+                data-purchase-status="{{ purchase.status }}"
                 data-purchase-date="{{ purchase.dt_compra|date:'d/m/Y' }}"
                 data-purchase-quantity="{{ purchase.quantidade }}"
                 data-purchase-original="{{ purchase.valor_original|floatformat:2 }}"
@@ -54,6 +56,8 @@
                     <p class="alert-success">Compra aprovada</p>
                 {% elif purchase.status == 2 %}
                     <p class="alert-error">Compra rejeitada</p>
+                {% elif purchase.status == 3 %}
+                    <p class="alert-error">Compra cancelada</p>
                 {% endif %}
 
                 {% if is_admin and purchase.produto.ativo == 2 %}
@@ -111,6 +115,15 @@
                 <div><dt>Data da aprovação</dt><dd id="product-purchase-approval-date"></dd></div>
             </dl>
         </section>
+        <div class="action-buttons product-card-actions">
+            {% if is_admin %}
+                <form method="post" id="cancel-purchase-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="purchase_id" id="cancel-purchase-id">
+                    <button class="cancel-button" type="submit" id="cancel-purchase-button">Cancelar compra</button>
+                </form>
+            {% endif %}
+        </div>
     </section>
 </div>
 {% endblock %}

@@ -3,6 +3,7 @@
     <div class="form-container">
         <h3 id="popup_title">Detalhes do registro</h3>
         <form id="popup-form">
+            {% csrf_token %}
 
             <div class="form-group">
                 <label for="popup-data">Data:</label>
@@ -72,9 +73,49 @@
             </div>
 
 
-            <div class="action-buttons generic-button">
-                <button type="button" onclick="closePopup()">Fechar</button>
+            <div class="action-buttons product-card-actions">
+                <button type="button" class="save-button" onclick="closePopup()">Fechar</button>
+                <button type="button" class="cancel-button" id="popup-return-review" data-action-url="{% url 'analise_movimentacao' %}" hidden>Retornar para revisão</button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+    (() => {
+        const returnButton = document.getElementById('popup-return-review');
+        const popupForm = document.getElementById('popup-form');
+        if (!returnButton || !popupForm) return;
+
+        window.configureReturnReviewButton = (details) => {
+            returnButton.dataset.extratoId = details.id || '';
+            returnButton.hidden = !details.can_return_to_review;
+        };
+
+        returnButton.addEventListener('click', async () => {
+            if (!window.confirm('Tem certeza que deseja retornar o registro para revisão?')) return;
+
+            showLoadingOverlay();
+            try {
+                const csrfToken = popupForm.querySelector('[name="csrfmiddlewaretoken"]').value;
+                const response = await fetch(returnButton.dataset.actionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: new URLSearchParams({
+                        return_to_review: '1',
+                        extrato_id: returnButton.dataset.extratoId,
+                    }),
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Não foi possível retornar o registro para revisão.');
+                window.location.reload();
+            } catch (error) {
+                alert(error.message);
+                hideLoadingOverlay();
+            }
+        });
+    })();
+</script>

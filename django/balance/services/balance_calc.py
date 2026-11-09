@@ -478,7 +478,7 @@ def create_account_report(request, data_list: list, config: dict) -> dict:
 def user_balance(associado, today):
     # Cria uma lista de dicionários com os dados dos extratos e das compras do associado
     rows = []
-    extratos = tbExtrato.objects.filter(associado_id=associado.id).select_related('transacao').order_by('data', 'id')
+    extratos = tbExtrato.objects.filter(associado_id=associado.id, status=3).select_related('transacao').order_by('data', 'id')
     for extrato in extratos:
         paid = extrato.credito or Decimal('0.00')
         received = Decimal('0.00')
