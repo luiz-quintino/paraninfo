@@ -250,7 +250,8 @@
                     document.getElementById('popup-user_id').value = `código de pagamento: ${data.codigo_pagamento}`;
 
                     // Exibir o popup
-                    document.getElementById('popup-modal').style.display = 'block';
+                    document.getElementById('popup-modal').style.display = 'flex';
+                    hideLoadingOverlay();
 
                     // Adicionar classe ao corpo para impedir scroll e seleção
                     document.body.classList.add('popup-active');

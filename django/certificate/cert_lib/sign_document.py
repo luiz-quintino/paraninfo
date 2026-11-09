@@ -309,10 +309,20 @@ def intall_root_certificate_and_check_validity():
 
     criar_root = False 
 
-    if not validate_root or (validate_root and validate_root[0].date() <= datetime.today().date()):
+    if validate_root and type(validate_root[0]) != type(datetime.today().date()):
+        validate_root = validate_root[0].date()
+    elif validate_root:
+        validate_root = validate_root[0]
+
+    if validate_intermediate and type(validate_intermediate[0]) != type(datetime.today().date()):
+        validate_intermediate = validate_intermediate[0].date()
+    elif validate_intermediate:
+        validate_intermediate = validate_intermediate[0]
+
+    if not validate_root or (validate_root and validate_root <= datetime.today().date()):
         criar_root = True 
     
-    elif not validate_intermediate or  (validate_intermediate and validate_intermediate[0].date() <= datetime.today().date()):
+    elif not validate_intermediate or  (validate_intermediate and validate_intermediate <= datetime.today().date()):
         criar_root = True
 
     if criar_root:

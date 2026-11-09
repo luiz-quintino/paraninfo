@@ -173,7 +173,7 @@ def emitir_recibo_view(request):
 @login_required()
 def close_balance_view(request):
     """
-    Render the close balance view.
+        Faz o fechamento do mês
     """
     message = {'type': 'info', 'text': '', 'title': 'Fechamento de Balanço', 'function': ''}
     is_data_empty = False  # Variável para verificar se os dados estão vazios
@@ -315,41 +315,46 @@ def balance_view(request):
     if user_role(request) in ['presidente', 'vice-presidente', 'tesoureiro'] or is_app_admin(request):
         menu_options.append(MENU_CONTABILIDADE_FECHAR_BALANCO)
     
-    # Extrair meses e anos únicos
-    meses_anos = tbExtrato.objects.annotate(
+    comissao_id = request.comissao if request.comissao else 1
+    extratos = tbExtrato.objects.filter(comissao_id=comissao_id)
+
+    # Extrair meses e anos únicos da comissão atual
+    meses_anos = extratos.filter(data__isnull=False).annotate(
         ano=TruncYear('data'),  # Extrai o ano
         mes=TruncMonth('data')  # Extrai o mês
-    ).values('ano', 'mes').distinct()
+    ).values('ano', 'mes').distinct().order_by('-ano', '-mes')
     
     # Preparar os dados para o template
-    periodos = [{'ano': item['ano'].year, 'mes': item['mes'].month, 'combinado':f"{MONTHS.get(item['mes'].month)} de {item['ano'].year}"} for item in meses_anos][::-1]
-    
-    data_atual = datetime.now()  # Obtém a data atual como um objeto datetime
-    mes_atual = data_atual.month  # Obtém o mês atual
-    ano_atual = data_atual.year  # Obtém o ano atual
+    periodos = [
+        {
+            'ano': item['ano'].year,
+            'mes': item['mes'].month,
+            'combinado': f"{MONTHS.get(item['mes'].month)} de {item['ano'].year}",
+        }
+        for item in meses_anos
+    ]
 
-    # Obtem o o filtro de período do request, se existir
-    search_query = request.GET.get('periodo_index', '1')  # Obtém o texto do filtro
+    # Sem filtro explícito, seleciona o período mais recente (índice 1).
+    search_query = request.GET.get('periodo_index')
+    if search_query is None:
+        search_query = '1' if periodos else 'todos'
 
-    try:
-        # Tenta converter o filtro em um inteiro
-        periodo_index = int(search_query) - 1
-        if periodo_index < 0 or periodo_index >= len(periodos):
-            message['text'] = "Período inválido"
+    # "todos" mantém o extrato completo.
+    if search_query != 'todos':
+        try:
+            periodo_index = int(search_query) - 1
+            if periodo_index < 0 or periodo_index >= len(periodos):
+                raise IndexError
+            periodo = periodos[periodo_index]
+        except (ValueError, IndexError):
+            search_query = 'todos'
+            message['text'] = 'Período inválido; exibindo todos.'
             message['type'] = 'error'
-        mes_atual = periodos[periodo_index]['mes']
-        ano_atual = periodos[periodo_index]['ano']
-    except (ValueError, IndexError):
-        message['text'] = "Período inválido"
-        message['type'] = 'error'
-        
-
-    # Filtra os registros de tbExtrato para o mês e ano da data atual
-    extratos = tbExtrato.objects.filter(
-        comissao_id=request.comissao if request.comissao else 1,  # Valor padrão para comissao_id
-        data__year=ano_atual,  # Filtra pelo ano
-        data__month=mes_atual  # Filtra pelo mês
-    )
+        else:
+            extratos = extratos.filter(
+                data__year=periodo['ano'],
+                data__month=periodo['mes'],
+            )
 
     status_options = [
         {'value': '', 'label': 'Todos os status'},
@@ -389,7 +394,13 @@ def balance_view(request):
             'transacao_key': extrato.transacao.key_name if extrato.transacao else '',
             'associado_id': extrato.associado_id if extrato.associado_id else '',
         })
-        
+
+    comissao = tbComissao.objects.filter(
+        id=request.comissao,
+    ).first()
+
+    fechamento = f'nº {comissao.sequence} referente a {comissao.mes}/{comissao.ano}'
+    
     context = {
         'menu_options': menu_options,
         'message': message,
@@ -399,6 +410,7 @@ def balance_view(request):
         'is_admin_user': is_admin_user,
         'status_options': status_options,
         'selected_status': selected_status,
+        'fechamento': fechamento,
     }
     return render(request, 'balance.html', context)
 
@@ -468,7 +480,7 @@ def balance_overview(request):
             selected_transactions = (
                 transactions.filter(sequencia=selected_sequence)
                 .select_related('transacao')
-                .order_by('data', 'transacao__key_name', 'id')
+                .order_by('id')
             )
 
         month_index = available_months.index(selected_month)
@@ -578,28 +590,36 @@ def get_extrato_details(request, extrato_id):
     """
         Retorna os detalhes de um extrato específico em formato JSON.
     """
-    registro_user = None
-    associacao_user = None
-    fechamento_user = None
+    extrato = get_object_or_404(
+        tbExtrato.objects.select_related('associado', 'transacao'),
+        id=extrato_id,
+        comissao_id=request.comissao,
+    )
 
-    extrato = get_object_or_404(tbExtrato, id=extrato_id)
-    registro = get_object_or_404(tbLog, id=extrato.log_registro_id) if extrato.log_registro_id else None
-    associacao = get_object_or_404(tbLog, id=extrato.log_associacao_id) if extrato.log_associacao_id else None
-    fechamento = get_object_or_404(tbLog, id=extrato.log_fechamento_id) if extrato.log_fechamento_id else None
+    def log_details(log_id):
+        if not log_id:
+            return {'data': '', 'name': ''}
 
-    if registro:
-        registro_user = get_object_or_404(tbSessao, id=registro.sessao_ativa_id) if registro else {}
+        log = tbLog.objects.filter(id=log_id).first()
+        if not log:
+            return {'data': '', 'name': ''}
+
+        sessao = tbSessao.objects.filter(
+            id=log.sessao_ativa_id
+        ).select_related('usuario').first()
+        nome = (
+            sessao.usuario.nome_responsavel
+            if sessao and sessao.usuario else ''
+        )
+        return {
+            'data': log.data.strftime('%d/%m/%Y, %H:%M:%S') if log.data else '',
+            'name': nome,
+        }
     
-    if associacao:
-        associacao_user = get_object_or_404(tbSessao, id=associacao.sessao_ativa_id) if associacao else {}
-
-    if fechamento:
-        fechamento_user = get_object_or_404(tbSessao, id=fechamento.sessao_ativa_id) if fechamento else {}
-    
-    if extrato.associado_id:
-        associado_nome = extrato.associado.nome_responsavel or ''
-    else:
-        associado_nome = ''
+    associado_nome = (
+        extrato.associado.nome_responsavel or ''
+        if extrato.associado else ''
+    )
 
     context = {
         'id': extrato.id,
@@ -607,11 +627,11 @@ def get_extrato_details(request, extrato_id):
         'historico': extrato.historico,
         'credito': extrato.credito or '',
         'debito': extrato.debito or '',
-        'transacao': extrato.transacao.key or '',
+        'transacao': extrato.transacao.key_name if extrato.transacao else '',
         'nome': associado_nome ,
-        'registro_log':   {'data': registro.data.strftime('%d/%m/%Y, %H:%M:%S') or '',   'name': registro_user.usuario.nome_responsavel or ''},     #extrato.log_registro_id or '',
-        'associacao_log': {'data': associacao.data.strftime('%d/%m/%Y, %H:%M:%S') or '', 'name': associacao_user.usuario.nome_responsavel or ''},     #extrato.log_associacao_id or '',
-        'fechamento_log': {'data': fechamento.data.strftime('%d/%m/%Y, %H:%M:%S') or '', 'name': fechamento_user.usuario.nome_responsavel} or '',     #extrato.log_fechamento_id or ''
+        'registro_log': log_details(extrato.log_registro_id),
+        'associacao_log': log_details(extrato.log_associacao_id),
+        'fechamento_log': log_details(extrato.log_fechamento_id),
     }
 
     return JsonResponse(context)

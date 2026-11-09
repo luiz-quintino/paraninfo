@@ -25,7 +25,7 @@
                         onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.location.href = this.dataset.url; }">
                         <td data-label="Sequência">{{ report.sequencia }}</td>
                         <td data-label="Nome do arquivo">
-                            <a href="{{ report_url }}">{{ report.arquivo }}</a>
+                            <a href="{{ report_url }}" target="_blank" rel="noopener">{{ report.arquivo }}</a>
                         </td>
                         <td data-label="Data">{{ report.data|date:"d/m/Y" }}</td>
                     </tr>

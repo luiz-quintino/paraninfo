@@ -22,12 +22,17 @@
             {% endif %}
         </div>
 
+        <div>
+            Próximo fechamento {{ fechamento }}
+            <p></p>
+        </div>
+
         <!-- Filtro de dados -->
         <form method="get" action="{% url 'balance:balance' %}" class="filter-form" id='period_form'>
 
             <label>Período: </label>
             <select name="periodo_index" onchange="toggleFilterPeriod(this)" class="filter-select" id="select_control">
-                <option value="">Selecione o período</option>
+                <option value="todos" {% if search_query == 'todos' %}selected{% endif %}>Todos</option>
                 {% for periodo in periodos %}
                 <option value="{{ forloop.counter }}" {% if search_query == forloop.counter|stringformat:"s" %} selected {% endif %}>
                     {{ periodo.combinado }}
@@ -36,7 +41,7 @@
             </select>
 
             {% if is_admin_user %}
-            <label for="status_filter">Status: </label>
+            <label for="status_filter"> Status: </label>
             <select name="status" onchange="toggleFilterPeriod(this)" class="filter-select" id="status_filter">
                 {% for status in status_options %}
                 <option value="{{ status.value }}" {% if selected_status == status.value %}selected{% endif %}>
@@ -62,7 +67,7 @@
             </thead>
             <tbody>
                 {% for extrato in extrato_list %}
-                    <tr style="color: {{ extrato.cor }}; cursor: pointer;" data-id="{{ extrato.id }}" id="row-{{ extrato.id }}" class="openPopup" onclick="openPopupBalanceDetails({{ extrato.id }})">
+                    <tr style="color: {{ extrato.cor }}; cursor: pointer;" data-id="{{ extrato.id }}" data-details-url="{% url 'balance:get_extrato_details' extrato_id=extrato.id %}" id="row-{{ extrato.id }}" class="openPopup" onclick="openPopupBalanceDetails({{ extrato.id }})">
                         
                         <td data-label="Índice"> {{ extrato.indice }} </td>
                         <td data-label="Data"> {{ extrato.data }} </td>
@@ -97,23 +102,24 @@
             }, 1); // Executa imediatamente após a atualização da interface
         }
 
-        function openPopupBalanceDetails_(id) {
-            // Faz uma requisição AJAX para buscar os dados da linha selecionada
-            fetch(`/balance/get-extrato-details/${id}/`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Erro ao buscar os detalhes do extrato com id ${id}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
+        async function openPopupBalanceDetails_(id) {
+            try {
+                const row = document.getElementById(`row-${id}`);
+                const response = await fetch(row.dataset.detailsUrl, {
+                    headers: {'X-Requested-With': 'XMLHttpRequest'},
+                });
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP ${response.status} ao buscar o extrato ${id}`);
+                }
+                const data = await response.json();
+
                     // Preencher os campos do popup com os dados retornados
 
                     document.getElementById('popup_title').innerText = `Registro: ${data.historico}`;
 
                     document.getElementById('popup-data').value = data.data;
-                    document.getElementById('popup-credito').value = data.credito.replace('.', ',');
-                    document.getElementById('popup-debito').value = data.debito.replace('.', ',');
+                    document.getElementById('popup-credito').value = String(data.credito || '').replace('.', ',');
+                    document.getElementById('popup-debito').value = String(data.debito || '').replace('.', ',');
                     document.getElementById('popup-nome').value = data.nome;
                     document.getElementById('popup-registro_name').value = data.registro_log.name;
                     document.getElementById('popup-registro').value = data.registro_log.data;
@@ -142,15 +148,15 @@
                     }
 
                     // Exibir o popup
-                    document.getElementById('popup-modal').style.display = 'block';
+                    document.getElementById('popup-modal').style.display = 'flex';
 
                     // Adicionar classe ao corpo para impedir scroll e seleção
                     document.body.classList.add('popup-active');
-                })
-                .catch(error => {
-                    console.error(error);
-                });
-            
+            } catch (error) {
+                console.error('Falha ao carregar detalhes do extrato:', error);
+            } finally {
+                hideLoadingOverlay();
+            }
         }
 
         function closePopup() {

@@ -6,6 +6,8 @@ from transaction.models import tbExtrato, tbTransacao, lsttransacao, tbAssociado
 from products.models import tbProduto
 from balance.models import tbRelatorio
 import traceback
+from django.db.models import Sum
+import copy
 
 from datetime import datetime, date
 from reportlab.pdfgen import canvas
@@ -35,7 +37,7 @@ def month_enclosed(request, comissao: dict, extratos):
     | cria relatorio PDF  o-->|Atualiza tbTransacaoo o-->| Atualiza Associados o-->| Atualiza tbComissao |
     |                     |   |                      |   |                     |   |                     |   
     +---------------------+   +----------------------+   +---------------------+   +---------------------+
-    cria e assina relatorio  resumo de transações       situação de pagamento     atualiza mês e sequência
+    cria e assina relatorio   resumo de transações       situação de pagamento     atualiza mês e sequência
                                 no mês e adiciona          de cada associado         de fecamento
                                 cota ao valor do poudto    e envia por email
 
@@ -56,13 +58,8 @@ def month_enclosed(request, comissao: dict, extratos):
         comissao_id=comissao_id,
     ).order_by('-data', '-id')
 
-    # Reagata o valor das aplicações do mês anterior, se houver, para somar ao saldo final do mês
-    t_aplicacao = float(transaction_report.filter(
-        transacao__key_name='TotalAplicacao'
-    )[0].valor) if transaction_report.filter(transacao__key_name='TotalAplicacao').exists() else 0.0    
-
     # Extrai key, value de tbTransacao
-    transaction_list = lsttransacao.objects.filter()
+    transaction_list = lsttransacao.objects.order_by('pk')
     popup_list = []
     for transacao_ in transaction_list:
         popup_list.append(transacao_.key_name)
@@ -80,10 +77,48 @@ def month_enclosed(request, comissao: dict, extratos):
             'credito': {'value': float(extrato.credito) if extrato.credito else 0.0},
             'debito': {'value': float(extrato.debito) if extrato.debito else 0.0},
             'nota': {'value': extrato.transacao.key_name if extrato.transacao else ''},
-            'user*': {'value': str(extrato.associado_id)},
+            'user*': {'value': str(extrato.associado_id) if extrato.associado_id else ''},
             'doc': {'value': ''},
             'cc': {'value': 'CC'}
         })
+
+    if data_list[0]['operacao']['value'] != 'SALDO ANTERIOR':
+        # Precisa do saldo anterior para não dar erro nas totalizações
+        # transacao_ =  lsttransacao.objects.filter(key_name='Saldo CC').first()
+        valor = float(
+            tbTransacao.objects
+                .filter(
+                    comissao_id=comissao['comissao_id'],
+                    transacao__key_name='Saldo CC',
+                )
+                .order_by('-id')
+                .values_list('valor', flat=True)
+                .first()
+                or 0.0
+            )
+        
+        data_list.insert(0,{})
+        data_list[0] = copy.deepcopy(data_list[1])
+        data_list[0]['operacao']['value'] = 'SALDO ANTERIOR'
+        data_list[0]['credito']['value'] = valor
+        data_list[0]['debito']['value'] = 0.0
+        data_list[0]['user*']['value'] = ''
+        data_list[0]['nota']['value'] = 'Saldo inicial'
+        data_list[0]['doc']['value'] = ''
+        data_list[0]['cc']['value'] = 'CC'
+
+    # Soma aplicações anteriores e as aplicações deste extrato.
+    total_anterior = float(tbTransacao.objects.filter(
+        comissao_id=main_data['comissao_id'],
+        transacao__key_name='Aplicação financeira',
+    ).aggregate(total=Sum('valor'))['total'] or 0.0)
+
+    soma_extrato = sum(
+        item['debito']['value']
+        for item in data_list
+        if item['operacao']['value'] == 'APLICAÇÃO RDC'
+    )
+    t_aplicacao = total_anterior + soma_extrato
 
     # Cria configurações para o relatório
     config = {
@@ -124,8 +159,6 @@ def month_enclosed(request, comissao: dict, extratos):
             request.user_id
         ]
 
-        # assinaturas = list(set(assinaturas))
-
         for position_id, user_id_assinatura in enumerate(user_id_assinaturas):
             cert_id = tbAssociados.objects.filter(id=user_id_assinatura).first().certificado
             report_name, cert_id_new = signing_by_cert_id(file_pdf=report_name, cert_id=cert_id, index_position=position_id, user_id=user_id_assinatura, comissao=comissao['title'])
@@ -139,6 +172,7 @@ def month_enclosed(request, comissao: dict, extratos):
         try:
             # Atualiza transações com os valores correntes
             update_transactions(transaction_list, transaction_report, totals, main_data)
+
             # Atualiza Produtos com o novo valor se o o produto tiver a configuação de atualização automática de cota
             update_cota_in_product(main_data)
         except Exception as e:
@@ -238,61 +272,61 @@ def send_email_to_associado(associado, summary, main_data):
 
 
 def update_cota_in_product(main_data):
+    cota_id = lsttransacao.objects.filter(key_name='Valor da cota').first().id
     cota_value = tbTransacao.objects.filter(
-                sequencia=main_data.get('sequence'),
                 comissao_id=main_data.get('comissao_id'),
-                transacao_id=40).first() # 40 = Valor da cota
-    value = cota_value.valor if cota_value else 0
-    produtos = tbProduto.objects.filter(
-        ativo=1
-    )
-    
-    for produto in produtos:
-        if produto.ajustar_cota == 1:
-            produto.vr_acrescimo = value
-            produto.save()
+                transacao_id=cota_id)
+    if cota_value:
+        cota_sum = cota_value.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+            
+        tbProduto.objects.filter(
+            ativo=1,
+            ajustar_cota=1,
+        ).update(vr_acrescimo=cota_sum)
     
 
 def update_transactions(transaction_list, transaction_report, totals, main_data):
     avoid_duplicates = ['Saldo Inicial']
+    new_key = []
     for transaction_ in transaction_list:
-        # pega o último valor de transaction_.key_name em tbTransacao
-        if transaction_.key_name in avoid_duplicates:
+        # evita duplica entradas especiais
+        key = transaction_.key_name
+        if key in new_key and key in avoid_duplicates:
             continue
+        if key not in new_key:
+            new_key.append(key)
 
-        avoid_duplicates.append(transaction_.key_name)
-        valor = 0.0
-        
-        # Pego o valor anterior da transação para somar ao atual
-        last_transaction = transaction_report.filter(transacao__key_name=transaction_.key_name).first()
-        if last_transaction and transaction_.key_name not in ['Total Credito', 'Total Debito', 'Saldo CC', 'Saldo CC Total CC + Apl']:
-            valor = float(last_transaction.valor)
-    
-        # soma com o valor atual de transaction_.key_name de totals, se existir
-        if transaction_.key_name in totals:
-            valor = valor + float(totals[transaction_.key_name])        
-
-        # cria um novo registro em tbTransacao com o valor total de cada tipo de transação no mês
+        valor = Decimal(str(totals.get(key, 0.0))).quantize(Decimal('0.01'))
+        # cria um novo registro em tbTransacao com o valor de cada tipo de transação no mês
         tbTransacao.objects.create( 
             sequencia=main_data.get('sequence'),
             data=date(main_data.get('year'), main_data.get('month'), 1),
             comissao_id=main_data.get('comissao_id'),
             transacao=transaction_,
-            valor=valor
+            valor=valor,
         ).save()
 
-    transaction_ = lsttransacao.objects.filter(id=40).first()
-    # atualiza valor da cota
+    # Atualiza o valor da cota usando a transação já carregada em transaction_list.
+    transaction_id = next(
+        (
+            item.pk for item in transaction_list
+            if item.key_name == 'Valor da cota'
+        ),
+        None,
+    )
     count_users = tbAssociados.objects.filter(situacao=ATIVO).count() or 1
-    cota = sum([totals.get(field, 0) for field in FIELDS_USED_FOR_COTA])
-    cota = cota / count_users
+    total_cota = sum(
+        (totals.get(field, 0) for field in FIELDS_USED_FOR_COTA),
+    )
+    cota = Decimal(str(total_cota / count_users)).quantize(Decimal('0.01'))
 
-    tbTransacao.objects.filter( 
+    if transaction_id is not None:
+        tbTransacao.objects.filter(
             sequencia=main_data.get('sequence'),
             data=date(main_data.get('year'), main_data.get('month'), 1),
             comissao_id=main_data.get('comissao_id'),
-            transacao_id=transaction_,
-        ).update(valor=cota)     # 'Última transação deve ser o valor da cota)
+            transacao_id=transaction_id,
+        ).update(valor=cota)
 
 
 def create_account_report(request, data_list: list, config: dict) -> dict:
@@ -421,10 +455,10 @@ def create_account_report(request, data_list: list, config: dict) -> dict:
 
     file_name = f'{current_year}-{current_month}-livro caixa.pdf'
 
-    totals['Total Credito'] = t_cred
+    totals['Total Credito'] = t_cred - totals['Saldo inicial']
     totals['Total Debito'] = t_deb
     totals['Saldo CC'] = f'{t_cred - t_deb:0.2f}'
-    totals['Saldo CC Total CC + Apl'] = f'{config.get("t_aplicacao") + t_cred - t_deb:0.2f}'
+    totals['Saldo Total CC + Apl'] = f'{config.get("t_aplicacao") + t_cred - t_deb:0.2f}'
 
     # Cria o caminho, se não existe
     os.makedirs(config.get('folder_name'), exist_ok=True)

@@ -56,5 +56,30 @@
 body.popup-active {
     overflow: hidden; /* Impede o scroll */
     user-select: none; /* Impede a seleção de texto */
-    
+}
+
+/* O popup de detalhes cobre a tela toda e bloqueia cliques na página ao fundo. */
+.balance-detail-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 16px;
+    overflow-y: auto;
+    transform: none;
+    border: 0;
+    border-radius: 0;
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: none;
+}
+
+.balance-detail-popup .form-container {
+    width: min(800px, 100%);
+    max-height: calc(100vh - 32px);
+    margin: auto;
+    overflow-y: auto;
 }
