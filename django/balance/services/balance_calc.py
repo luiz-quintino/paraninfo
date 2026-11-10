@@ -304,7 +304,7 @@ def update_transactions(transaction_list, transaction_report, totals, main_data)
             comissao_id=main_data.get('comissao_id'),
             transacao=transaction_,
             valor=valor,
-        ).save()
+        )
 
     # Atualiza o valor da cota usando a transação já carregada em transaction_list.
     transaction_id = next(
