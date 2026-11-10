@@ -711,7 +711,8 @@ def product_my_list(request, UUID=None):
 
 	associado = get_object_or_404(tbAssociados, uuid=UUID)
 	if request.method == 'POST':
-		if not is_admin_:
+		role_can_cancel = user_role(request) in ['presidente', 'vice-presidente', 'secretario']
+		if not role_can_cancel:
 			messages.error(request, 'Você não tem permissão para cancelar compras.')
 			return redirect('products:product_my_list', UUID=UUID)
 
@@ -721,8 +722,8 @@ def product_my_list(request, UUID=None):
 			id=purchase_id,
 			associado=associado,
 		)
-		if purchase.status == tbCompra.STATUS_CANCELADO:
-			messages.info(request, 'Esta compra já está cancelada.')
+		if purchase.status != tbCompra.STATUS_APROVADO:
+			messages.error(request, 'Somente compras aprovadas podem ser canceladas.')
 			return redirect('products:product_my_list', UUID=UUID)
 
 		with transaction.atomic():
@@ -737,10 +738,13 @@ def product_my_list(request, UUID=None):
 		messages.success(request, 'Compra cancelada.')
 		return redirect('products:product_my_list', UUID=UUID)
 
+	role_can_cancel = user_role(request) in ['presidente', 'vice-presidente', 'secretario', 'tesoureiro']
+
 	context = product_my_list_context(request, associado)
 	context['menu_options'] = menu_options
 	context['message'] = message
 	context['message']['title'] = f'Meu produtos adquiridos ({associado.nome_responsavel})'
+	context['role_can_cancel'] = role_can_cancel
 	return render(request, 'products/product_my_list.html', context)
 
 

@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const image = card?.querySelector('.product-image');
                 if (cancelPurchaseId && cancelPurchaseButton && card) {
                     cancelPurchaseId.value = card.dataset.purchaseId || '';
-                    cancelPurchaseButton.hidden = card.dataset.purchaseStatus === '3';
+                    cancelPurchaseButton.hidden = card.dataset.purchaseStatus !== '1';
                     cancelPurchaseButton.disabled = false;
                 }
                 detailTitle.textContent = trigger.dataset.productName || '';

@@ -8,6 +8,9 @@ from config.constants import ATIVO
 import os, traceback
 
 def save_erro_log(request, error: dict):
+    """
+        Salva erro em tempo de execução RUN TIME ERROR
+    """
     if error:
         for k, v in error.items():
             frames = traceback.extract_tb(v.__traceback__)
@@ -84,9 +87,15 @@ def convert_date(date_str) -> str:
     return date
 
 def save_log(request, description: str, evento_log_id: int) -> int:
-    # Registra log de evento no banco de dados
-    pagina_ = request.resolver_match.url_name
-    pagina = lstPagina.objects.get(pagina=pagina_)
+    """
+        Salva log genérico
+    """
+    # Registra log de eventos
+    pagina_name = request.resolver_match.url_name
+    pagina = lstPagina.objects.filter(pagina=pagina_name).first() or ''
+    if not pagina:
+        lstPagina.objects.create(pagina=pagina_name)
+        pagina = lstPagina.objects.filter(pagina=pagina_name).first()
     
     if request.session.get('user_data'):
         seessao_ativa_id = request.session['user_data'].get('sessao_id', 0)

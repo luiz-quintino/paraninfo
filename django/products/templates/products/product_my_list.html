@@ -116,11 +116,11 @@
             </dl>
         </section>
         <div class="action-buttons product-card-actions">
-            {% if is_admin %}
+            {% if role_can_cancel %}
                 <form method="post" id="cancel-purchase-form">
                     {% csrf_token %}
                     <input type="hidden" name="purchase_id" id="cancel-purchase-id">
-                    <button class="cancel-button" type="submit" id="cancel-purchase-button">Cancelar compra</button>
+                    <button class="cancel-button" type="submit" id="cancel-purchase-button" hidden>Cancelar compra</button>
                 </form>
             {% endif %}
         </div>

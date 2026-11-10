@@ -66,5 +66,5 @@
     justify-content: space-between;
     align-items: center;
     padding: 0;
-    z-index: 9991; /* Certifique-se de que o botão está acima do menu */
+    z-index: 991; /* Certifique-se de que o botão está acima do menu */
 }
