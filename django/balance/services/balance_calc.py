@@ -286,11 +286,11 @@ def update_cota_in_product(main_data):
     
 
 def update_transactions(transaction_list, transaction_report, totals, main_data):
-    avoid_duplicates = ['saldo inicial']
+    avoid_duplicates = ['Saldo inicial']
     new_key = []
     for transaction_ in transaction_list:
         # evita duplica entradas especiais
-        key = transaction_.key_name.lower()
+        key = transaction_.key_name
         if key in new_key and key in avoid_duplicates:
             continue
         if key not in new_key:
