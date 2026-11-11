@@ -107,6 +107,12 @@ def month_enclosed(request, comissao: dict, extratos):
         data_list[0]['doc']['value'] = ''
         data_list[0]['cc']['value'] = 'CC'
 
+    # verifica se o SALDO ANTERIOR já existe no data_list. Se existir, exclui, pra manter somente o primeiro
+    for i in range(1, len(data_list)):
+        if data_list[i]['operacao']['value'] == 'SALDO ANTERIOR':
+            del data_list[i]
+            break
+    
     # Soma aplicações anteriores e as aplicações deste extrato.
     total_anterior = float(tbTransacao.objects.filter(
         comissao_id=main_data['comissao_id'],
@@ -286,15 +292,9 @@ def update_cota_in_product(main_data):
     
 
 def update_transactions(transaction_list, transaction_report, totals, main_data):
-    avoid_duplicates = ['Saldo inicial']
-    new_key = []
     for transaction_ in transaction_list:
         # evita duplica entradas especiais
         key = transaction_.key_name
-        if key in new_key and key in avoid_duplicates:
-            continue
-        if key not in new_key:
-            new_key.append(key)
 
         valor = Decimal(str(totals.get(key, 0.0))).quantize(Decimal('0.01'))
         # cria um novo registro em tbTransacao com o valor de cada tipo de transação no mês
