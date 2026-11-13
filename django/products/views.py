@@ -22,7 +22,6 @@ from users.models import tbAssociados
 from .models import lstParcelas, tbCompra, tbMediaFiles, tbParcelamento, tbPlanoPagamentoProduto, tbProduto
 from config.menus import MENU_VOLTAR, MENU_PRODUTOS_INCLUIR
 from utils import save_log, is_admin, is_app_admin, user_role
-from config.constants import ATIVO
 
 def get_associado(request):
 	return get_object_or_404(tbAssociados, uuid=request.user.last_name)
@@ -855,7 +854,7 @@ def product_edit(request, product_id):
 				product.dt_inicio = start_date
 				product.dt_previsao = forecast_date
 				product.dia_vencimento = due_day
-				product.ativo = int(request.POST.get(ATIVO))
+				product.ativo = int(request.POST.get('ATIVO'))
 				product.ajustar_atrasadas = int(request.POST.get('adjust'))
 				product.parcelas = max(len(schedule) for _, schedule in validated_plans)
 
