@@ -7,6 +7,7 @@ class tbRelatorio(models.Model):
     arquivo = models.CharField(max_length=255, null=True, blank=True)  # Campo comissão
     pasta = models.CharField(max_length=255, null=True, blank=True)  # Campo CNPJ
     data = models.DateTimeField()
+    hash = models.CharField(max_length=255, null=True, blank=True) # Campo Hash do relatório
 
     comissao = models.ForeignKey(
         tbComissao,

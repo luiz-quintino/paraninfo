@@ -26,6 +26,7 @@ import json
 import math
 from utils import get_user_from_log_id, save_erro_log
 from config.constants import ATIVO
+from Crypto.Hash import SHA1 
 
 from certificate.cert_lib.sign_document import signing_by_cert_id
 
@@ -126,6 +127,12 @@ def month_enclosed(request, comissao: dict, extratos):
     )
     t_aplicacao = total_anterior + soma_extrato
 
+    # pega o hash do relatório anterior
+    report_hash = tbRelatorio.objects.filter(
+            comissao_id=comissao_id,
+        ).order_by('-sequencia').first()
+    report_hash = report_hash.hash if report_hash else ''
+
     # Cria configurações para o relatório
     config = {
         'title': title,
@@ -133,7 +140,7 @@ def month_enclosed(request, comissao: dict, extratos):
         'cnpj': cnpj,
         'month': MONTHS.get(month,1),
         'doc': str(sequence).zfill(2),
-        'hash': f'{comissao_id}-{year}-{month}',
+        'hash': report_hash,
         'popup': popup_list,
         "t_aplicacao": t_aplicacao,
         'signatures': [
@@ -165,11 +172,14 @@ def month_enclosed(request, comissao: dict, extratos):
             request.user_id
         ]
 
+        # Assina relatório
         for position_id, user_id_assinatura in enumerate(user_id_assinaturas):
             cert_id = tbAssociados.objects.filter(id=user_id_assinatura).first().certificado
             report_name, cert_id_new = signing_by_cert_id(file_pdf=report_name, cert_id=cert_id, index_position=position_id, user_id=user_id_assinatura, comissao=comissao['title'])
             if cert_id != cert_id_new:
                 tbAssociados.objects.filter(id=user_id_assinatura).update(certificado=cert_id_new)
+
+        report_hash = search_hash(report_name)
 
     # *******************************************************************************************************************************
     #  Atualiza tbTransacao com os valores totais de cada tipo de transação 
@@ -216,6 +226,7 @@ def month_enclosed(request, comissao: dict, extratos):
             sequencia=sequence,
             arquivo=file_name,
             pasta=folder_name,
+            hash=report_hash,
             data=date.today()
         )
 
@@ -613,3 +624,13 @@ def _payment_history_summary(rows, today, associado):
         'show_next_payment': show_next_payment,
         'plan': plan
     }
+
+def search_hash(file_name:str) -> str:
+    if os.path.exists(file_name):
+        with open(file_name, 'rb') as f:
+            data = f.read()
+
+        if data:
+            my_hash = SHA1.new(data).hexdigest()
+            return my_hash
+    return ''

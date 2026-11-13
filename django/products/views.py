@@ -22,6 +22,7 @@ from users.models import tbAssociados
 from .models import lstParcelas, tbCompra, tbMediaFiles, tbParcelamento, tbPlanoPagamentoProduto, tbProduto
 from config.menus import MENU_VOLTAR, MENU_PRODUTOS_INCLUIR
 from utils import save_log, is_admin, is_app_admin, user_role
+from config.constants import ATIVO
 
 def get_associado(request):
 	return get_object_or_404(tbAssociados, uuid=request.user.last_name)
