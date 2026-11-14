@@ -58,6 +58,7 @@ def email(request):
                 )
 
                 email_result = send_paraninfo_email(
+                    request=request,
                     subject=titulo, 
                     message_text=conteudo, 
                     recipient_list=[record.email for record in recipients], 

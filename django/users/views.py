@@ -910,7 +910,7 @@ def user_record(request, uuid=None):
             # Envia email de confirmação de associação aprovada
             subject = f'Associação aprovada'
             primeiro_nome = associado.nome_responsavel.split()[0].title()
-            success_message = FICHA_DE_INSCRICAO_APROVADA.format(primeiro_nome, 
+            success_message = EMAIL_FICHA_DE_INSCRICAO_APROVADA.format(primeiro_nome, 
                                                                 request.session['user_data']['comissao_title'],
                                                                 codigo_pagamento,
                                                                 codigo_pagamento,
