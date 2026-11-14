@@ -43,6 +43,7 @@ from config.constants import MESSAGE_TYPE_INFO, \
                              MESSAGE_TYPE_CONFIRM
 
 from config.constants import ATIVO
+from email_app.manage_email import send_paraninfo_email, EMAIL_FICHA_DE_INSCRICAO_ATUALIZACAO, EMAIL_FICHA_DE_INSCRICAO_ENVIO, EMAIL_FICHA_DE_INSCRICAO_APROVADA
 
 def _digits_only(value: str) -> str:
     return ''.join(character for character in value if character.isdigit())
@@ -360,50 +361,27 @@ def invitation_view(request, uuid):
     if convite_field:
         # Novo registro
         subject = f'Ficha de Inscrição - {convite_field.nome_curto}'
-        success_message = (
-            f'Ilustre {primeiro_nome},\n\n'
-
-            f'Temos o prazer de informar que a sua Ficha de Inscrição para a {convite_field.nome_curto} foi enviada com sucesso. \n\n'
-            f'Após a análise da documentação, você receberá um email de confirmação ou alguém irá entrar em contato com você. \n\n'
-
-
-            'Utilize o link abaixo caso necessite alterar alguma informação ou algum docucumento. \n'
-            f'Link para edição: {edit_url}\n'
-            'O link ficará disponível até que sua solicitação seja processada. \n\n\n'
-
-            'Esse é um email automático. Não responda a esse email\n\n'
-
-            'Atenciosamente,\n'
-            f'{convite_field.nome_comissao}\n'
-            f'cnpj:{convite_field.cnpj}'
+        success_message = EMAIL_FICHA_DE_INSCRICAO_ENVIO.format(
+            primeiro_nome,
+            convite_field.nome_curto,
+            edit_url,
+            request.session['user_data']['comissao_title']
         )
 
     else:
         # Edita um registro existente
         subject = f'Ficha de Inscrição - Revisão'
-        success_message = (
-                    f'Ilustre {primeiro_nome},\n\n'
-        
-                    f'Sua Ficha de Inscrição foi atualizada com sucesso. \n'
-                    f'Após a análise da documentação, você receberá um email de confirmação ou alguém irá entrar em contato com você. \n\n'
-        
-        
-                    'Utilize o link abaixo caso necessite alterar alguma informação ou algum docucumento. \n'
-                    f'Link para edição: {edit_url}\n'
-                    'O link ficará disponível até que sua solicitação seja processada. \n\n\n'
-        
-                    'Esse é um email automático. Não responda a esse email\n\n'
-
-                )
+        success_message = EMAIL_FICHA_DE_INSCRICAO_ATUALIZACAO.format(primeiro_nome, edit_url, 
+                                                                      request.session['user_data']['comissao_title'])
 
     user_email = record.email
-    email_error = send_uer_email(subject, success_message, user_email)
+    email_error = send_paraninfo_email(request=request, subject=subject, message_text=success_message, recipient_list=user_email)
 
     success_message = f'Ficha de Inscrição enviada com sucesso.\nVocê receberá um email de confirmação.\nUse o link a seguir caso necesside revisar algum dado. {edit_url}'
 
     if email_error:
-        success_message += (
-            ' Não foi possível enviar o email de confirmação. '
+        success_message = (
+            'Não foi possível enviar o email de confirmação. '
             'Verifique o endereço cadastrado ou contate a comissão.'
         )
 
@@ -662,8 +640,6 @@ def user_list(request):
         else:
             associados = associados.filter(comissao=request.comissao).order_by('codigo_pagamento') 
             appa = 1
-
-        
 
         if search_query:
             # Filtrar os registros com base no texto de busca
@@ -928,26 +904,19 @@ def user_record(request, uuid=None):
                 messages.error(request, 'Não foi possível aprovar o convidado. Nenhuma alteração foi concluída.')
                 return redirect('user_record', uuid=uuid)
 
+            # Extrai código de pagamento do associado aprovado
+            codigo_pagamento = associado.codigo_pagamento
+
             # Envia email de confirmação de associação aprovada
             subject = f'Associação aprovada'
             primeiro_nome = associado.nome_responsavel.split()[0].title()
-            success_message = (
-                f'Olá, {primeiro_nome}!\n\n'
+            success_message = FICHA_DE_INSCRICAO_APROVADA.format(primeiro_nome, 
+                                                                request.session['user_data']['comissao_title'],
+                                                                codigo_pagamento,
+                                                                codigo_pagamento,
+                                                                request.session['user_data']['comissao_title'])
 
-                f'Gostaríamos de dar-lhe as boas vindas à {request.session['user_data']['comissao_title']}\n\n'
-
-                f'Estamos preparando tudo pra você.\nAguarde algumas horas e acesso o site paraninfo.com.br. Clique em [Esqueci minha senha] e siga as instruções para gerar uma senha e acessar o sistema.\n'
-                f'Acesse o sistema para ver como está o seu pagamento, as últimas notícias e tudo relacionado ao evento de formatua.\n\n'
-
-                f'Atenciosamente,\n'
-                f'{request.session['user_data']['comissao_title']},\n'
-                            )
-
-            email_error = send_uer_email(subject, success_message, associado.email)
-            presidente_id = request.session['user_data']['comissao_presidente_id']
-            presidente_email = tbAssociados.objects.filter(id=presidente_id).first().email
-            if presidente_email:
-                email_error = send_uer_email(subject, success_message, presidente_email)
+            email_error = send_paraninfo_email(request=request, subject=subject, message_text=success_message, recipient_list=associado.email)
 
             messages.success(request, 'Convidado aprovado com sucesso')
             return redirect('user_record', uuid=associado.uuid)
@@ -1123,21 +1092,3 @@ def user_credential(request, uuid):
         'message': message
     }
     return render(request, 'users/user_credential.html', context)
-
-def send_uer_email(subject, message_text, user_email) -> bool:
-    email_error = False
-    from_address = parseaddr(settings.DEFAULT_FROM_EMAIL)[1]
-    try:
-        send_mail(
-            subject=subject,
-            message=(
-                f'{message_text}'
-            ),
-            from_email=formataddr(('Paraninfo', from_address)),
-            recipient_list=[user_email],
-            fail_silently=False,
-        )
-    except Exception:
-        email_error = True
-
-    return email_error

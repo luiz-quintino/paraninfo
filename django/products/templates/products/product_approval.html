@@ -38,6 +38,7 @@
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>Dt Compra</th>
                         <th>Produto</th>
                         <th>Associado</th>
                         <th>Quantidade</th>
@@ -51,6 +52,7 @@
                     {% for purchase in purchases %}
                         <tr>
                             <td>{{ purchase.id }}</td>
+                            <td>{{ purchase.dt_compra|date:"d/m/Y" }}</td>
                             <td>{{ purchase.produto.produto }}</td>
                             <td>{{ purchase.associado.nome_responsavel }}</td>
                             <td>{{ purchase.quantidade }}</td>

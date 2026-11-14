@@ -22,6 +22,7 @@ from users.models import tbAssociados
 from .models import lstParcelas, tbCompra, tbMediaFiles, tbParcelamento, tbPlanoPagamentoProduto, tbProduto
 from config.menus import MENU_VOLTAR, MENU_PRODUTOS_INCLUIR
 from utils import save_log, is_admin, is_app_admin, user_role
+from email_app.manage_email import purchase_mail, purchase_approved_mail
 
 def get_associado(request):
 	return get_object_or_404(tbAssociados, uuid=request.user.last_name)
@@ -1047,100 +1048,102 @@ def product_approval(request):
 	}
 	return render(request, 'products/product_approval.html', context)
 
-from django.shortcuts import render
 
-def purchase_mail(purchase_schedule, product, quantity, request, associado) -> bool:
-	payment_text = ''.join([' '.join(['   ',f'{str(compra['number']):2}:',str(compra['due_date'].strftime("%d/%m/%Y")), f'R${compra["value"]:>8.2f}', '\n']) for compra in purchase_schedule])
-	email_error = False
-	subject = f'Recebemos seu pedido para {product.produto}'
-	success_message = (
-		f'Compra realizada\n\n'
-		f'Situação: Pendente de aprovação.\n\n'
-		f'Produto: {product.produto}\n'
-		f'Quantidade: {quantity}\n'
-		f'{product.descricao}\n\n'
-		f'Valor total: R${product.valor_total}\n'
-		f'Plano de pagamento:\n{payment_text}\n\n'
-		f'Atenciosamente,\n{request.comissao_title}'
-	)
-	try:
-		from_address = parseaddr(settings.DEFAULT_FROM_EMAIL)[1]
-		email = EmailMultiAlternatives(
-			subject=subject,
-			body=success_message,
-			from_email=formataddr(('Paraninfo', from_address)),
-			to=[associado.email],
-		)
-		media = tbMediaFiles.objects.filter(id=product.img_id).first()
-		image_html = ''
-		if media:
-			media_folder = media.folder.removeprefix('/media/').strip('/')
-			image_path = (Path(settings.MEDIA_ROOT) / media_folder / media.new_file_name).resolve()
-			if image_path.is_file():
-				image_html = '<p><img src="cid:product-image" alt="Imagem do produto" style="max-width:500px;height:auto;"></p>'
-				image = MIMEImage(image_path.read_bytes())
-				image.add_header('Content-ID', '<product-image>')
-				image.add_header('Content-Disposition', 'inline', filename=media.new_file_name)
-				email.attach(image)
-		html_message = (
-			f'<h2>{escape(subject)}</h2>'
-			f'{image_html}'
-			f'<p><strong>Situação:</strong> Pendente de aprovação.</p>'
-			f'<p><strong>Produto:</strong> {escape(product.produto)}<br>'
-			f'<strong>Quantidade:</strong> {quantity}<br>{escape(product.descricao)}</p>'
-			f'<p><strong>Valor total:</strong> R$ {product.valor_total}</p>'
-			f'<p><strong>Plano de pagamento:</strong><br>{escape(payment_text).replace(chr(10), "<br>")}</p>'
-			f'<p>Atenciosamente,<br>{escape(request.comissao_title or "Paraninfo")}</p>'
-		)
-		email.attach_alternative(html_message, 'text/html')
-		email.send(fail_silently=False)
-	except Exception:
-		email_error = True
 
-	return email_error
+# def purchase_mail(purchase_schedule, product, quantity, request, associado) -> bool:
+# 	payment_text = ''.join([' '.join(['   ',f'{str(compra['number']):2}:',str(compra['due_date'].strftime("%d/%m/%Y")), f'R${compra["value"]:>8.2f}', '\n']) for compra in purchase_schedule])
+# 	email_error = False
+# 	subject = f'Recebemos seu pedido para {product.produto}'
+# 	success_message = (
+# 		f'Compra realizada\n\n'
+# 		f'Situação: Pendente de aprovação.\n\n'
+# 		f'Produto: {product.produto}\n'
+# 		f'Quantidade: {quantity}\n'
+# 		f'{product.descricao}\n\n'
+# 		f'Valor total: R${product.valor_total}\n'
+# 		f'Plano de pagamento:\n{payment_text}\n\n'
+# 		f'Atenciosamente,\n{request.comissao_title}'
+# 	)
+# 	try:
+# 		from_address = parseaddr(settings.DEFAULT_FROM_EMAIL)[1]
+# 		email = EmailMultiAlternatives(
+# 			subject=subject,
+# 			body=success_message,
+# 			from_email=formataddr(('Paraninfo', from_address)),
+# 			to=[associado.email],
+# 		)
+# 		media = tbMediaFiles.objects.filter(id=product.img_id).first()
+# 		image_html = ''
+# 		if media:
+# 			media_folder = media.folder.removeprefix('/media/').strip('/')
+# 			image_path = (Path(settings.MEDIA_ROOT) / media_folder / media.new_file_name).resolve()
+# 			if image_path.is_file():
+# 				image_html = '<p><img src="cid:product-image" alt="Imagem do produto" style="max-width:500px;height:auto;"></p>'
+# 				image = MIMEImage(image_path.read_bytes())
+# 				image.add_header('Content-ID', '<product-image>')
+# 				image.add_header('Content-Disposition', 'inline', filename=media.new_file_name)
+# 				email.attach(image)
+# 		html_message = (
+# 			f'<h2>{escape(subject)}</h2>'
+# 			f'{image_html}'
+# 			f'<p><strong>Situação:</strong> Pendente de aprovação.</p>'
+# 			f'<p><strong>Produto:</strong> {escape(product.produto)}<br>'
+# 			f'<strong>Quantidade:</strong> {quantity}<br>{escape(product.descricao)}</p>'
+# 			f'<p><strong>Valor total:</strong> R$ {product.valor_total}</p>'
+# 			f'<p><strong>Plano de pagamento:</strong><br>{escape(payment_text).replace(chr(10), "<br>")}</p>'
+# 			f'<p>Atenciosamente,<br>{escape(request.comissao_title or "Paraninfo")}</p>'
+# 		)
+# 		email.attach_alternative(html_message, 'text/html')
+# 		email.send(fail_silently=False)
+# 	except Exception:
+# 		email_error = True
 
-def purchase_approved_mail(product, request, associado, result) -> bool:
-	email_error = False
-	subject = f'Resulta do seu pedido para {product.produto}'
-	success_message = (
-		f'Situação da Compra: {result}.\n\n'
-		f'Produto: {product.produto}\n'
-		f'{product.descricao}\n\n'
-		f'Valor total: R${product.valor_total}\n'
-		f'Atenciosamente,\n{request.comissao_title}'
-	)
+# 	return email_error
+
+# def purchase_approved_mail(product, request, associado, result) -> bool:
+# 	email_error = False
+# 	subject = f'Resulta do seu pedido para {product.produto}'
+# 	success_message = (
+# 		f'Situação da Compra: {result}.\n\n'
+# 		f'Produto: {product.produto}\n'
+# 		f'{product.descricao}\n\n'
+# 		f'Valor total: R${product.valor_total}\n'
+# 		f'Atenciosamente,\n{request.comissao_title}'
+# 	)
 	
-	try:
-		from_address = parseaddr(settings.DEFAULT_FROM_EMAIL)[1]
-		email = EmailMultiAlternatives(
-			subject=subject,
-			body=success_message,
-			from_email=formataddr(('Paraninfo', from_address)),
-			to=[associado.email],
-		)
-		media = tbMediaFiles.objects.filter(id=product.img_id).first()
-		image_html = ''
-		if media:
-			media_folder = media.folder.removeprefix('/media/').strip('/')
-			image_path = (Path(settings.MEDIA_ROOT) / media_folder / media.new_file_name).resolve()
-			if image_path.is_file():
-				image_html = '<p><img src="cid:product-image" alt="Imagem do produto" style="max-width:500px;height:auto;"></p>'
-				image = MIMEImage(image_path.read_bytes())
-				image.add_header('Content-ID', '<product-image>')
-				image.add_header('Content-Disposition', 'inline', filename=media.new_file_name)
-				email.attach(image)
-		html_message = (
-			f'<h2>{escape(subject)}</h2>'
-			f'{image_html}'
-			f'<p><strong>Situação da compra:</strong> {escape(result)}</p>'
-			f'<p><strong>Produto:</strong> {escape(product.produto)}<br>'
-			f'<strong>Quantidade:</strong> {escape(product.descricao)}</p>'
-			f'<p><strong>Valor total:</strong> R$ {product.valor_total}</p>'
-			f'<p>Atenciosamente,<br>{escape(request.comissao_title or "Paraninfo")}</p>'
-		)
-		email.attach_alternative(html_message, 'text/html')
-		email.send(fail_silently=False)
-	except Exception:
-		email_error = True
+# 	try:
+# 		from_address = parseaddr(settings.DEFAULT_FROM_EMAIL)[1]
+# 		email = EmailMultiAlternatives(
+# 			subject=subject,
+# 			body=success_message,
+# 			from_email=formataddr(('Paraninfo', from_address)),
+# 			to=[associado.email],
+# 		)
+# 		media = tbMediaFiles.objects.filter(id=product.img_id).first()
+# 		image_html = ''
+# 		if media:
+# 			media_folder = media.folder.removeprefix('/media/').strip('/')
+# 			image_path = (Path(settings.MEDIA_ROOT) / media_folder / media.new_file_name).resolve()
+# 			if image_path.is_file():
+# 				image_html = '<p><img src="cid:product-image" alt="Imagem do produto" style="max-width:500px;height:auto;"></p>'
+# 				image = MIMEImage(image_path.read_bytes())
+# 				image.add_header('Content-ID', '<product-image>')
+# 				image.add_header('Content-Disposition', 'inline', filename=media.new_file_name)
+# 				email.attach(image)
 
-	return email_error
+# 		html_message = (
+# 			f'<h2>{escape(subject)}</h2>'
+# 			f'{image_html}'
+# 			f'<p><strong>Situação da compra:</strong> {escape(result)}</p>'
+# 			f'<p><strong>Produto:</strong> {escape(product.produto)}<br>'
+# 			f'<strong>Quantidade:</strong> {escape(product.descricao)}</p>'
+# 			f'<p><strong>Valor total:</strong> R$ {product.valor_total}</p>'
+# 			f'<p>Atenciosamente,<br>{escape(request.comissao_title or "Paraninfo")}</p>'
+# 		)
+# 		email.attach_alternative(html_message, 'text/html')
+# 		email.send(fail_silently=False)
+
+# 	except Exception:
+# 		email_error = True
+
+# 	return email_error

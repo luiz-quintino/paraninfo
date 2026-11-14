@@ -13,6 +13,9 @@ from email_app.models import tbEmail
 from users.models import tbAssociados
 from utils import save_log
 from config.constants import ATIVO
+from email.utils import formataddr, parseaddr
+from django.conf import settings
+from email_app.manage_email import send_paraninfo_email
 
 
 def _email_permission(request):
@@ -39,25 +42,32 @@ def email(request):
             ids = [int(value) for value in request.POST.getlist('associados')]
         except (TypeError, ValueError):
             ids = []
+
         recipients = list(associados.filter(id__in=set(ids)))
         if not titulo or not conteudo or not recipients:
             messages.error(request, 'Informe título, conteúdo e ao menos um associado.')
+            
         else:
-            try:
-                with transaction.atomic():
-                    log_id = save_log(request, 'Envio de email', 21)
-                    tbEmail.objects.create(
-                        titulo=titulo,
-                        conteudo=conteudo,
-                        distribuicao=json.dumps(ids),
-                        log_id=log_id,
+            with transaction.atomic():
+                log_id = save_log(request, 'Envio de email', 21)
+                tbEmail.objects.create(
+                    titulo=titulo,
+                    conteudo=conteudo,
+                    distribuicao=json.dumps(ids),
+                    log_id=log_id,
+                )
+
+                email_result = send_paraninfo_email(
+                    subject=titulo, 
+                    message_text=conteudo, 
+                    recipient_list=[record.email for record in recipients], 
                     )
-                    send_mail(titulo, conteudo, None, [record.email for record in recipients], fail_silently=False)
-            except Exception as exc:
-                messages.error(request, f'Não foi possível enviar o email: {exc}')
-            else:
-                messages.success(request, 'Email enviado com sucesso.')
-                return redirect('email')
+                
+                if email_result:
+                    messages.error(request, email_result["text"])
+                else:
+                    messages.success(request, 'Email enviado com sucesso.')
+                    return redirect('email')
 
     context = {
         'menu_options': [MENU_VOLTAR, {'name': 'Emails enviados', 'url': '/email/email-list/', 'tip': 'Listar emails enviados'}],
