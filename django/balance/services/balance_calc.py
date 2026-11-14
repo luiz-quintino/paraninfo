@@ -144,9 +144,9 @@ def month_enclosed(request, comissao: dict, extratos):
         'popup': popup_list,
         "t_aplicacao": t_aplicacao,
         'signatures': [
-            {'title': 'Comissão de Formatura', 'name': 'Presidente', 'document': ''},
             {'title': 'Comissão de Formatura', 'name': 'Tesoureiro', 'document': ''},
-            {'title': 'Comissão de Formatura', 'name': 'Secretário', 'document': ''}
+            {'title': 'Comissão de Formatura', 'name': 'Fiscal', 'document': ''},
+            {'title': 'Comissão de Formatura', 'name': 'Presidente', 'document': ''}
         ],
         'folder_name': settings.BASE_DIR / folder_name,
         'model_name': model_name
