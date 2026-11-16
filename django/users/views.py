@@ -18,13 +18,14 @@ from django.utils.timezone import localtime, get_current_timezone, timezone, now
 from datetime import timedelta, datetime
 from django.urls import reverse
 from users.models import tbAssociados, tbAssociadosListView, tbAssociadosCredentials, tbConvidado, lstTipoAssociado, lstSituacao
+from products.models import tbCompra
 from home.models import tbLog
 from paraninfo_admin.models import tbComissao
 from utils import convert_date, save_log, is_admin, is_app_admin, user_role
 from django.core.files.storage import FileSystemStorage
 from django.core.files.storage import default_storage
 from django.db import IntegrityError, transaction as db_transaction
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.db.models.functions import Collate
 from config.menus import menu_url,  MENU_USERS_INCLUIR_USUARIO, \
                                     MENU_USERS_DEFINICAO_ACESSO, \
@@ -630,7 +631,8 @@ def user_list(request):
     )  # Exibe apenas se há email/senha, sem trazer os valores para a listagem
 
     show_search = False  # Oculta a opção de busca
-    appa = 0
+    appa = 0        # Tipo de acesso: 1=staff ou 2=app_admin
+    compras = 0
 
     if is_admin(request) or is_app_admin(request):
         # Usuários com acesso admin verão todos os registros com a mesma comissão
@@ -641,13 +643,24 @@ def user_list(request):
             associados = associados.filter(comissao=request.comissao).order_by('codigo_pagamento') 
             appa = 1
 
+        
+
         if search_query:
             # Filtrar os registros com base no texto de busca
             associados = \
                 associados.filter(nome_responsavel__icontains=search_query) \
                 | associados.filter(aluno__icontains=search_query) \
+                | associados.filter(situacao__icontains=search_query) \
+                | associados.filter(tipo__icontains=search_query) \
+                | associados.filter(__icontains=search_query) \
                 | associados.filter(nome_de_guerra__icontains=search_query)
         show_search = True  # Exibe a opção de busca
+
+        # Calcula a quantidade de produtos comprados por cada associado
+        associados = associados.annotate(
+                products_count=Count('compras_produtos')
+            )
+
 
         # Cria side menu apenas para os perfis selecionados
         if user_role(request) in ['presidente', 'vice-presidente', 'secretario'] or is_app_admin(request):

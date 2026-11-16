@@ -1,6 +1,6 @@
 from django.db import models
-from users.models import tbAssociados
 from config.constants import ATIVO
+from users.models import tbAssociados
 
 class lstprodutoativo(models.Model):
 	id = models.AutoField(primary_key=True)

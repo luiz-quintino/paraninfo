@@ -51,6 +51,7 @@
                     <th>Nome de Guerra</th>
                     <th>Situação</th>
                     {% if appa > 0 %}
+                        <th>Compras</th>
                         <th>Acesso</th>
                     {% endif %}
                     {% if appa == 2 %}
@@ -70,6 +71,7 @@
                         <td data-label="Nome de Guerra">{{ associado.nome_de_guerra }}</td>
                         <td data-label="Situação">{{ associado.situacao }}</td>
                         {% if appa > 0 %}
+                            <td data-label="Compras">{{ associado.products_count }}</td>
                             <td data-label="Acesso">{% if associado.user_has_email %}✉️{% endif %}{% if associado.user_has_password %}🔑{% endif %}</td>
                          {% endif %}
                         {% if appa == 2 %}

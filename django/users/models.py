@@ -51,7 +51,6 @@ class tbAssociados(models.Model):
     foto_endereco = models.CharField(max_length=100, null=True, blank=True)
     comissao = models.IntegerField(null=False, blank=False)  # Referência a outra tabela (comissão)
 
-
     def __str__(self):
         return self.nome_responsavel or "Sem Nome"
 
