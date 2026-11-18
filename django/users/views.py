@@ -652,7 +652,6 @@ def user_list(request):
                 | associados.filter(aluno__icontains=search_query) \
                 | associados.filter(situacao__icontains=search_query) \
                 | associados.filter(tipo__icontains=search_query) \
-                | associados.filter(__icontains=search_query) \
                 | associados.filter(nome_de_guerra__icontains=search_query)
         show_search = True  # Exibe a opção de busca
 
