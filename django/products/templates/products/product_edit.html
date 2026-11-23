@@ -71,7 +71,7 @@
             </div>
             <label class="product-active-field" for="product-active">
                 Situação do Produto:
-                <select id="product-active" name=ATIVO>
+                <select id="product-active" name="ativo">
                     <option value=0 {% if product.ativo == 0 %}selected{% endif %}>Novo</option>
                     <option value=1 {% if product.ativo == 1 %}selected{% endif %}>Ativo</option>
                     <option value=2 {% if product.ativo == 2 %}selected{% endif %}>Oculto</option>
@@ -79,11 +79,18 @@
                 </select>
             </label>
             <label class="product-active-field" for="product-active">
+                Atualizar cota no fechamento:
+                <select id="product-field" name="update">
+                    <option value=0 {% if product.ajustar_cota == 0 %}selected{% endif %}>Não atualizar</option>
+                    <option value=1 {% if product.ajustar_cota == 1 %}selected{% endif %}>Atualizar</option>
+                </select>
+            </label>
+            <label class="product-active-field" for="product-active">
                 Ajustar atradadas:
                 <select id="product-adjuts" name="adjust">
                     <option value=0 {% if product.ajustar_atrasadas == 0 %}selected{% endif %}>Distribuir em parcelas futuras [🗓️🪙🪙🪙]</option>
                     <option value=1 {% if product.ajustar_atrasadas == 1 %}selected{% endif %}>Acumular parcelas vencidas     [🗓️💰🪙]</option>
-                    <option value=2 {% if product.ajustar_atrasadas == 2 %}selected{% endif %}>Manter com datas vencidas      [🪙🪙🗓️🪙]</option>
+                    <option value=2 {% if product.ajustar_atrasadas == 2 %}selected{% endif %}>Manter com vencimento original [🪙🪙🗓️🪙]</option>
                 </select>
             </label>
         </div>

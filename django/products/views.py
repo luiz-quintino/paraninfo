@@ -855,8 +855,9 @@ def product_edit(request, product_id):
 				product.dt_inicio = start_date
 				product.dt_previsao = forecast_date
 				product.dia_vencimento = due_day
-				product.ativo = int(request.POST.get('ATIVO'))
+				product.ativo = int(request.POST.get('ativo'))
 				product.ajustar_atrasadas = int(request.POST.get('adjust'))
+				product.ajustar_cota = int(request.POST.get('update'))
 				product.parcelas = max(len(schedule) for _, schedule in validated_plans)
 
 				if uploaded_image:
