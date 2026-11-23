@@ -17,6 +17,7 @@ urlpatterns = [
     path('paraninfo-admin/', include('paraninfo_admin.urls')),  # Inclui as URLs do app users
     path('transaction/', include('transaction.urls')),  # Inclui as URLs do app users
     path('balance/', include('balance.urls', namespace='balance')),  # Inclui as URLs do app contabilidade
+    path('balance-closing-jobs/', include('closing_jobs.urls', namespace='closing_jobs')),
     path('products/', include('products.urls')),
     path('certificate/', include('certificate.urls')),
 

@@ -138,6 +138,7 @@
                         <td data-label="Comprovante">
                             <input type="file" id="comprovante-file-{{ extrato.id }}" data-upload-url="{% url 'upload_extrato_comprovante' extrato_id=extrato.id %}" accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg" hidden onchange="uploadComprovante({{ extrato.id }}, this)">
                             <button type="button" class="generic-button" onclick="document.getElementById('comprovante-file-{{ extrato.id }}').click()" title="Anexar ou substituir comprovante">Anexar</button>
+                            {% if extrato.comprovante > 0 %} 🔗 {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -237,10 +238,16 @@
                 return; // Não faz a requisição se a linha já foi duplicada
             }
 
-            fetch(`/transaction/get-extrato-details/${id}/`)
+            fetch(`/transaction/get-extrato-details/${id}/`, {
+                headers: {'X-Requested-With': 'XMLHttpRequest'},
+                credentials: 'same-origin',
+            })
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`Erro ao buscar os detalhes do extrato com id ${id}`);
+                        throw new Error(`Não foi possível carregar o extrato (${response.status}).`);
+                    }
+                    if (!response.headers.get('content-type')?.includes('application/json')) {
+                        throw new Error('A sessão pode ter expirado. Atualize a página e entre novamente.');
                     }
                     return response.json();
                 })
@@ -260,13 +267,16 @@
 
                     // Exibir o popup
                     document.getElementById('popup-modal').style.display = 'flex';
-                    hideLoadingOverlay();
 
                     // Adicionar classe ao corpo para impedir scroll e seleção
                     document.body.classList.add('popup-active');
                 })
                 .catch(error => {
                     console.error(error);
+                    alert(error.message || 'Falha ao carregar os detalhes do extrato.');
+                })
+                .finally(() => {
+                    hideLoadingOverlay();
                 });
             
         }

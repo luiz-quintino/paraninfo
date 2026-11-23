@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "paraninfo_admin",
     "transaction",
     "balance",
+    "closing_jobs",
     "products",
     "certificate",
 ]

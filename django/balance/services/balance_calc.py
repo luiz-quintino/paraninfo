@@ -1,14 +1,16 @@
 from django.conf import settings
-from decimal import Decimal, ROUND_HALF_UP
-from config.constants import MONTHS, FIELDS_USED_FOR_COTA, SEND_ALL_EMAILS, SKIP_EMAIL_NOTIFICATION_AFTER_CLOSE_BALANCE
-from pathlib import Path
 from transaction.models import tbExtrato, tbTransacao, lsttransacao, tbAssociados
 from products.models import tbProduto
 from balance.models import tbRelatorio
-import traceback
+from products.models import tbCompra, tbParcelamento
+from paraninfo_admin.models import tbComissao
+from home.models import tbLog
+
+from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
 from django.db.models import Sum
 import copy
-
+import traceback
 from datetime import datetime, date
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
@@ -16,18 +18,15 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from PyPDF2 import PdfFileReader, PdfFileWriter
 from PIL import ImageFont
-from products.models import tbCompra, tbParcelamento
-from paraninfo_admin.models import tbComissao
-from home.models import tbLog
+from Crypto.Hash import SHA1 
 import io
 import os
 import copy
 import json
 import math
-from utils import get_user_from_log_id, save_erro_log
+from utils import get_user_from_log_id, save_erro_log, save_log
+from config.constants import MONTHS, FIELDS_USED_FOR_COTA, SEND_ALL_EMAILS
 from config.constants import ATIVO
-from Crypto.Hash import SHA1 
-
 from certificate.cert_lib.sign_document import signing_by_cert_id
 
 def month_enclosed(request, comissao: dict, extratos):
@@ -206,14 +205,6 @@ def month_enclosed(request, comissao: dict, extratos):
 
 
         # *******************************************************************************************************************************
-        #  Atualiza a situação dos pagamentos dos associados e envia email com o resumo
-        # *******************************************************************************************************************************
-        try:
-            update_associado(comissao_id, main_data)
-        except Exception as e:
-            error['update_associado'] = e
-
-        # *******************************************************************************************************************************
         #  Atualiza fechamento em tbComissao
         # *******************************************************************************************************************************
         mes = month + 1 if month < 12 else 1
@@ -230,8 +221,19 @@ def month_enclosed(request, comissao: dict, extratos):
             data=date.today()
         )
 
+        
+        # *******************************************************************************************************************************
+        #  Atualiza a situação dos pagamentos dos associados e envia email com o resumo
+        # *******************************************************************************************************************************
+        try:
+            update_associado(comissao_id, main_data)
+        except Exception as e:
+            error['update_associado'] = e
+
     if error:
         save_erro_log(request, error)
+
+    return error
 
 
 def update_associado(comissao_id, main_data):
@@ -268,8 +270,8 @@ def update_associado(comissao_id, main_data):
                             dt_vencimento = today,
                             origem = 4  # parcela atuomática
                         ).save()
-            
-        if not SKIP_EMAIL_NOTIFICATION_AFTER_CLOSE_BALANCE:
+        skip_notification = tbComissao.objects.filter(id=comissao_id).first().skip_email_notification
+        if skip_notification != 0:
             send_email_to_associado(associado, summary, main_data)
 
 
@@ -278,14 +280,18 @@ def send_email_to_associado(associado, summary, main_data):
     from django.template.loader import render_to_string
 
     if SEND_ALL_EMAILS or (not SEND_ALL_EMAILS and associado.email == 'luiz.quintino@gmail.com'):
-        subject = f"Resumo de Pagamento - {main_data['month']}/{main_data['year']}'"
+        subject = f"Email de teste do Paraninfo - Não responda"
+        # subject = f"Resumo de Pagamento - {main_data['month']}/{main_data['year']}'"
         message = render_to_string('email_associado_summary.html', {
             'associado': associado,
             'summary': summary,
         })
         email = EmailMessage(subject, message, to=[associado.email])
         email.content_subtype = "html"
-        email.send()
+        try:
+            email.send()
+        except:
+            print("erro email", associado.email)
 
 
 def update_cota_in_product(main_data):

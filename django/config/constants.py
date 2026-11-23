@@ -20,10 +20,6 @@ MESSAGE_TYPE_CONFIRM = 'confirm'    # Yes or No
 MESSAGE_TYPE_INPUT = 'input'        # Input text
 MESSAGE_TYPE_SUCCESS = 'success'
 
-# Não realiza a congruência do mês atual vs tbComissao para o fechamento mensal em close_balance_view()
-SKIP_MONTH_CHECK = True
-# Não envia email de notificação para associado após o fechamento mensal
-SKIP_EMAIL_NOTIFICATION_AFTER_CLOSE_BALANCE = False
 # Envia somente email de teste
 SEND_ALL_EMAILS = True
 

@@ -43,6 +43,8 @@ class tbComissao(models.Model):
     mes = models.IntegerField()
     ano = models.IntegerField()
     sequence = models.IntegerField()
+    skip_email_notification = models.IntegerField(null=True, blank=True)
+    skip_month_check = models.IntegerField(null=True, blank=True)
 
     # Relacionamento com tbTipo_identificacao
     tipo_identificacao = models.ForeignKey(

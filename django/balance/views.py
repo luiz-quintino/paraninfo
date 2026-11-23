@@ -12,9 +12,11 @@ from django.http import FileResponse, Http404, JsonResponse
 from django.db.models import Sum
 from pathlib import Path
 
-from config.constants import MONTHS, SKIP_MONTH_CHECK
+from config.constants import MONTHS
 from utils import save_log, is_admin, is_app_admin, user_role
-from .services.balance_calc import month_enclosed, user_balance
+from .services.balance_calc import user_balance
+from closing_jobs.models import BalanceClosingJob
+from closing_jobs.services import enqueue_balance_closing
 
 from config.constants import MESSAGE_TYPE_INFO, \
                             MESSAGE_TYPE_ERROR, \
@@ -187,16 +189,31 @@ def close_balance_view(request):
         MENU_CONTABILIDADE_VER_EXTRATO,
         MENU_CONTABILIDADE_RESUMO_OPERACOES,
         MENU_CONTABILIDADE_LIVRO_CAIXA,
-        MENU_CONTABILIDADE_FECHAR_BALANCO,
+        # MENU_CONTABILIDADE_FECHAR_BALANCO,
         # MENU_CONTABILIDADE_MENSALIDADDES,
     ]
 
     comissaodb = tbComissao.objects.filter(id=request.comissao).first()
+    latest_closing_job = BalanceClosingJob.objects.filter(
+        comissao_id=request.comissao,
+    ).order_by('-created_at').first()
+    closing_job_matches_period = bool(
+        latest_closing_job
+        and (latest_closing_job.year, latest_closing_job.month, latest_closing_job.sequence)
+        == (comissaodb.ano, comissaodb.mes, comissaodb.sequence)
+    )
+    closing_job_blocks_retry = closing_job_matches_period and latest_closing_job.status in {
+        BalanceClosingJob.PENDING,
+        BalanceClosingJob.RUNNING,
+        BalanceClosingJob.FAILED,
+    }
 
     enclose_month = datetime.now().month
     enclose_month = enclose_month - 1 if enclose_month > 1 else 12
 
-    if not SKIP_MONTH_CHECK:
+    skip_check = comissaodb.skip_month_check
+    if skip_check !=1:
+        # Verifica o mês correto antes de efetuar o fechamento
         if enclose_month != comissaodb.mes:
             if enclose_month > comissaodb.mes:
                 message['text'] = f'Erro na sequência de fechamento. Esperado o mês: {comissaodb.mes}/{comissaodb.ano} '
@@ -218,20 +235,6 @@ def close_balance_view(request):
             close_balance = True
         
         if request.POST.get('confirm', ''):
-            #***********************************************************************************************
-            # Realiza o fechamento mensal do mês anterior
-            #***********************************************************************************************
-
-            comissao = {'sequence': comissaodb.sequence,
-                        'title': comissaodb.nome_comissao,           # 'COMISSÃO DE FORMATURA DOS SÓCIOS TURMAS DO 6º ANO 2023'
-                        'inscricao': comissaodb.inscricao,           # '1478340/001-2'
-                        'cnpj': comissaodb.cnpj,                     # '50.945.607/0001-12'
-                        'comissao_id': request.comissao,
-                        'year': comissaodb.ano,
-                        'month': comissaodb.mes,
-            }
-
-            # Filtra os extratos do mês anterior
             extratos = tbExtrato.objects.filter(
                 comissao_id=request.comissao,
                 data__year=comissaodb.ano,
@@ -239,16 +242,37 @@ def close_balance_view(request):
                 status=2 # Extratos prontos para fechamento
             )
 
-            if extratos:
-                #**************************************************************
-                # É aqui que a mágica acontece
-                #**************************************************************
-                month_enclosed(request, comissao, extratos)
+            if extratos.exists():
+                allowed_roles = {'presidente', 'vice-presidente', 'tesoureiro'}
+                if user_role(request) not in allowed_roles and not is_app_admin(request):
+                    raise PermissionDenied
 
-                message['text'] = f'Fechamento realizado com sucesso. O relatório encontra-se disponível no menu Livro Caixa'
-                message['type'] = MESSAGE_TYPE_INFO
-                message['function'] = 'submitForm("formSuccess")'
-                close_balance = False
+                latest_closing_job, created = enqueue_balance_closing(
+                    comissao_id=request.comissao,
+                    requested_by_user_id=request.user_id,
+                    session_id=request.session.get('user_data', {}).get('sessao_id', 0),
+                )
+                if created:
+                    message['text'] = (
+                        'Fechamento solicitado. O processamento continuará em segundo plano; '
+                        'esta página pode ser fechada.'
+                    )
+                    message['type'] = MESSAGE_TYPE_INFO
+                    message['function'] = 'window.location.reload()'
+                elif latest_closing_job.status == BalanceClosingJob.FAILED:
+                    message['text'] = (
+                        'A tentativa anterior falhou. Por segurança, não foi iniciada outra '
+                        'tentativa automática. Revise o estado do banco antes de tentar novamente.'
+                    )
+                    message['type'] = MESSAGE_TYPE_ERROR
+                else:
+                    message['text'] = 'Já existe uma tarefa de fechamento para este período.'
+                    message['type'] = MESSAGE_TYPE_INFO
+                    message['function'] = 'window.location.reload()'
+
+                # Post/Redirect/Get evita que atualizar/fechar o popup reenvie
+                # a confirmação e mostre novamente o mesmo aviso.
+                return redirect('balance:fechar_balanco')
 
             else:
                 message['text'] = f'Não existem movimentação para fechamento para o mês {comissaodb.mes}/{comissaodb.ano}'
@@ -256,7 +280,7 @@ def close_balance_view(request):
                 message['function'] = 'submitForm("formSuccess")'
                 close_balance = False
             
-    else:
+    elif not closing_job_blocks_retry:
         if not wrong_month:
             count_extrato_status_1 = tbExtrato.objects.filter(
                 comissao_id=request.comissao,
@@ -271,7 +295,18 @@ def close_balance_view(request):
                 message['function'] = 'submitForm("formCloseBalance")'
                 close_balance = False
 
-    if close_balance:
+    closing_job_matches_period = bool(
+        latest_closing_job
+        and (latest_closing_job.year, latest_closing_job.month, latest_closing_job.sequence)
+        == (comissaodb.ano, comissaodb.mes, comissaodb.sequence)
+    )
+    closing_job_blocks_retry = closing_job_matches_period and latest_closing_job.status in {
+        BalanceClosingJob.PENDING,
+        BalanceClosingJob.RUNNING,
+        BalanceClosingJob.FAILED,
+    }
+
+    if close_balance and not closing_job_blocks_retry:
         count_extrato_status_2 = tbExtrato.objects.filter(
                 comissao_id=request.comissao,
                 data__year=comissaodb.ano,
@@ -294,7 +329,8 @@ def close_balance_view(request):
     context = {
         'menu_options': menu_options,
         'message': message,
-        'is_data_empty': is_data_empty
+        'is_data_empty': is_data_empty,
+        'closing_job': latest_closing_job,
     }
     
     return render(request, 'close_balance.html', context)
@@ -432,8 +468,8 @@ def balance_overview(request):
         # MENU_CONTABILIDADE_MENSALIDADDES,
     ]
 
-    if user_role(request) in ['presidente', 'vice-presidente', 'tesoureiro'] or is_app_admin(request):
-        menu_options.append(MENU_CONTABILIDADE_FECHAR_BALANCO)
+    # if user_role(request) in ['presidente', 'vice-presidente', 'tesoureiro'] or is_app_admin(request):
+    #     menu_options.append(MENU_CONTABILIDADE_FECHAR_BALANCO)
 
     comissao_id = getattr(request, 'comissao', None)
     transactions = tbTransacao.objects.filter(comissao_id=comissao_id)
@@ -597,8 +633,8 @@ def livro_caixa(request):
         # MENU_CONTABILIDADE_MENSALIDADDES,
     ]
 
-    if user_role(request) in ['presidente', 'vice-presidente', 'tesoureiro'] or is_app_admin(request):
-        menu_options.append(MENU_CONTABILIDADE_FECHAR_BALANCO)
+    # if user_role(request) in ['presidente', 'vice-presidente', 'tesoureiro'] or is_app_admin(request):
+    #     menu_options.append(MENU_CONTABILIDADE_FECHAR_BALANCO)
     
     reports = tbRelatorio.objects.none()
     if request.comissao:
