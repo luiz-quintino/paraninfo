@@ -23,6 +23,11 @@
                     <input type="text" id="popup-debito" name="debito" readonly>
                 </div>
             </div>
+
+            <div class="form-group" id="popup-comprovante-group" style="display: none;">
+                <label>Comprovante:</label>
+                <a id="popup-comprovante-link" href="#" target="_blank" rel="noopener"></a>
+            </div>
             
             <div id="popup-nome-group">
                 <div class="form-group">
@@ -90,6 +95,16 @@
         window.configureReturnReviewButton = (details) => {
             returnButton.dataset.extratoId = details.id || '';
             returnButton.hidden = !details.can_return_to_review;
+        };
+
+        window.configureComprovante = (comprovante) => {
+            const group = document.getElementById('popup-comprovante-group');
+            const link = document.getElementById('popup-comprovante-link');
+            const name = comprovante?.name || '';
+            const url = comprovante?.url || '';
+            link.textContent = name;
+            link.href = url || '#';
+            group.style.display = name && url ? 'block' : 'none';
         };
 
         returnButton.addEventListener('click', async () => {

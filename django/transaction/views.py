@@ -4,11 +4,14 @@ from django.contrib.auth.decorators import user_passes_test, login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import OuterRef, Subquery
 from django.db import transaction as db_transaction
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from django.conf import settings
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path, PurePosixPath
+import uuid
 import pandas as pd
 import json
 import os
@@ -24,6 +27,8 @@ from config.constants import MESSAGE_TYPE_INFO, \
 from utils import  convert_date, save_log, get_user_by_responsible_name, is_app_admin, is_admin, user_role, ATIVO
 
 from .services.imports import process_sicoob_input_txt, process_sicoob_input_xls, import_boletos_xls, identify_transaction
+from .attachments import get_comprovante_details, get_media_file_path
+from products.models import tbMediaFiles
                     
 from config.menus import    MENU_VOLTAR, \
                             MENU_BALANCE_IMPORTAR_EXTRATO, \
@@ -911,6 +916,7 @@ def analise_movimentacao_view(request):
             'debito': extrato.debito or '',
             'transacao_id': tipo_transacao['id'],   # código da transação associada ao extrato
             'associado_id': tipo_transacao['user'] if tipo_transacao['user'] else None,
+            'comprovante': extrato.comprovante,
             'cor': cor  # Adiciona a cor ao contexto,
         })
 
@@ -969,9 +975,103 @@ def get_extrato_details(request, extrato_id):
             user_role(request) == 'presidente'
             and extrato.status == tbExtrato.STATUS_EXTRATO_INCORPORADO
         ),
+        'comprovante': get_comprovante_details(extrato),
     }
 
     return JsonResponse(data)
+
+
+@login_required()
+def upload_extrato_comprovante(request, extrato_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método não permitido.'}, status=405)
+
+    allowed_roles = {'presidente', 'vice-presidente', 'tesoureiro', 'conselho fiscal'}
+    if user_role(request) not in allowed_roles and not is_app_admin(request):
+        return JsonResponse({'error': 'Você não tem permissão para anexar comprovantes.'}, status=403)
+
+    uploaded_file = request.FILES.get('comprovante')
+    if not uploaded_file:
+        return JsonResponse({'error': 'Selecione um arquivo PDF ou JPG.'}, status=400)
+
+    original_path = PurePosixPath((uploaded_file.name or '').replace('\\', '/'))
+    extension = original_path.suffix
+    if extension.lower() not in {'.pdf', '.jpg', '.jpeg'}:
+        return JsonResponse({'error': 'O arquivo deve estar no formato PDF ou JPG.'}, status=400)
+
+    header = uploaded_file.read(8)
+    uploaded_file.seek(0)
+    valid_pdf = extension.lower() == '.pdf' and header.startswith(b'%PDF-')
+    valid_jpeg = extension.lower() in {'.jpg', '.jpeg'} and header.startswith(b'\xff\xd8\xff')
+    if not (valid_pdf or valid_jpeg):
+        return JsonResponse({'error': 'O conteúdo do arquivo não corresponde à extensão informada.'}, status=400)
+
+    comissao_id = getattr(request, 'comissao', None)
+    if not comissao_id:
+        return JsonResponse({'error': 'Comissão não identificada.'}, status=403)
+
+    destination_folder = Path(settings.MEDIA_ROOT) / str(comissao_id) / 'comprovantes'
+    destination = None
+    old_file_path = None
+    try:
+        destination_folder.mkdir(parents=True, exist_ok=True)
+        while destination is None or destination.exists():
+            new_file_name = f'{uuid.uuid4().hex}{extension}'
+            destination = destination_folder / new_file_name
+
+        with destination.open('xb') as saved_file:
+            for chunk in uploaded_file.chunks():
+                saved_file.write(chunk)
+
+        with db_transaction.atomic():
+            extrato = get_object_or_404(
+                tbExtrato.objects.select_for_update(),
+                id=extrato_id,
+                comissao_id=comissao_id,
+            )
+            media = tbMediaFiles.objects.filter(id=extrato.comprovante).first() if extrato.comprovante else None
+            old_file_path = get_media_file_path(media) if media else None
+            media_folder = f'/media/{comissao_id}/comprovantes'
+            original_name = original_path.name
+            if len(original_name) > 255:
+                original_name = f'{original_path.stem[:255 - len(extension)]}{extension}'
+
+            if media:
+                media.original_file_name = original_name
+                media.new_file_name = destination.name
+                media.folder = media_folder
+                media.save(update_fields=['original_file_name', 'new_file_name', 'folder'])
+            else:
+                media = tbMediaFiles.objects.create(
+                    original_file_name=original_name,
+                    new_file_name=destination.name,
+                    folder=media_folder,
+                )
+                extrato.comprovante = media.id
+                extrato.save(update_fields=['comprovante'])
+
+    except Http404:
+        if destination:
+            try:
+                destination.unlink(missing_ok=True)
+            except OSError:
+                pass
+        return JsonResponse({'error': 'Registro de extrato não encontrado.'}, status=404)
+    except Exception:
+        if destination:
+            try:
+                destination.unlink(missing_ok=True)
+            except OSError:
+                pass
+        return JsonResponse({'error': 'Não foi possível salvar o comprovante.'}, status=500)
+
+    if old_file_path and old_file_path != destination:
+        try:
+            old_file_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+    return JsonResponse({'success': True, 'comprovante': get_comprovante_details(extrato)})
 
 
 @login_required()

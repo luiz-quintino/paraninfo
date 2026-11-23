@@ -63,6 +63,7 @@
                     <th>Débito</th>
                     <th>Tipo de Transação</th>
                     <th>Código do Associado</th>
+                    <th>Anexo</th>
                     {% if is_admin_user %}
                         <th>Status</th>
                     {% endif %}
@@ -80,6 +81,7 @@
                         <td data-label="Débito"> {{ extrato.debito }} </td>
                         <td data-label="Tipo de Transação"> {{ extrato.transacao_key }} </td>
                         <td data-label="Código do Associado"> {{ extrato.associado_id }} </td>
+                        <td data-label="Comprovante"> {% if extrato.comprovante > 0 %}🔗{% endif %} </td>
                         {% if is_admin_user %}
                             <td data-label="Status"> {{ extrato.status }} </td>
                         {% endif %}
@@ -136,6 +138,7 @@
                     document.getElementById('popup-fechamento').value = data.fechamento_log.data;
                     document.getElementById('popup-transacao').value = data.transacao;
                     window.configureReturnReviewButton?.(data);
+                    window.configureComprovante?.(data.comprovante);
 
                     document.getElementById('popup-user_id').style.display = 'none';
                     document.getElementById('default-movimentacao').style.display = 'none';

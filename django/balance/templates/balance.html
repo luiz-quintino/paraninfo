@@ -135,6 +135,7 @@
                     document.getElementById('popup-fechamento').value = data.fechamento_log.data;
                     document.getElementById('popup-transacao').value = data.transacao;
                     window.configureReturnReviewButton?.(data);
+                    window.configureComprovante?.(data.comprovante);
 
                     document.getElementById('popup-user_id').style.display = 'none';
                     document.getElementById('default-movimentacao').style.display = 'none';

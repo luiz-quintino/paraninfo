@@ -25,6 +25,7 @@ from config.constants import MESSAGE_TYPE_INFO, \
 from products.models import tbCompra, tbParcelamento
 from .models import tbRelatorio
 from transaction.models import tbTransacao, tbExtratoConfig, tbExtrato
+from transaction.attachments import get_comprovante_details
 from home.models import tbLog, tbSessao
 from django.db.models.functions import TruncMonth, TruncYear
 from users.models import tbAssociados
@@ -394,6 +395,7 @@ def balance_extract_view(request):
             'debito': extrato.debito or '',
             'transacao_key': extrato.transacao.key_name if extrato.transacao else '',
             'associado_id': extrato.associado_id if extrato.associado_id else '',
+            'comprovante': extrato.comprovante,
             'status': extrato.status or '',
         })
 
@@ -702,6 +704,7 @@ def get_extrato_details(request, extrato_id):
             user_role(request) == 'presidente'
             and extrato.status == tbExtrato.STATUS_EXTRATO_INCORPORADO
         ),
+        'comprovante': get_comprovante_details(extrato),
     }
 
     return JsonResponse(context)

@@ -160,6 +160,7 @@ class tbExtrato(models.Model):
     log_registro_id = models.IntegerField(null=True, blank=True)
     log_associacao_id = models.IntegerField(null=True, blank=True)
     log_fechamento_id = models.IntegerField(null=True, blank=True)
+    comprovante = models.IntegerField(null=True, blank=True)
 
     # Relacionamento com tbTransacao
     transacao = models.ForeignKey(

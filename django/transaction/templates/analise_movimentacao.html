@@ -66,6 +66,7 @@
                         <th>Tipo de Transação</th>
                         <th>Código do Associado</th>
                         <th>Comandos</th>
+                        <th>Comprovante</th>
                     </tr>
 
                 </thead>
@@ -131,6 +132,12 @@
                                     <img src="{% static 'fork.png' %}" alt="Duplicar" class="duplicate-icon">
                                 </button>
                             </div>
+                        </td>
+
+                        <!-- Comprovante -->
+                        <td data-label="Comprovante">
+                            <input type="file" id="comprovante-file-{{ extrato.id }}" data-upload-url="{% url 'upload_extrato_comprovante' extrato_id=extrato.id %}" accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg" hidden onchange="uploadComprovante({{ extrato.id }}, this)">
+                            <button type="button" class="generic-button" onclick="document.getElementById('comprovante-file-{{ extrato.id }}').click()" title="Anexar ou substituir comprovante">Anexar</button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -249,6 +256,7 @@
                     document.getElementById('popup-nota').value = data.nota;
                     document.getElementById('popup-user_id').value = `código de pagamento: ${data.codigo_pagamento}`;
                     window.configureReturnReviewButton?.(data);
+                    window.configureComprovante?.(data.comprovante);
 
                     // Exibir o popup
                     document.getElementById('popup-modal').style.display = 'flex';
@@ -272,6 +280,33 @@
             
             // Esconder a ampulheta
             hideLoadingOverlay()
+        }
+
+        async function uploadComprovante(extratoId, input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const form = document.getElementById('formAnalise');
+            const csrfToken = form.querySelector('[name="csrfmiddlewaretoken"]').value;
+            const formData = new FormData();
+            formData.append('comprovante', file);
+
+            showLoadingOverlay();
+            try {
+                const uploadUrl = document.getElementById(`comprovante-file-${extratoId}`).dataset.uploadUrl;
+                const response = await fetch(uploadUrl, {
+                    method: 'POST',
+                    headers: {'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest'},
+                    body: formData,
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Não foi possível anexar o comprovante.');
+                window.location.reload();
+            } catch (error) {
+                alert(error.message);
+                input.value = '';
+                hideLoadingOverlay();
+            }
         }
 
         // Ignora ou desfaz a ignorância de uma linha
