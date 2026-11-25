@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.views import LoginView
 from django.core.mail import send_mail
@@ -30,6 +31,7 @@ from django.db.models.functions import Collate
 from config.menus import menu_url,  MENU_USERS_INCLUIR_USUARIO, \
                                     MENU_USERS_DEFINICAO_ACESSO, \
                                     MENU_USERS_CONVIDADOS, \
+                                    MENU_USERS_PAGAMENTOS, \
                                     MENU_USERS_GERAR_CONVITE, \
                                     MENU_USERS_ACEITAR_CONVIDADOS, \
                                     MENU_VOLTAR, \
@@ -45,6 +47,7 @@ from config.constants import MESSAGE_TYPE_INFO, \
 
 from config.constants import ATIVO
 from email_app.manage_email import send_paraninfo_email, EMAIL_FICHA_DE_INSCRICAO_ATUALIZACAO, EMAIL_FICHA_DE_INSCRICAO_ENVIO, EMAIL_FICHA_DE_INSCRICAO_APROVADA
+from balance.services.balance_calc import user_balance
 
 def _digits_only(value: str) -> str:
     return ''.join(character for character in value if character.isdigit())
@@ -670,6 +673,9 @@ def user_list(request):
         # Usuário com acesso "user" verá apenas o próprio registro
         associados = associados.filter(codigo_associado=request.user.username)
 
+    if user_role(request) in {'presidente', 'vice-presidente', 'tesoureiro', 'fiscal'}:
+        menu_options.append(MENU_USERS_PAGAMENTOS)
+
     # Paginação: 10 registros por página
     paginator = Paginator(associados, 10)
     page_number = request.GET.get('page')
@@ -684,6 +690,33 @@ def user_list(request):
     }
 
     return render(request, 'users/user_list.html', context)  # Renderiza o template com o contexto})
+
+
+@login_required()
+def user_payments(request):
+    allowed_roles = {'presidente', 'vice-presidente', 'tesoureiro', 'fiscal'}
+    if user_role(request) not in allowed_roles:
+        raise PermissionDenied
+
+    today = date.today()
+    associados = tbAssociados.objects.filter(
+        comissao=request.comissao,
+    ).order_by('codigo_pagamento', 'id')
+    payment_rows = []
+
+    for associado in associados:
+        summary = user_balance(associado, today)
+        payment_rows.append({
+            'associado': associado,
+            'total_paid': summary['grand_total_paid'],
+            'total_debit': summary['grand_total_debit'],
+            'total_received': summary['grand_total_received'],
+        })
+
+    return render(request, 'users/user_payments.html', {
+        'menu_options': [MENU_VOLTAR],
+        'payment_rows': payment_rows,
+    })
 
 
 @login_required()

@@ -64,7 +64,13 @@ def balance_my_view(request, usuario):
     associado = get_object_or_404(tbAssociados, uuid=usuario)
     is_admin_ = is_admin(request)
     is_self = str(getattr(request.user, 'last_name', '')) == associado.uuid
-    if not is_self and (not is_admin_ or getattr(request, 'comissao', None) != associado.comissao):
+    can_view_commission_payments = user_role(request) in {
+        'presidente', 'vice-presidente', 'tesoureiro', 'fiscal',
+    }
+    if not is_self and (
+        not (is_admin_ or can_view_commission_payments)
+        or getattr(request, 'comissao', None) != associado.comissao
+    ):
         raise PermissionDenied
 
     today = date.today()

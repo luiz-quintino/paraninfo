@@ -47,6 +47,11 @@ MENU_USERS_CONVIDADOS                   = {'name': 'Convidados',
                                            'tip': 'Gerenciar convidados por link de convite e gerencia convites',
                                            'color': "#fab5bc",}
 
+MENU_USERS_PAGAMENTOS                   = {'name': 'Pagamentos',
+                                           'url': '/users/user-payments/',
+                                           'tip': 'Consultar pagamentos dos associados',
+                                           'color': "#fab5bc",}
+
 MENU_USERS_ACEITAR_CONVIDADOS           = {'name': 'Aceitar convidados',               
                                            'url': '/users/invited',
                                            'color': 'yellow',
