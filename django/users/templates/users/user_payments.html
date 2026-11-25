@@ -23,8 +23,8 @@
                     <td data-label="Código de pagamento">{{ row.associado.codigo_pagamento }}</td>
                     <td data-label="Código do associado">{{ row.associado.codigo_associado }}</td>
                     <td data-label="Nome do responsável">{{ row.associado.nome_responsavel }}</td>
-                    <td data-label="Total pago">R$ {{ row.total_paid|floatformat:2 }}</td>
-                    <td data-label="Total débito">R$ {{ row.total_debit|floatformat:2 }}</td>
+                    <td data-label="Total pago" style="color: #175cd3;">R$ {{ row.total_paid|floatformat:2 }}</td>
+                    <td data-label="Total débito" style="color: #d92d20;">R$ {{ row.total_debit|floatformat:2 }}</td>
                     <td data-label="Total recebido">R$ {{ row.total_received|floatformat:2 }}</td>
                 </tr>
             {% empty %}

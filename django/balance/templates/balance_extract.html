@@ -114,11 +114,18 @@
         async function openPopupBalanceDetails_(id) {
             try {
                 const row = document.getElementById(`row-${id}`);
+                if (!row?.dataset.detailsUrl) {
+                    throw new Error('Não foi possível localizar os detalhes desta operação. Atualize a página e tente novamente.');
+                }
                 const response = await fetch(row.dataset.detailsUrl, {
+                    credentials: 'same-origin',
                     headers: {'X-Requested-With': 'XMLHttpRequest'},
                 });
                 if (!response.ok) {
-                    throw new Error(`Erro HTTP ${response.status} ao buscar o extrato ${id}`);
+                    throw new Error(`Não foi possível carregar os detalhes da operação (HTTP ${response.status}). Atualize a página e tente novamente.`);
+                }
+                if (!response.headers.get('content-type')?.includes('application/json')) {
+                    throw new Error('A resposta não contém os detalhes da operação. Sua sessão pode ter expirado; atualize a página e entre novamente.');
                 }
                 const data = await response.json();
 
@@ -165,6 +172,7 @@
                     document.body.classList.add('popup-active');
             } catch (error) {
                 console.error('Falha ao carregar detalhes do extrato:', error);
+                window.alert(error.message || 'Falha ao carregar os detalhes da operação.');
             } finally {
                 hideLoadingOverlay();
             }

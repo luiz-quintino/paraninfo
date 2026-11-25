@@ -701,6 +701,7 @@ def user_payments(request):
     today = date.today()
     associados = tbAssociados.objects.filter(
         comissao=request.comissao,
+        situacao=ATIVO,
     ).order_by('codigo_pagamento', 'id')
     payment_rows = []
 
@@ -708,9 +709,9 @@ def user_payments(request):
         summary = user_balance(associado, today)
         payment_rows.append({
             'associado': associado,
-            'total_paid': summary['grand_total_paid'],
-            'total_debit': summary['grand_total_debit'],
-            'total_received': summary['grand_total_received'],
+            'total_paid': summary['total_paid'],
+            'total_debit': summary['total_debit'],
+            'total_received': summary['total_received'],
         })
 
     return render(request, 'users/user_payments.html', {

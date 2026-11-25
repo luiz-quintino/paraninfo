@@ -769,7 +769,7 @@ def get_extrato_details(request, extrato_id):
         Retorna os detalhes de um extrato específico em formato JSON.
     """
     extrato = get_object_or_404(
-        tbExtrato.objects.select_related('associado', 'transacao'),
+        tbExtrato.objects.select_related('transacao'),
         id=extrato_id,
         comissao_id=request.comissao,
     )
@@ -794,10 +794,21 @@ def get_extrato_details(request, extrato_id):
             'name': nome,
         }
     
-    associado_nome = (
-        extrato.associado.nome_responsavel or ''
-        if extrato.associado else ''
-    )
+    associado_nome = ''
+    if extrato.codigo_pagamento is not None:
+        payment_code = str(extrato.codigo_pagamento).strip()
+        if payment_code.isdigit():
+            equivalent_codes = {
+                payment_code.zfill(width)
+                for width in range(len(payment_code), 6)
+            }
+            associado_nome = tbAssociados.objects.filter(
+                comissao=extrato.comissao_id,
+                codigo_pagamento__in=equivalent_codes,
+            ).values_list('nome_responsavel', flat=True).first() or ''
+
+    if not associado_nome:
+        associado_nome = extrato.nome or ''
 
     context = {
         'id': extrato.id,

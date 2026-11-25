@@ -315,8 +315,8 @@ def send_email_to_associado(associado, summary, main_data):
     from django.template.loader import render_to_string
 
     if SEND_ALL_EMAILS or (not SEND_ALL_EMAILS and associado.email == 'luiz.quintino@gmail.com'):
-        subject = f"Email de teste do Paraninfo - Não responda"
-        # subject = f"Resumo de Pagamento - {main_data['month']}/{main_data['year']}'"
+        # subject = f"Email de teste do Paraninfo - Não responda"
+        subject = f"Resumo de Pagamento - {main_data['month']}/{main_data['year']}'"
         message = render_to_string('email_associado_summary.html', {
             'associado': associado,
             'summary': summary,
