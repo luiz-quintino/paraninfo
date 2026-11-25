@@ -9,7 +9,7 @@ def identify_transaction(comissao: str, description: str, value: Decimal) -> dic
         transaction = {
             'id': <transacao_id>,                   # id da transaçõa
             'configuracao': <configuracao>,         # configuração da transação, se houver
-            'user': <user_id>                       # id do usuário se "#find_user
+            'user': <codigo_pagamento>               # código de pagamento do associado
         }
     """
 
@@ -34,7 +34,8 @@ def identify_transaction(comissao: str, description: str, value: Decimal) -> dic
                 user = get_user_by_codigo_pagamento(comissao, user_id)  # retorna o primeiro usuário encontrado ou None
 
                 if user:
-                    transaction['user'] = user.id
+                    payment_code = str(user.codigo_pagamento or '').strip()
+                    transaction['user'] = int(payment_code) if payment_code.isdigit() else 0
                     return transaction
                 
                 else:

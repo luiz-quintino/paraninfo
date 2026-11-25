@@ -29,7 +29,7 @@ from config.constants import MONTHS, FIELDS_USED_FOR_COTA, SEND_ALL_EMAILS
 from config.constants import ATIVO
 from certificate.cert_lib.sign_document import signing_by_cert_id
 
-def month_enclosed(request, comissao: dict, extratos):
+def month_enclosed(request, comissao: dict, extratos, progress_callback=None):
     """
     Realiza o fechamento mensal do mês anterior
     +---------------------+   +----------------------+   +---------------------+   +---------------------+
@@ -43,6 +43,11 @@ def month_enclosed(request, comissao: dict, extratos):
 
     """
 
+    def report_progress(message):
+        if progress_callback:
+            progress_callback(message)
+
+    report_progress('Montando dados do relatório de fechamento...')
     sequence = comissao['sequence']     # 8
     title = comissao['title']           # 'COMISSÃO DE FORMATURA DOS SÓCIOS TURMAS DO 6º ANO 2023'
     inscricao = comissao['inscricao']   # '1478340/001-2'
@@ -54,11 +59,13 @@ def month_enclosed(request, comissao: dict, extratos):
     main_data =  {'comissao_id': comissao_id, 'year':year, 'month':month, 'sequence':sequence}
 
     # Filtra as transações e lista em ordem inversa de data e id, para que as transações mais recentes venham primeiro
+    report_progress('Carregando transações anteriores do período...')
     transaction_report = tbTransacao.objects.filter(
         comissao_id=comissao_id,
     ).order_by('-data', '-id')
 
     # Extrai key, value de tbTransacao
+    report_progress('Carregando tipos de transação para montar o relatório...')
     transaction_list = lsttransacao.objects.order_by('pk')
     popup_list = []
     for transacao_ in transaction_list:
@@ -69,6 +76,7 @@ def month_enclosed(request, comissao: dict, extratos):
     folder_name = f'media/{str(comissao_id)}/reports/{str(year)}'
 
     # Cria uma lista de dicionários com os dados dos extratos
+    report_progress('Preparando movimentações do período para o relatório...')
     data_list = []
     for extrato in extratos:
         data_list.append({
@@ -77,7 +85,7 @@ def month_enclosed(request, comissao: dict, extratos):
             'credito': {'value': float(extrato.credito) if extrato.credito else 0.0},
             'debito': {'value': float(extrato.debito) if extrato.debito else 0.0},
             'nota': {'value': extrato.transacao.key_name if extrato.transacao else ''},
-            'user*': {'value': str(extrato.associado_id) if extrato.associado_id else ''},
+            'user*': {'value': str(extrato.codigo_pagamento) if extrato.codigo_pagamento else ''},
             'doc': {'value': ''},
             'cc': {'value': 'CC'}
         })
@@ -114,6 +122,7 @@ def month_enclosed(request, comissao: dict, extratos):
             break
     
     # Soma aplicações anteriores e as aplicações deste extrato.
+    report_progress('Calculando saldos e aplicações financeiras...')
     total_anterior = float(tbTransacao.objects.filter(
         comissao_id=main_data['comissao_id'],
         transacao__key_name='Aplicação financeira',
@@ -127,6 +136,7 @@ def month_enclosed(request, comissao: dict, extratos):
     t_aplicacao = total_anterior + soma_extrato
 
     # pega o hash do relatório anterior
+    report_progress('Consultando o hash do relatório anterior...')
     report_hash = tbRelatorio.objects.filter(
             comissao_id=comissao_id,
         ).order_by('-sequencia').first()
@@ -158,13 +168,17 @@ def month_enclosed(request, comissao: dict, extratos):
     error = {}
     report_name = ''
     try:
+        report_progress('Gerando relatório PDF do fechamento...')
         file_name, totals = create_account_report(request, data_list, config)
         report_name = settings.BASE_DIR / folder_name / file_name
+        report_progress('Relatório PDF gerado. Preparando assinaturas digitais...')
     except Exception as e:
         error['report'] = e
+        report_progress(f'Erro ao gerar relatório PDF: {type(e).__name__}: {e}')
 
     # try:
     if not error:   # Identifica os ids das pessoas que oficializaram cada fase
+        report_progress('Localizando responsáveis pelas assinaturas do relatório...')
         user_id_assinaturas = [
             get_user_from_log_id(extratos[0].log_registro_id),
             get_user_from_log_id(extratos[0].log_fechamento_id),
@@ -173,6 +187,10 @@ def month_enclosed(request, comissao: dict, extratos):
 
         # Assina relatório
         for position_id, user_id_assinatura in enumerate(user_id_assinaturas):
+            report_progress(
+                f'Assinando relatório digitalmente ({position_id + 1}/'
+                f'{len(user_id_assinaturas)})...'
+            )
             cert_id = tbAssociados.objects.filter(id=user_id_assinatura).first().certificado
             report_name, cert_id_new = signing_by_cert_id(file_pdf=report_name, cert_id=cert_id, index_position=position_id, user_id=user_id_assinatura, comissao=comissao['title'])
             if cert_id != cert_id_new:
@@ -185,6 +203,7 @@ def month_enclosed(request, comissao: dict, extratos):
     # *******************************************************************************************************************************
     if not error:
         try:
+            report_progress('Atualizando transações e recalculando valores das cotas...')
             # Atualiza transações com os valores correntes
             update_transactions(transaction_list, transaction_report, totals, main_data)
 
@@ -192,8 +211,10 @@ def month_enclosed(request, comissao: dict, extratos):
             update_cota_in_product(main_data)
         except Exception as e:
             error['update_transaction'] = e
+            report_progress(f'Erro ao atualizar transações e cotas: {type(e).__name__}: {e}')
 
     if not error:
+        report_progress('Marcando movimentações do período como fechadas...')
         # Atualiza extrato status = 3
         extratos=tbExtrato.objects.filter(
         comissao_id=comissao_id,
@@ -210,8 +231,10 @@ def month_enclosed(request, comissao: dict, extratos):
         mes = month + 1 if month < 12 else 1
         ano = year +1 if month == 12 else year
         sequence += 1
+        report_progress('Atualizando mês e sequência da comissão...')
         tbComissao.objects.filter(id=comissao_id).update(ano=ano, mes=mes, sequence=sequence)
 
+        report_progress('Registrando relatório do fechamento no banco de dados...')
         tbRelatorio.objects.create(
             comissao_id=comissao_id,
             sequencia=sequence,
@@ -226,27 +249,39 @@ def month_enclosed(request, comissao: dict, extratos):
         #  Atualiza a situação dos pagamentos dos associados e envia email com o resumo
         # *******************************************************************************************************************************
         try:
-            update_associado(comissao_id, main_data)
+            report_progress('Atualizando pagamentos e notificações dos associados...')
+            update_associado(comissao_id, main_data, progress_callback=report_progress)
         except Exception as e:
             error['update_associado'] = e
+            report_progress(f'Erro ao atualizar associados: {type(e).__name__}: {e}')
 
     if error:
+        report_progress('Fechamento finalizado com erro(s); gravando detalhes no log...')
         save_erro_log(request, error)
+    else:
+        report_progress('Etapas do fechamento concluídas; validando resultado...')
 
     return error
 
 
-def update_associado(comissao_id, main_data):
+def update_associado(comissao_id, main_data, progress_callback=None):
     associados = tbAssociados.objects.filter(
         comissao=comissao_id,
         situacao=ATIVO  # Associado ativo
     )
+    total_associados = associados.count()
+    if progress_callback:
+        progress_callback(f'Atualizando pagamentos dos associados (0/{total_associados})...')
 
     today = date.today()
     if today.month != main_data['month'] or today.year != main_data['year']:
         today = datetime.strptime(f'1/{main_data["month"]}/{main_data["year"]}', "%d/%m/%Y").date()
 
-    for associado in associados:
+    for index, associado in enumerate(associados, start=1):
+        if progress_callback and (index == 1 or index % 25 == 0 or index == total_associados):
+            progress_callback(
+                f'Atualizando pagamentos dos associados ({index}/{total_associados})...'
+            )
         # calcula o resumo do historico de pagamento para o associado
         summary = user_balance(associado, today)
 
@@ -271,7 +306,7 @@ def update_associado(comissao_id, main_data):
                             origem = 4  # parcela atuomática
                         ).save()
         skip_notification = tbComissao.objects.filter(id=comissao_id).first().skip_email_notification
-        if skip_notification != 0:
+        if skip_notification != 1:
             send_email_to_associado(associado, summary, main_data)
 
 
@@ -495,7 +530,15 @@ def create_account_report(request, data_list: list, config: dict) -> dict:
 def user_balance(associado, today):
     # Cria uma lista de dicionários com os dados dos extratos e das compras do associado
     rows = []
-    extratos = tbExtrato.objects.filter(associado_id=associado.id, status=3).select_related('transacao').order_by('data', 'id')
+    payment_code = str(associado.codigo_pagamento or '').strip()
+    if payment_code.isdigit():
+        extratos = tbExtrato.objects.filter(
+            comissao_id=associado.comissao,
+            codigo_pagamento=int(payment_code),
+            status=tbExtrato.STATUS_EXTRATO_BALANCO_FECHADO,
+        ).select_related('transacao').order_by('data', 'id')
+    else:
+        extratos = tbExtrato.objects.none()
     for extrato in extratos:
         paid = extrato.credito or Decimal('0.00')
         received = Decimal('0.00')

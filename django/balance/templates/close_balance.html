@@ -10,13 +10,32 @@
     {% endif %}
 
     <div class="table-container">
+        <h2>{{ message.title }}</h2>
+        
         {% if closing_job %}
             <section id="closing-job" class="alert" data-status-url="{% url 'closing_jobs:status' job_id=closing_job.id %}">
-                <strong>Fechamento: <span id="closing-job-status">{{ closing_job.get_status_display }}</span></strong>
-                <p id="closing-job-message">{{ closing_job.message }}</p>
+                <strong id="closing-job-heading">
+                    {% if closing_job.status == 'pending' %}
+                        Fechamento aguardando início
+                    {% elif closing_job.status == 'running' %}
+                        Fechamento já em andamento
+                    {% elif closing_job.status == 'succeeded' %}
+                        Fechamento concluído
+                    {% elif closing_job.status == 'completed_with_warnings' %}
+                        Fechamento concluído com avisos
+                    {% elif closing_job.status == 'failed' %}
+                        Falha no fechamento
+                    {% else %}
+                        Fechamento
+                    {% endif %}
+                </strong>
+                <!-- <span id="closing-job-status">{{ closing_job.get_status_display }}</span> -->
+                <p aria-live="polite" aria-atomic="true">
+                    <strong>Etapa atual:</strong>
+                    <span id="closing-job-message">{{ closing_job.message }}</span>
+                </p>
             </section>
         {% endif %}
-        <h2>{{ message.title }}</h2>
 
         <div class="user-form">
             {% if is_data_empty %}
@@ -33,6 +52,7 @@
         
         <form method="post" action="{% url 'balance:fechar_balanco' %}" id="formConfirmCloseBalance">
             {% csrf_token %}
+            <input type="hidden" name="request_token" value="{{ request_token }}">
             <input type="hidden" id="confirm" name="confirm" value="confirm"> 
         </form>
         
@@ -52,17 +72,41 @@
         <script>
             (() => {
                 const panel = document.getElementById('closing-job');
-                const terminalStates = new Set(['succeeded', 'completed_with_warnings', 'failed']);
+                const heading = document.getElementById('closing-job-heading');
+                const message = document.getElementById('closing-job-message');
+                const terminalTitles = {
+                    succeeded: 'Fechamento concluído',
+                    completed_with_warnings: 'Fechamento concluído com avisos',
+                    failed: 'Falha no fechamento',
+                };
+
                 const poll = async () => {
                     try {
                         const response = await fetch(panel.dataset.statusUrl, {
+                            cache: 'no-store',
                             headers: {'X-Requested-With': 'XMLHttpRequest'},
                         });
-                        if (!response.ok) return;
+                        if (!response.ok) {
+                            window.setTimeout(poll, 5000);
+                            return;
+                        }
                         const job = await response.json();
-                        document.getElementById('closing-job-status').textContent = job.status_display;
-                        document.getElementById('closing-job-message').textContent = job.message;
-                        if (!terminalStates.has(job.status)) window.setTimeout(poll, 3000);
+                        message.textContent = job.message;
+
+                        const completedTitle = terminalTitles[job.status];
+                        if (completedTitle) {
+                            heading.textContent = completedTitle;
+                            const popupTitle = document.getElementById('popup-title');
+                            const popupMessage = document.getElementById('popup-message');
+                            if (popupTitle) popupTitle.textContent = completedTitle;
+                            if (popupMessage) popupMessage.textContent = job.message;
+                        } else if (job.status === 'running') {
+                            heading.textContent = 'Fechamento já em andamento';
+                        } else if (job.status === 'pending') {
+                            heading.textContent = 'Fechamento aguardando início';
+                        }
+
+                        if (!job.finished) window.setTimeout(poll, 3000);
                     } catch (error) {
                         window.setTimeout(poll, 5000);
                     }

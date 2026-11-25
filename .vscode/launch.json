@@ -2,18 +2,45 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Django: Paraninfo",
+      "name": "Django server: Paraninfo",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/django/manage.py",
+      "python": "${workspaceFolder}/env/Scripts/python.exe",
       "args": [
         "runserver",
         "127.0.0.1:8001",
         "--noreload"
       ],
+      "console": "integratedTerminal",
       "django": true,
       "justMyCode": true,
       "cwd": "${workspaceFolder}/django"
+    },
+    {
+      "name": "Balance closing worker",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/django/manage.py",
+      "python": "${workspaceFolder}/env/Scripts/python.exe",
+      "args": [
+        "run_balance_closing_worker",
+        "--poll-interval",
+        "3"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "cwd": "${workspaceFolder}/django"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Django: Paraninfo",
+      "configurations": [
+        "Django server: Paraninfo",
+        "Balance closing worker"
+      ],
+      "stopAll": true
     }
   ]
 }

@@ -157,6 +157,7 @@ class tbExtrato(models.Model):
     cpf = models.CharField(max_length=45, null=True, blank=True)
     saldo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=False)
     status = models.IntegerField(null=True, blank=True)
+    codigo_pagamento = models.IntegerField(null=True, blank=True)
     log_registro_id = models.IntegerField(null=True, blank=True)
     log_associacao_id = models.IntegerField(null=True, blank=True)
     log_fechamento_id = models.IntegerField(null=True, blank=True)
@@ -169,14 +170,6 @@ class tbExtrato(models.Model):
         null=True,
         blank=True,
         related_name='transacao'
-    )
-    # Relacionamento com tbAssociado
-    associado = models.ForeignKey(
-        tbAssociados,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='associado'
     )
 
     class Meta:

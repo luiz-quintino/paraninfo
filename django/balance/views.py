@@ -1,5 +1,6 @@
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import date
+import secrets
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -106,11 +107,11 @@ def emitir_recibo_view(request):
     Render the emitir recibo view.
     """
 
-    # Buscars no extrato os pagamentos de usuario tbExtrato.associado_id not null e tbExtrato.status == 2
+    # Busca pagamentos associados por código de pagamento no período.
     extratos = tbExtrato.objects.filter(
         comissao_id=request.comissao if request.comissao else 1,  # Valor padrão para comissao_id
         status=2,
-        associado_id__isnull=False  # Filtra para incluir apenas extratos com associado_id
+        codigo_pagamento__isnull=False,
     ).order_by('-data')  # Ordena por data decrescente
 
     is_data_empty = not extratos.exists()  # Verifica se a queryset está vazia
@@ -124,7 +125,10 @@ def emitir_recibo_view(request):
             'credito': extrato.credito or '',
             'debito': extrato.debito or '',
             'transacao_key': extrato.transacao.key,
-            'associado_nome': extrato.associado.nome_responsavel,
+            'associado_nome': tbAssociados.objects.filter(
+                comissao=extrato.comissao_id,
+                codigo_pagamento=str(extrato.codigo_pagamento),
+            ).values_list('nome_responsavel', flat=True).first() or '',
         })
 
     message = {'type': 'info', 'text': '', 'title': 'Emitir Recibo', 'function': ''}
@@ -180,6 +184,14 @@ def close_balance_view(request):
         Faz o fechamento do mês
     """
     message = {'type': 'info', 'text': '', 'title': 'Fechamento de Balanço', 'function': ''}
+    closing_notice = None
+    closing_was_just_submitted = False
+    if request.method == 'GET':
+        closing_notice = request.session.pop('balance_closing_notice', None)
+        closing_was_just_submitted = request.session.pop(
+            'balance_closing_submitted', False
+        )
+
     is_data_empty = False  # Variável para verificar se os dados estão vazios
     close_balance = True
     wrong_month = False
@@ -235,6 +247,25 @@ def close_balance_view(request):
             close_balance = True
         
         if request.POST.get('confirm', ''):
+            submitted_token = request.POST.get('request_token', '')
+            expected_token = request.session.get('balance_closing_request_token', '')
+            valid_token = bool(expected_token and submitted_token) and secrets.compare_digest(
+                submitted_token.encode('utf-8'),
+                expected_token.encode('utf-8'),
+            )
+            if not valid_token:
+                message['text'] = 'Requisição fora de contexto'
+                message['type'] = MESSAGE_TYPE_WARNING
+                request.session['balance_closing_notice'] = {
+                    'type': message['type'],
+                    'text': message['text'],
+                    'title': message['title'],
+                    'function': '',
+                }
+                return redirect('balance:fechar_balanco')
+
+            # Token de uso único: recarregar ou reenviar este POST não repete o fechamento.
+            request.session.pop('balance_closing_request_token', None)
             extratos = tbExtrato.objects.filter(
                 comissao_id=request.comissao,
                 data__year=comissaodb.ano,
@@ -253,25 +284,40 @@ def close_balance_view(request):
                     session_id=request.session.get('user_data', {}).get('sessao_id', 0),
                 )
                 if created:
-                    message['text'] = (
-                        'Fechamento solicitado. O processamento continuará em segundo plano; '
-                        'esta página pode ser fechada.'
-                    )
-                    message['type'] = MESSAGE_TYPE_INFO
-                    message['function'] = 'window.location.reload()'
+                    # Mostra a página de acompanhamento sem popup que possa reenviar
+                    # a confirmação ao executar seu callback ou ao ser recarregado.
+                    request.session.pop('balance_closing_notice', None)
+                    request.session['balance_closing_submitted'] = True
+                    return redirect('balance:fechar_balanco')
                 elif latest_closing_job.status == BalanceClosingJob.FAILED:
                     message['text'] = (
                         'A tentativa anterior falhou. Por segurança, não foi iniciada outra '
                         'tentativa automática. Revise o estado do banco antes de tentar novamente.'
                     )
                     message['type'] = MESSAGE_TYPE_ERROR
+                elif latest_closing_job.status in {
+                    BalanceClosingJob.PENDING,
+                    BalanceClosingJob.RUNNING,
+                }:
+                    message['title'] = 'Fechamento já em andamento'
+                    message['text'] = (
+                        'Já existe um processo de fechamento em andamento '
+                        f'(período {latest_closing_job.month}/{latest_closing_job.year}). '
+                        'Aguarde a conclusão antes de solicitar novo fechamento.'
+                    )
+                    message['type'] = MESSAGE_TYPE_INFO
                 else:
                     message['text'] = 'Já existe uma tarefa de fechamento para este período.'
                     message['type'] = MESSAGE_TYPE_INFO
                     message['function'] = 'window.location.reload()'
 
-                # Post/Redirect/Get evita que atualizar/fechar o popup reenvie
-                # a confirmação e mostre novamente o mesmo aviso.
+                # Preserve o aviso no redirect; a view monta o popup no próximo GET.
+                request.session['balance_closing_notice'] = {
+                    'type': message['type'],
+                    'text': message['text'],
+                    'title': message['title'],
+                    'function': message['function'],
+                }
                 return redirect('balance:fechar_balanco')
 
             else:
@@ -326,11 +372,34 @@ def close_balance_view(request):
             message['function'] = 'submitForm("formSuccess")'
             close_balance = False
 
+    # O aviso do POST deve prevalecer sobre as validações normais da página no GET.
+    if closing_notice:
+        message.update(closing_notice)
+
+    # Uma solicitação aceita já está sendo acompanhada no painel de status; não
+    # exiba popup nem confirmação de um novo fechamento nessa página.
+    if closing_was_just_submitted or (
+        closing_job_blocks_retry
+        and latest_closing_job.status in {
+            BalanceClosingJob.PENDING,
+            BalanceClosingJob.RUNNING,
+        }
+        and not closing_notice
+    ):
+        message['text'] = ''
+        message['function'] = ''
+
+    request_token = request.session.get('balance_closing_request_token')
+    if not request_token:
+        request_token = secrets.token_urlsafe(32)
+        request.session['balance_closing_request_token'] = request_token
+
     context = {
         'menu_options': menu_options,
         'message': message,
         'is_data_empty': is_data_empty,
         'closing_job': latest_closing_job,
+        'request_token': request_token,
     }
     
     return render(request, 'close_balance.html', context)
@@ -430,7 +499,7 @@ def balance_extract_view(request):
             'credito': extrato.credito or '',
             'debito': extrato.debito or '',
             'transacao_key': extrato.transacao.key_name if extrato.transacao else '',
-            'associado_id': extrato.associado_id if extrato.associado_id else '',
+            'codigo_pagamento': extrato.codigo_pagamento or '',
             'comprovante': extrato.comprovante,
             'status': extrato.status or '',
         })

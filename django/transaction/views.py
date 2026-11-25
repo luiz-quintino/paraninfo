@@ -794,7 +794,7 @@ def analise_movimentacao_view(request):
                 else:
                     transacao_id = None
                 
-                # Atualizar associado_id apenas para transações com "mensalidade" no texto
+                # Associar codigo_pagamento apenas para transações de recebimento.
                 if transacao_id:
                     transacao = lsttransacao.objects.get(id=transacao_id)
                 else:
@@ -808,15 +808,20 @@ def analise_movimentacao_view(request):
                     updated = True  # Marca como atualizado
 
                 if "recebimento" in transacao.key_name.lower():
-                    associado_id = request.POST.get(f'associado_codigo_{extrato_id}')
-                    if associado_id and associado_id.isdigit():
-                        associado_id = int(associado_id)  # Converte para inteiro se for um ID válido
-                    else:
-                        associado_id = None
+                    payment_code_value = request.POST.get(
+                        f'associado_codigo_{extrato_id}', ''
+                    ).strip()
+                    associado = None
+                    if payment_code_value.isdigit():
+                        associado = tbAssociados.objects.filter(
+                            codigo_pagamento=payment_code_value,
+                            comissao=request.comissao,
+                        ).first()
 
-                    if associado_id:
-                        if extrato.associado_id != associado_id:
-                            extrato.associado_id = associado_id
+                    if associado and str(associado.codigo_pagamento).strip().isdigit():
+                        payment_code = int(associado.codigo_pagamento)
+                        if extrato.codigo_pagamento != payment_code:
+                            extrato.codigo_pagamento = payment_code
                             updated = True
                     else:
                         continue  # Pula associado não definido
@@ -902,7 +907,7 @@ def analise_movimentacao_view(request):
     extratos_list = []
     for index, extrato in enumerate(extratos):
         if extrato.transacao_id:
-            tipo_transacao = {'id': extrato.transacao_id, 'configuracao': '', 'user': extrato.associado_id}  # Transação já associada ao extrato
+            tipo_transacao = {'id': extrato.transacao_id, 'configuracao': '', 'user': extrato.codigo_pagamento}  # Transação já associada ao extrato
         else:
             tipo_transacao = identify_transaction(comissao, extrato.historico, extrato.credito)
 
@@ -915,7 +920,7 @@ def analise_movimentacao_view(request):
             'credito': extrato.credito or '',
             'debito': extrato.debito or '',
             'transacao_id': tipo_transacao['id'],   # código da transação associada ao extrato
-            'associado_id': tipo_transacao['user'] if tipo_transacao['user'] else None,
+            'codigo_pagamento': tipo_transacao['user'] if tipo_transacao['user'] else None,
             'comprovante': extrato.comprovante,
             'cor': cor  # Adiciona a cor ao contexto,
         })
@@ -925,6 +930,17 @@ def analise_movimentacao_view(request):
         comissao=request.comissao,  # Filtrar por comissão atual
         situacao=ATIVO,
     ).order_by('id')
+    associados = [
+        {
+            'codigo_pagamento': associado.codigo_pagamento,
+            'codigo_pagamento_int': (
+                int(str(associado.codigo_pagamento).strip())
+                if str(associado.codigo_pagamento or '').strip().isdigit()
+                else None
+            ),
+        }
+        for associado in associados
+    ]
     
     
     is_data_empty = True if not extratos_list else False

@@ -90,7 +90,7 @@
             </table>
 
             {% if summary.future_rows %}
-                <h3>Lançamentos Futuros / Pendentes:</h3>
+                <h3>Lançamentos Futuros:</h3>
                 <ul>
                 {% for row in summary.future_rows %}
                     <li>{{ row.date|date:"d/m/Y" }} - {{ row.description }}: R$ {{ row.debit }}</li>

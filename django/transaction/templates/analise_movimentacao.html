@@ -64,7 +64,7 @@
                         <th>Crédito</th>
                         <th>Débito</th>
                         <th>Tipo de Transação</th>
-                        <th>Código do Associado</th>
+                        <th>Código de pagamento</th>
                         <th>Comandos</th>
                         <th>Comprovante</th>
                     </tr>
@@ -105,12 +105,12 @@
                             </select>
                         </td>
 
-                        <!-- Código do Associado -->
-                        <td data-label="Código do Associado">
-                            <select style="{% if extrato.associado_id > 0 %}display: block;{% else %}display: none;{% endif %}"  style="color: {{ extrato.cor }};" name="associado_codigo_{{ extrato.id }}" id="associado-field-{{ extrato.id }}" class="associado-select" onchange="toggleAssociadoId({{ extrato.id }})" >
+                        <!-- Código de pagamento -->
+                        <td data-label="Código de pagamento">
+                            <select style="{% if extrato.codigo_pagamento %}display: block;{% else %}display: none;{% endif %}"  style="color: {{ extrato.cor }};" name="associado_codigo_{{ extrato.id }}" id="associado-field-{{ extrato.id }}" class="associado-select" onchange="toggleAssociadoId({{ extrato.id }})" >
                                 <option value="">Selecione</option>
                                 {% for associado in associados %}
-                                <option value="{{ associado.codigo_pagamento }}" {% if extrato.associado_id == associado.id %}selected{% endif %}>
+                                <option value="{{ associado.codigo_pagamento }}" {% if extrato.codigo_pagamento == associado.codigo_pagamento_int %}selected{% endif %}>
                                     {{ associado.codigo_pagamento }}
                                 </option>
                                 {% endfor %}
@@ -153,7 +153,7 @@
     </script>
 
     <script>
-        // Função para ocultar ou exibir o campo "Código do Associado" e atualizar cor da seleção
+        // Oculta/exibe o campo de código de pagamento e atualiza sua cor.
         function toggleAssociadoField(extratoId, selectElement) {
             const associadoField = document.getElementById(`associado-field-${extratoId}`);
     
@@ -185,7 +185,7 @@
                 toggleAssociadoId(extratoId); // Atualiza a cor do usuário selecionado
             }
 
-            // Exibir ou ocultar o campo "Código do Associado" com base no valor selecionado
+            // Exibir ou ocultar o código de pagamento conforme a transação selecionada.
             if (selectedValue === null || selectedValue === '') {
                 associadoField.style.display = "none"; // Oculta o campo se não houver valor selecionado
             } else {
@@ -201,9 +201,9 @@
         function toggleAssociadoId(extratoId) {
             const row = document.getElementById(`row-${extratoId}`);
             // Obter a opção selecionada
-            const user_id  = row.querySelector(`select[name="associado_codigo_${extratoId}"]`).value;
+            const payment_code = row.querySelector(`select[name="associado_codigo_${extratoId}"]`).value;
 
-            if (user_id === '') {
+            if (payment_code === '') {
                 // mudar a cor para vermelho
                 row.querySelector(`select[name="associado_codigo_${extratoId}"]`).style.color = "red";
             } else {
