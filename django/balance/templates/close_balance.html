@@ -106,7 +106,7 @@
                             heading.textContent = 'Fechamento aguardando início';
                         }
 
-                        if (!job.finished) window.setTimeout(poll, 3000);
+                        if (!job.finished) window.setTimeout(poll, 1000);
                     } catch (error) {
                         window.setTimeout(poll, 5000);
                     }
